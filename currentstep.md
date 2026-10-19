@@ -13,13 +13,27 @@
 4. After every finished item: tick it, run `.\scripts\build.ps1`, update `Documentation.md` if projects/types/tests/requirement status changed.
 4a. After every finished feature: `git add -A` and commit (message starts with the requirement ID, see CLAUDE.md).
 5. When the step is finished: move it to "Done" (newest first), set Active step to `none`.
-6. Git: local repository, one commit per finished feature, never push (see CLAUDE.md).
+6. Git: one commit per finished feature, then `git push` to origin (GitHub, DasPhero/Formwerk-3D-Modelling); never force push (see CLAUDE.md). `dotnet` is not on the PATH of the shells: use `$env:PATH += ";C:\Program Files\dotnet"` in PowerShell first.
 7. Report each step to the user as: brief plan before, brief result after, each time functional overview first, then technical view.
 
 ## Active step
 
-**Status:** none
-(Last finished: "Own accent color". The checklist of the round "closing the gaps" still has open items: themed message boxes, template variables and refresh, pick speed on huge meshes; see the user request of 2026-10-19, to be done next, one commit each.)
+**Status:** in progress
+**Step name:** Phase 2 block 1: holes (two commits)
+**Goal:** the user clicks a face and gets a hole perpendicular to it that cuts the body, can be moved/edited/deleted later, and has four types with a cross-section picture.
+**Requirement IDs:** F-HOL-01, F-HOL-05 (commit 1); F-HOL-02 (commit 2). Later in this block: F-HOL-03 presets, F-HOL-04 tolerance (need the variable table F-PAR-03 first).
+**Design (decided):**
+- A hole is a normal `PrimitiveNode` with `GeneratorId = "hole"` and `Role = Hole`, so save/load, templates, snapping, undo, properties and booleans work unchanged. `HoleGenerator` revolves a profile (radius, z); origin on the surface, axis +Z = outward normal, the hole goes down to -depth and 1 mm above the surface (clean cut). Parameters: type (0 cylindrical, 1 conical, 2 countersink, 3 counterbore), diameter, endDiameter, depth, sinkDiameter, sinkAngle (90), sinkDepth, segments. All sizes `IsDetail` (no scale bindings). Holes are found by `ShapeLibrary.Find` but are not in `ShapeLibrary.All` (not a shape in the shape menu).
+- Placement (`MainViewModel.Holes.cs`): reuse the face pick of F-ROT-04 (a second mode flag). The hole is added to the group/merge that is the top-level ancestor of the picked solid; a plain top-level solid or a boolean is wrapped into a new group first (one undo step, `CompositeCommand`). Rotation aligns +Z with the face normal; local transform = world * inverse(parent world).
+- Through hole: depth = extent of the picked object's box along the normal + 1 mm, stored as a plain number.
+**Checklist:**
+- [x] 1. Tests first: `HoleGeneratorTests`, `HolePlacementTests`, `HoleToolTests` (40 new tests)
+- [x] 2. `HoleGenerator` + registry (`ShapeLibrary.Hole`, found by id, not in the shape menu)
+- [x] 3. `MainViewModel.Holes.cs` (tool mode, placement), `HoleToolViewModel`, floating tool panel (type, sizes, through), toolbar button + Edit menu, hint, strings
+- [x] 4. Real-exe check (real mouse: click on the top of a box gives Group/Box/Hole, Z = 20, depth 21), build green (1486 tests), Documentation.md; commit + push (F-HOL-01/05 + types) next
+- [ ] 5. Commit 2: tool panel with type choice and cross-section picture, relevant fields per type in Properties (F-HOL-02), tests, build, docs, commit + push
+**Files touched so far:** Features: `Shapes/HoleGenerator.cs`, `ShapeGenerator.cs` (`Resolve`), `ShapeLibrary.cs`; App: `ViewModels/HoleToolViewModel.cs`, `MainViewModel.Holes.cs`, `.Orientation.cs`, `.Dimensions.cs`, `.Gizmo.cs`, `MainViewModel.cs`, `MainWindow.xaml`, `Resources/Strings.resx`; tests `HoleGeneratorTests`, `HolePlacementTests`, `HoleToolTests`; `Documentation.md`.
+**Notes / decisions / problems:** snap to face center and grid (part of F-HOL-01) is not planned for commit 1; will be noted as a caveat. Seen in the real program: the properties panel of a hole lists all parameters (Type as a number, end diameter and head fields although unused, "Head angle" with unit mm): commit 2 fixes this (type choice, only the fields the type needs, unit degrees) and adds the cross-section picture.
 
 <!-- Template for a new active step:
 
@@ -64,7 +78,7 @@ Done (fully): F-LIB-01 (all 12 shapes), F-GRP-02, F-GRP-04, F-CPY-01, F-ROT-04, 
 
 ## Current state of the project (snapshot)
 
-- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1446 tests green at last run, about 30 s, test projects run one at a time). Executable: `artifacts\publish\Formwerk.exe`.
+- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1486 tests green at last run, about 30 s, test projects run one at a time). Executable: `binary\Formwerk.exe`.
 - Working application: add box/cylinder/sphere, typed editing of position/rotation/dimensions (numbers, expressions, `+10`, `150%`, variables), selection (viewport and list), hole/group/merge/boolean, duplicate/delete, undo history panel, STL export, **STL/OBJ import (File > Import, Ctrl+I, drag and drop onto the window, unit question for tiny/huge models, lands on the plate, saved in the project)**, 3D view with build plate and orbit camera, new/open/save/save as of `.fwp` projects, modified marker, unsaved-changes questions, autosave every 2 minutes, crash recovery, **move gizmo (arrows + plane handles), rotate gizmo (rings), scale gizmo (box with 6 face and 8 corner handles, Proportional switch, Ctrl = from center, shapes change their dimensions), tools Select/Move/Rotate/Scale (Q/W/E/R), grid and angle snapping and **snapping to other objects (edges and centers flush/centered, floor, bed center, pink guide frames, tolerance 10 px at any zoom, "Objects" switch)**, Alt/Shift suppress snapping, live readout at the cursor, Esc cancels, one undo step per drag, drop to floor (B)**.
 - Also working now (after the lines above were written): settings dialog (File > Settings, Ctrl+,), 3MF export and import, Open in Slicer, mesh check banner with one-click repair. Not done: repair of self-intersections and non-manifold edges, OBJ export, scaling several objects at once, snap point markers / circle centers / face-to-face gap / align tool, edge lines, DirectX renderer, more shapes, holes tool, patterns, templates, "Open in Slicer", `thumbnail.png` in the project file. (Settings dialog and persistent snap settings are done.)
 - Verified in the real exe with real input (UI automation + real mouse events): start, add shapes, title and `*` marker, menus, unsaved-changes dialog on close, crash recovery after a killed process, **mouse drag of the X arrow (0 to 22 mm, readout and highlight, one "Move Box" entry), mouse drag of the Z ring (30 degrees, readout, one "Rotate Box" entry), Esc during a drag (nothing changes, no history entry), mouse drag of the scale corner handle (41 x 41 x 41 mm, proportional) and of the +X face handle (20 to 22 mm, only the width changes, one "Scale Box" entry), mouse drag of a box towards another box (pink guide frame at the flush plane, ends exactly flush at X = -20, one "Move Box 2" entry)**. The user confirmed picking and the camera controls work.

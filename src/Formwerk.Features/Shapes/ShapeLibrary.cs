@@ -12,7 +12,15 @@ public static class ShapeLibrary
         }
             .ToDictionary(g => g.Id, StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Generators that are found by id but are not offered in the shape menu: the hole is made by its own tool.</summary>
+    private static readonly Dictionary<string, IShapeGenerator> Tools =
+        new IShapeGenerator[] { new HoleGenerator() }.ToDictionary(g => g.Id, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The shapes of the shape menu.</summary>
     public static IReadOnlyCollection<IShapeGenerator> All => Generators.Values;
 
-    public static IShapeGenerator? Find(string id) => Generators.GetValueOrDefault(id);
+    /// <summary>The generator of the hole tool.</summary>
+    public static HoleGenerator Hole { get; } = (HoleGenerator)Tools["hole"];
+
+    public static IShapeGenerator? Find(string id) => Generators.GetValueOrDefault(id) ?? Tools.GetValueOrDefault(id);
 }

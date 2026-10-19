@@ -55,6 +55,7 @@ public sealed partial class MainViewModel
     private void FaceOnFloor()
     {
         IsPickingFace = !IsPickingFace;
+        if (IsPickingFace) IsPlacingHole = false;
         RefreshScaleHint(); // sets the hint for the mode, or the usual one again
     }
 
@@ -65,10 +66,13 @@ public sealed partial class MainViewModel
         if (pick is null)
         {
             EndFacePick();
+            IsPlacingHole = false; // Esc ends the hole tool as well
+            RefreshScaleHint();
             return;
         }
 
-        LayFaceOnFloor(pick);
+        if (IsPlacingHole) PlaceHole(pick);
+        else LayFaceOnFloor(pick);
     }
 
     private void EndFacePick()

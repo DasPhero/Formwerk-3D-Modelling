@@ -759,6 +759,7 @@ public sealed partial class MainViewModel : ObservableObject
         SaveTemplateCommand.NotifyCanExecuteChanged();
         Rotate90Command.NotifyCanExecuteChanged();
         FaceOnFloorCommand.NotifyCanExecuteChanged();
+        DrillCommand.NotifyCanExecuteChanged();
         BooleanCommand.NotifyCanExecuteChanged();
         ToggleHoleCommand.NotifyCanExecuteChanged();
         DropToFloorCommand.NotifyCanExecuteChanged();

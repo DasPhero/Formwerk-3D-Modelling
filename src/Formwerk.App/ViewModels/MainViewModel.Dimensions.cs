@@ -15,7 +15,11 @@ public sealed partial class MainViewModel
     [ObservableProperty]
     public partial IReadOnlyList<ViewportDimension>? ViewportDimensions { get; set; }
 
-    partial void OnIsPickingFaceChanged(bool value) => ViewportDimensions = ComputeDimensions();
+    partial void OnIsPickingFaceChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsFacePickActive));
+        ViewportDimensions = ComputeDimensions();
+    }
 
     /// <summary>
     /// One dimension per parameter that the scale handles bind to an axis (a cylinder's diameter once, on X): the line runs along the
@@ -23,7 +27,7 @@ public sealed partial class MainViewModel
     /// </summary>
     private IReadOnlyList<ViewportDimension>? ComputeDimensions()
     {
-        if (IsPickingFace || SelectedTopLevel() is not [PrimitiveNode { Locked: false } node]) return null;
+        if (IsFacePickActive || SelectedTopLevel() is not [PrimitiveNode { Locked: false } node]) return null;
         if (ShapeLibrary.Find(node.GeneratorId) is not { } generator || ComputeScaleBox() is not { } box) return null;
 
         var frame = TransformOps.FrameOf(node);

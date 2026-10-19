@@ -113,7 +113,8 @@ public sealed partial class MainViewModel : IGizmoTarget
     /// <summary>Scaling works on one object at a time; with several selected objects the hint says what to do.</summary>
     private void RefreshScaleHint()
     {
-        if (IsPickingFace) HintText = Texts.Get("Hint.FacePick");
+        if (IsPlacingHole) HintText = Texts.Get("Hint.HolePlace");
+        else if (IsPickingFace) HintText = Texts.Get("Hint.FacePick");
         else if (OpenContainer is { } open) HintText = Texts.Format("Hint.GroupOpen", open.Name);
         else if (ActiveTool == ViewportTool.Scale && _selected.Count > 1) HintText = Texts.Get("Hint.ScaleSingle");
         else if (ActiveTool == ViewportTool.Select) HintText = Texts.Get("Hint.SelectTool");

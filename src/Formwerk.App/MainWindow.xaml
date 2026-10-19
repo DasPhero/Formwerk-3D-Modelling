@@ -152,6 +152,7 @@
                 <MenuItem Header="{res:Loc Menu.Edit.Flatten}" Command="{Binding FlattenCommand}" />
                 <MenuItem Header="{res:Loc Menu.Edit.DropToFloor}" Command="{Binding DropToFloorCommand}" InputGestureText="B" />
                 <MenuItem Header="{res:Loc Menu.Edit.FaceOnFloor}" Command="{Binding FaceOnFloorCommand}" />
+                <MenuItem Header="{res:Loc Menu.Edit.Drill}" Command="{Binding DrillCommand}" />
                 <MenuItem Header="{res:Loc Menu.Edit.Rotate90}">
                     <MenuItem Header="{res:Loc Rot.XPlus}" Command="{Binding Rotate90Command}" CommandParameter="X" />
                     <MenuItem Header="{res:Loc Rot.XMinus}" Command="{Binding Rotate90Command}" CommandParameter="-X" />
@@ -206,6 +207,8 @@
                 <CheckBox Content="{res:Loc Tool.Proportional}" ToolTip="{res:Loc Tool.Proportional.Tip}" IsChecked="{Binding ScaleLinked}" MinWidth="0" Margin="0,0,16,0" />
                 <Button Content="{res:Loc Tool.DropToFloor}" ToolTip="{res:Loc Tool.DropToFloor.Tip}" Command="{Binding DropToFloorCommand}" />
                 <Button Content="{res:Loc Tool.FaceOnFloor}" ToolTip="{res:Loc Tool.FaceOnFloor.Tip}" Command="{Binding FaceOnFloorCommand}" Margin="6,0,0,0" />
+                <ToggleButton Content="{res:Loc Tool.Hole}" ToolTip="{res:Loc Tool.Hole.Tip}" Command="{Binding DrillCommand}"
+                              IsChecked="{Binding IsPlacingHole, Mode=OneWay}" Margin="14,0,0,0" AutomationProperties.AutomationId="DrillButton" />
             </StackPanel>
         </Border>
 
@@ -344,7 +347,7 @@
                                     OpenGroupCommand="{Binding OpenGroupCommand}"
                                     ActiveTool="{Binding ActiveTool}"
                                     PreviewTransforms="{Binding PreviewTransforms}"
-                                    FacePickMode="{Binding IsPickingFace}"
+                                    FacePickMode="{Binding IsFacePickActive}"
                                     FacePickCommand="{Binding FacePickedCommand}"
                                     Orthographic="{Binding IsOrthographic}"
                                     LightTheme="{Binding LightTheme}"
@@ -370,6 +373,25 @@
                         <TextBlock Text="{Binding RepairBannerText}" TextWrapping="Wrap" VerticalAlignment="Center"
                                    Foreground="#F2D98A" AutomationProperties.AutomationId="RepairBanner" />
                     </DockPanel>
+                </Border>
+
+                <!-- Hole tool: what the next hole looks like (F-HOL-01, F-HOL-02) -->
+                <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="12" Padding="10" Width="260" CornerRadius="4"
+                        BorderThickness="1" BorderBrush="{DynamicResource PanelBorderBrush}" Background="{DynamicResource PanelBrush}"
+                        Visibility="{Binding IsPlacingHole, Converter={StaticResource BoolToVisibility}}"
+                        AutomationProperties.AutomationId="HolePanel">
+                    <StackPanel DataContext="{Binding HoleTool}">
+                        <TextBlock Text="{res:Loc Hole.Title}" Style="{StaticResource PanelHeader}" Margin="0,0,0,6" />
+                        <ComboBox ItemsSource="{Binding Types}" DisplayMemberPath="Label" SelectedValuePath="Type" SelectedValue="{Binding Type}"
+                                  Margin="0,0,0,6" AutomationProperties.AutomationId="HoleType" />
+                        <ContentControl Content="{Binding Diameter}" />
+                        <ContentControl Content="{Binding EndDiameter}" Visibility="{Binding ShowEndDiameter, Converter={StaticResource BoolToVisibility}}" />
+                        <ContentControl Content="{Binding HeadDiameter}" Visibility="{Binding ShowHead, Converter={StaticResource BoolToVisibility}}" />
+                        <ContentControl Content="{Binding HeadAngle}" Visibility="{Binding ShowHeadAngle, Converter={StaticResource BoolToVisibility}}" />
+                        <ContentControl Content="{Binding HeadDepth}" Visibility="{Binding ShowHeadDepth, Converter={StaticResource BoolToVisibility}}" />
+                        <CheckBox Content="{res:Loc Hole.Through}" ToolTip="{res:Loc Hole.Through.Tip}" IsChecked="{Binding Through}" Margin="0,6,0,2" />
+                        <ContentControl Content="{Binding Depth}" Visibility="{Binding ShowDepth, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
                 </Border>
                 </Grid>
             </Border>

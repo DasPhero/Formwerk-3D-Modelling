@@ -232,6 +232,21 @@ Try a different location or file name.</value></data>
   <data name="Tool.FaceOnFloor" xml:space="preserve"><value>Face on Floor</value></data>
   <data name="Tool.FaceOnFloor.Tip" xml:space="preserve"><value>Click a face of an object; the object turns so that this face lies flat on the build plate</value></data>
   <data name="Hint.FacePick" xml:space="preserve"><value>Click the face that should lie on the floor. Esc cancels.</value></data>
+  <data name="Tool.Hole" xml:space="preserve"><value>Drill Hole</value></data>
+  <data name="Tool.Hole.Tip" xml:space="preserve"><value>Click a face of an object: a hole is made perpendicular to that face. Type and size are set in the panel. Esc ends the tool</value></data>
+  <data name="Menu.Edit.Drill" xml:space="preserve"><value>Drill _Hole</value></data>
+  <data name="Hint.HolePlace" xml:space="preserve"><value>Click the face where the hole should start; the hole is perpendicular to the face. Click again for the next hole, Esc ends the tool. A hole stays editable: move it with the handles, change it in the properties or delete it.</value></data>
+  <data name="Name.Hole" xml:space="preserve"><value>Hole</value></data>
+  <data name="Name.DrillHole" xml:space="preserve"><value>Drill hole in {0}</value></data>
+  <data name="Msg.HoleLocked" xml:space="preserve"><value>{0} is locked, no hole can be drilled into it.</value></data>
+  <data name="Hole.Title" xml:space="preserve"><value>Hole</value></data>
+  <data name="Hole.Type.Cylindrical" xml:space="preserve"><value>Cylindrical</value></data>
+  <data name="Hole.Type.Conical" xml:space="preserve"><value>Conical</value></data>
+  <data name="Hole.Type.Countersink" xml:space="preserve"><value>Countersink</value></data>
+  <data name="Hole.Type.Counterbore" xml:space="preserve"><value>Counterbore</value></data>
+  <data name="Hole.Through" xml:space="preserve"><value>Through all</value></data>
+  <data name="Hole.Through.Tip" xml:space="preserve"><value>The hole goes all the way through the body (its depth is worked out when you click). Switch off to type a depth.</value></data>
+  <data name="Hole.Err.Range" xml:space="preserve"><value>{0} must be between {1} and {2}.</value></data>
   <data name="Msg.FaceAlready" xml:space="preserve"><value>That face already lies on the floor.</value></data>
   <data name="Msg.FaceLocked" xml:space="preserve"><value>{0} is locked and cannot be turned.</value></data>
   <data name="Hint.SelectTool" xml:space="preserve"><value>Drag a rectangle: to the right takes what lies completely inside, to the left everything it touches. Ctrl/Shift adds. Esc cancels. Right-drag orbits, middle-drag pans.</value></data>

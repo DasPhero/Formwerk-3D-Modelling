@@ -56,7 +56,10 @@ public abstract class ShapeGenerator : IShapeGenerator
 
     public abstract IReadOnlyList<ScaleBinding> ScaleBindings { get; }
 
-    public MeshData Generate(IReadOnlyDictionary<string, double> values)
+    public MeshData Generate(IReadOnlyDictionary<string, double> values) => Build(Resolve(values));
+
+    /// <summary>Fills in the defaults and checks the ranges.</summary>
+    protected Dictionary<string, double> Resolve(IReadOnlyDictionary<string, double> values)
     {
         var resolved = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         foreach (var p in Parameters)
@@ -67,7 +70,7 @@ public abstract class ShapeGenerator : IShapeGenerator
             resolved[p.Name] = p.IsInteger ? Math.Round(value) : value;
         }
 
-        return Build(resolved);
+        return resolved;
     }
 
     protected abstract MeshData Build(IReadOnlyDictionary<string, double> p);
