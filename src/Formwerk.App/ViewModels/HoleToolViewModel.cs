@@ -7,7 +7,17 @@ using Formwerk.Features.Shapes;
 namespace Formwerk.App.ViewModels;
 
 /// <summary>One entry of the type choice of the hole tool.</summary>
-public sealed record HoleTypeItem(HoleType Type, string Label);
+public sealed record HoleTypeItem(HoleType Type, string Label)
+{
+    /// <summary>The four types, with their texts, for a choice list.</summary>
+    public static IReadOnlyList<HoleTypeItem> All() =>
+    [
+        new(HoleType.Cylindrical, Texts.Get("Hole.Type.Cylindrical")),
+        new(HoleType.Conical, Texts.Get("Hole.Type.Conical")),
+        new(HoleType.Countersink, Texts.Get("Hole.Type.Countersink")),
+        new(HoleType.Counterbore, Texts.Get("Hole.Type.Counterbore")),
+    ];
+}
 
 /// <summary>
 /// What the next hole looks like (F-HOL-01, F-HOL-02): the type and the sizes, as expressions like in the properties panel, so a
@@ -29,21 +39,13 @@ public sealed partial class HoleToolViewModel : ObservableObject
         {
             var definition = Definition(name);
             _texts[name] = definition.Default.ToString("0.###", CultureInfo.InvariantCulture);
-            var field = new FieldViewModel(definition.Label, definition.Name == "sinkAngle" ? "°" : "mm", text => Commit(definition, text));
+            var field = new FieldViewModel(definition.Label, definition.Unit ?? "mm", text => Commit(definition, text));
             field.SetFromModel(_texts[name]);
             _fields[name] = field;
         }
-
-        Types =
-        [
-            new(HoleType.Cylindrical, Texts.Get("Hole.Type.Cylindrical")),
-            new(HoleType.Conical, Texts.Get("Hole.Type.Conical")),
-            new(HoleType.Countersink, Texts.Get("Hole.Type.Countersink")),
-            new(HoleType.Counterbore, Texts.Get("Hole.Type.Counterbore")),
-        ];
     }
 
-    public IReadOnlyList<HoleTypeItem> Types { get; }
+    public IReadOnlyList<HoleTypeItem> Types { get; } = HoleTypeItem.All();
 
     [ObservableProperty]
     public partial HoleType Type { get; set; }
@@ -80,12 +82,25 @@ public sealed partial class HoleToolViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowHead));
         OnPropertyChanged(nameof(ShowHeadAngle));
         OnPropertyChanged(nameof(ShowHeadDepth));
-        OnPropertyChanged(nameof(Profile));
+        PictureChanged();
     }
 
-    partial void OnThroughChanged(bool value) => OnPropertyChanged(nameof(ShowDepth));
+    partial void OnThroughChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowDepth));
+        PictureChanged();
+    }
 
-    /// <summary>The outline of the hole for the cross-section picture (distance from the axis, height; the surface is at 0).</summary>
+    private void PictureChanged()
+    {
+        OnPropertyChanged(nameof(Profile));
+        OnPropertyChanged(nameof(Section));
+    }
+
+    /// <summary>
+    /// The outline of the hole for the cross-section picture (distance from the axis, height; the surface is at 0). A through hole has
+    /// no depth of its own, so it is drawn as deep as 2.5 times its widest part, which keeps the picture readable.
+    /// </summary>
     public IReadOnlyList<(float R, float Z)> Profile
     {
         get
@@ -96,6 +111,12 @@ public sealed partial class HoleToolViewModel : ObservableObject
             {
                 var result = ExpressionParser.Evaluate(_texts[name], variables);
                 if (result.IsSuccess) values[name] = result.Value;
+            }
+
+            if (Through)
+            {
+                var widest = Math.Max(values.GetValueOrDefault("diameter", 3.4), ShowHead ? values.GetValueOrDefault("sinkDiameter", 0) : 0);
+                values["depth"] = Math.Clamp(widest * 2.5, 0.01, 10000);
             }
 
             try
@@ -109,6 +130,9 @@ public sealed partial class HoleToolViewModel : ObservableObject
         }
     }
 
+    /// <summary>The cross-section picture of the next hole.</summary>
+    public HoleSection Section => HoleSection.From(Profile);
+
     private string? Commit(ParameterDefinition definition, string text)
     {
         var result = NumericInput.Resolve(text, double.TryParse(_texts[definition.Name], NumberStyles.Float, CultureInfo.InvariantCulture, out var current) ? current : definition.Default, _variables());
@@ -121,7 +145,7 @@ public sealed partial class HoleToolViewModel : ObservableObject
         _texts[definition.Name] = trimmed.StartsWith('+') || trimmed.EndsWith('%')
             ? Math.Round(result.Value, 3).ToString("0.###", CultureInfo.InvariantCulture)
             : trimmed;
-        OnPropertyChanged(nameof(Profile));
+        PictureChanged();
         return null;
     }
 

@@ -37,7 +37,7 @@ public sealed partial class PropertiesViewModel : ObservableObject
         if (node is PrimitiveNode primitive && ShapeLibrary.Find(primitive.GeneratorId) is { } generator)
         {
             Parameters = [.. generator.Parameters.Select(definition =>
-                new FieldViewModel(definition.Label, definition.IsInteger ? "" : "mm", text => ApplyParameter(primitive, definition, text)))];
+                new FieldViewModel(definition.Label, definition.Unit ?? (definition.IsInteger ? "" : "mm"), text => ApplyParameter(primitive, definition, text)))];
         }
 
         Refresh();
@@ -54,6 +54,51 @@ public sealed partial class PropertiesViewModel : ObservableObject
     public IReadOnlyList<FieldViewModel> Parameters { get; } = [];
 
     public bool HasParameters => Parameters.Count > 0;
+
+    /// <summary>The node is a hole (F-HOL-02): the type is a choice, only the fields of the type show, and a picture shows the section.</summary>
+    public bool IsHoleShape => _node is PrimitiveNode { GeneratorId: "hole" };
+
+    public IReadOnlyList<HoleTypeItem> HoleTypes { get; } = HoleTypeItem.All();
+
+    public HoleType HoleType
+    {
+        get => _node is PrimitiveNode primitive && primitive.Parameters.TryGetValue("type", out var text)
+            && ExpressionParser.Evaluate(text, _document.ResolveVariables(out _)) is { IsSuccess: true } result
+            ? (HoleType)(int)Math.Clamp(Math.Round(result.Value), 0, 3)
+            : HoleType.Cylindrical;
+        set
+        {
+            if (_node is PrimitiveNode primitive && IsHoleShape && HoleType != value)
+                _history.Execute(new SetParameterCommand(_document, primitive, "type", ((int)value).ToString(CultureInfo.InvariantCulture)));
+        }
+    }
+
+    /// <summary>The cross-section picture of the hole, null for other shapes.</summary>
+    public HoleSection? Section => IsHoleShape && _node is PrimitiveNode primitive ? HoleSection.From(HoleProfile(primitive)) : null;
+
+    private IReadOnlyList<(float R, float Z)> HoleProfile(PrimitiveNode primitive)
+    {
+        var values = primitive.EvaluateParameters(_document.ResolveVariables(out _), out _);
+        try
+        {
+            return ShapeLibrary.Hole.Profile(values);
+        }
+        catch (ArgumentException) // a value that is out of range: show the default hole until it is corrected
+        {
+            return ShapeLibrary.Hole.Profile(new Dictionary<string, double> { ["type"] = (int)HoleType });
+        }
+    }
+
+    /// <summary>Which fields of a hole the type needs (the type itself is the choice, so its number never shows).</summary>
+    private static bool IsFieldOfType(string parameter, HoleType type) => parameter switch
+    {
+        "type" => false,
+        "endDiameter" => type == HoleType.Conical,
+        "sinkDiameter" => type is HoleType.Countersink or HoleType.Counterbore,
+        "sinkAngle" => type == HoleType.Countersink,
+        "sinkDepth" => type == HoleType.Counterbore,
+        _ => true,
+    };
 
     public bool IsBoolean => _node is BooleanNode;
 
@@ -101,6 +146,13 @@ public sealed partial class PropertiesViewModel : ObservableObject
                 Parameters[i].SetFromModel(primitive.Parameters.TryGetValue(definition.Name, out var text)
                     ? text
                     : Format(definition.Default));
+            }
+
+            if (IsHoleShape)
+            {
+                var type = HoleType;
+                for (var i = 0; i < Parameters.Count && generator is not null; i++)
+                    Parameters[i].IsVisible = IsFieldOfType(generator.Parameters[i].Name, type);
             }
         }
 

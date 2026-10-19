@@ -51,7 +51,7 @@
 
         <!-- Numeric field: label, text box, unit. Red border when the input is invalid. -->
         <DataTemplate DataType="{x:Type vm:FieldViewModel}">
-            <Grid Margin="0,2">
+            <Grid Margin="0,2" Visibility="{Binding IsVisible, Converter={StaticResource BoolToVisibility}}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="86" />
                     <ColumnDefinition Width="*" />
@@ -74,6 +74,18 @@
                 <TextBlock Grid.Column="2" Text="{Binding Unit}" Margin="6,0,0,0" VerticalAlignment="Center"
                            Foreground="{DynamicResource MutedTextBrush}" />
             </Grid>
+        </DataTemplate>
+
+        <!-- Cross-section picture of a hole: the body cut open with the hole in it (F-HOL-02) -->
+        <DataTemplate DataType="{x:Type vm:HoleSection}">
+            <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1" CornerRadius="3" Padding="4" HorizontalAlignment="Left"
+                    AutomationProperties.AutomationId="HoleSection">
+                <Canvas Width="140" Height="90">
+                    <Path Data="{Binding Body}" Fill="{DynamicResource MutedTextBrush}" Opacity="0.4" Stroke="{DynamicResource MutedTextBrush}" StrokeThickness="1" />
+                    <Path Data="{Binding Hole}" Fill="{DynamicResource PanelBrush}" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.4" StrokeLineJoin="Round" />
+                    <Path Data="{Binding Axis}" Stroke="{DynamicResource MutedTextBrush}" StrokeThickness="0.8" StrokeDashArray="3 3" />
+                </Canvas>
+            </Border>
         </DataTemplate>
 
         <DataTemplate DataType="{x:Type vm:NodeItemViewModel}">
@@ -107,6 +119,11 @@
 
                 <StackPanel Visibility="{Binding HasParameters, Converter={StaticResource BoolToVisibility}}">
                     <TextBlock Text="{res:Loc Props.Parameters}" Style="{StaticResource PanelHeader}" Margin="0,14,0,6" />
+                    <StackPanel Visibility="{Binding IsHoleShape, Converter={StaticResource BoolToVisibility}}">
+                        <ComboBox ItemsSource="{Binding HoleTypes}" DisplayMemberPath="Label" SelectedValuePath="Type" SelectedValue="{Binding HoleType}"
+                                  Margin="0,0,0,6" AutomationProperties.AutomationId="PropertiesHoleType" />
+                        <ContentControl Content="{Binding Section}" Margin="0,0,0,6" />
+                    </StackPanel>
                     <ItemsControl ItemsSource="{Binding Parameters}" />
                 </StackPanel>
 
@@ -384,6 +401,7 @@
                         <TextBlock Text="{res:Loc Hole.Title}" Style="{StaticResource PanelHeader}" Margin="0,0,0,6" />
                         <ComboBox ItemsSource="{Binding Types}" DisplayMemberPath="Label" SelectedValuePath="Type" SelectedValue="{Binding Type}"
                                   Margin="0,0,0,6" AutomationProperties.AutomationId="HoleType" />
+                        <ContentControl Content="{Binding Section}" Margin="0,0,0,6" />
                         <ContentControl Content="{Binding Diameter}" />
                         <ContentControl Content="{Binding EndDiameter}" Visibility="{Binding ShowEndDiameter, Converter={StaticResource BoolToVisibility}}" />
                         <ContentControl Content="{Binding HeadDiameter}" Visibility="{Binding ShowHead, Converter={StaticResource BoolToVisibility}}" />

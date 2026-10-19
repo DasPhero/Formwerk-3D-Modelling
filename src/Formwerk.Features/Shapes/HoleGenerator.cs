@@ -42,7 +42,7 @@ public sealed class HoleGenerator : ShapeGenerator
         new("endDiameter", "End diameter", 1.7, 0, 1000, IsDetail: true),
         new("depth", "Depth", 10, 0.01, 10000, IsDetail: true),
         new("sinkDiameter", "Head diameter", 6.4, 0.01, 1000, IsDetail: true),
-        new("sinkAngle", "Head angle", 90, 10, 170, IsDetail: true),
+        new("sinkAngle", "Head angle", 90, 10, 170, IsDetail: true, Unit: "°"),
         new("sinkDepth", "Head depth", 3, 0.01, 1000, IsDetail: true),
         new("segments", "Segments", 48, 3, 256, IsInteger: true),
     ];

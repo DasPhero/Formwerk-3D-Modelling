@@ -28,6 +28,10 @@ public sealed partial class FieldViewModel : ObservableObject
 
     public bool HasError => !string.IsNullOrEmpty(Error);
 
+    /// <summary>False for a field that does not apply right now (the end diameter of a cylindrical hole).</summary>
+    [ObservableProperty]
+    public partial bool IsVisible { get; set; } = true;
+
     public string Text
     {
         get => _text;

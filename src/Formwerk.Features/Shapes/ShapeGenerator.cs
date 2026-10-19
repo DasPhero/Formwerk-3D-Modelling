@@ -8,7 +8,7 @@ namespace Formwerk.Features.Shapes;
 /// scale handles leave it alone and it has no <see cref="ScaleBinding"/>.
 /// </summary>
 public sealed record ParameterDefinition(
-    string Name, string Label, double Default, double Min, double Max, bool IsInteger = false, bool IsDetail = false);
+    string Name, string Label, double Default, double Min, double Max, bool IsInteger = false, bool IsDetail = false, string? Unit = null);
 
 /// <summary>The local axes of a shape (X = left/right, Y = front/back, Z = up).</summary>
 [Flags]
