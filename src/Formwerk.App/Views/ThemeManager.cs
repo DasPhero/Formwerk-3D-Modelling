@@ -40,6 +40,34 @@ public static class ThemeManager
         application.ThemeMode = light ? ThemeMode.Light : ThemeMode.Dark;
 #pragma warning restore WPF0001
         ApplyPalette(application.Resources, light);
+
+        // the Fluent theme has already turned the accent color of Windows into dozens of its own brushes: recolor them
+        var fluent = application.Resources.MergedDictionaries.FirstOrDefault(d => d.Source?.ToString().Contains("Fluent", StringComparison.OrdinalIgnoreCase) == true);
+        if (fluent is not null) RecolorFluentAccent(application.Resources, fluent, light);
+    }
+
+    private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<ResourceDictionary, HashSet<string>> Recolored = [];
+
+    /// <summary>
+    /// Every brush of <paramref name="fluent"/> in the hue of the accent color of Windows gets the hue of the program's accent, with the
+    /// same differences in lightness (the default accent fill becomes exactly the program accent). The new brushes are put into
+    /// <paramref name="resources"/>, where they shadow the ones of the theme; those of an earlier call are removed first.
+    /// </summary>
+    public static void RecolorFluentAccent(ResourceDictionary resources, ResourceDictionary fluent, bool light)
+    {
+        var previous = Recolored.GetOrCreateValue(resources);
+        foreach (var key in previous) resources.Remove(key);
+        previous.Clear();
+
+        if (fluent["AccentFillColorDefaultBrush"] is not SolidColorBrush anchorBrush) return;
+        var windows = anchorBrush.Color;
+        var ours = (light ? ThemePalette.Light : ThemePalette.Dark).Accent;
+        foreach (var key in fluent.Keys.OfType<string>().ToList())
+        {
+            if (fluent[key] is not SolidColorBrush brush || !AccentRecolor.IsAccent(brush.Color, windows)) continue;
+            resources[key] = new SolidColorBrush(AccentRecolor.Recolor(brush.Color, windows, ours)) { Opacity = brush.Opacity };
+            previous.Add(key);
+        }
     }
 
     /// <summary>
