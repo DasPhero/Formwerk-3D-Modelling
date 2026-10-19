@@ -67,7 +67,7 @@ public class HolePropertiesTests
 
         Assert.False(Field(props, "type").IsVisible); // the choice replaces the number
         Assert.True(Field(props, "diameter").IsVisible);
-        Assert.True(Field(props, "depth").IsVisible);
+        Assert.False(Field(props, "depth").IsVisible); // a through hole has no depth of its own
         Assert.False(Field(props, "endDiameter").IsVisible);
         Assert.False(Field(props, "sinkDiameter").IsVisible);
         Assert.False(Field(props, "sinkAngle").IsVisible);
@@ -85,6 +85,50 @@ public class HolePropertiesTests
         vm.Properties!.HoleType = HoleType.Counterbore;
         Assert.True(Field(vm.Properties!, "sinkDepth").IsVisible);
         Assert.False(Field(vm.Properties!, "sinkAngle").IsVisible);
+    }
+
+    [UiFact]
+    public async Task A_through_hole_has_a_checkbox_and_no_depth_field_until_it_is_switched_off()
+    {
+        var (vm, hole) = await Scene();
+        vm.SelectOnly([hole.Id]);
+        var props = vm.Properties!;
+
+        Assert.True(props.HoleThrough); // the tool makes through holes by default
+        Assert.False(Field(props, "through").IsVisible); // the checkbox replaces the number
+        Assert.False(Field(props, "depth").IsVisible);
+
+        var steps = vm.HistoryEntries.Count;
+        props.HoleThrough = false;
+        await vm.WaitForEvaluationAsync();
+
+        Assert.Equal("0", hole.Parameters["through"]);
+        Assert.Equal(steps + 1, vm.HistoryEntries.Count);
+        Assert.False(vm.Properties!.HoleThrough);
+        Assert.True(Field(vm.Properties!, "depth").IsVisible);
+
+        vm.UndoCommand.Execute(null);
+        Assert.True(vm.Properties!.HoleThrough);
+        Assert.False(Field(vm.Properties!, "depth").IsVisible);
+    }
+
+    [UiFact]
+    public async Task A_through_hole_still_goes_through_when_the_body_gets_deeper_below_it()
+    {
+        var (vm, hole) = await Scene(); // drilled from the top (Z = 20) into the 20 mm box
+        var box = vm.Document.Root.Descendants().First(n => n is PrimitiveNode { GeneratorId: "box" });
+        double Removed(double whole) => whole - vm.ViewportItems.Where(i => i.Kind == ViewportItemKind.Solid).Sum(i => (double)i.Mesh.ComputeVolume());
+        var before = Removed(8000);
+
+        // the box becomes 40 mm tall and moves down by 20 mm: its top stays at Z = 20, the hole now has to go twice as deep
+        vm.SelectOnly([box.Id]);
+        var height = ShapeLibrary.Find("box")!.Parameters.ToList().FindIndex(p => p.Name == "height");
+        vm.Properties!.Parameters[height].Text = "40";
+        vm.Properties!.Position[2].Text = "-20";
+        await vm.WaitForEvaluationAsync();
+
+        Assert.InRange(Removed(16000) / before, 1.9, 2.1); // the box is 16000 mm³ now
+        Assert.Equal("1", hole.Parameters["through"]);
     }
 
     [UiFact]

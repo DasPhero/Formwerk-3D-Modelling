@@ -73,6 +73,18 @@ public sealed partial class PropertiesViewModel : ObservableObject
         }
     }
 
+    /// <summary>"Through all": the hole is as deep as the body needs (the evaluator works it out). Switching it off gives the hole its stored depth back.</summary>
+    public bool HoleThrough
+    {
+        get => _node is PrimitiveNode primitive && primitive.Parameters.TryGetValue("through", out var text)
+            && ExpressionParser.Evaluate(text, _document.ResolveVariables(out _)) is { IsSuccess: true } result && result.Value >= 0.5;
+        set
+        {
+            if (_node is PrimitiveNode primitive && IsHoleShape && HoleThrough != value)
+                _history.Execute(new SetParameterCommand(_document, primitive, "through", value ? "1" : "0"));
+        }
+    }
+
     /// <summary>The cross-section picture of the hole, null for other shapes.</summary>
     public HoleSection? Section => IsHoleShape && _node is PrimitiveNode primitive ? HoleSection.From(HoleProfile(primitive)) : null;
 
@@ -90,9 +102,10 @@ public sealed partial class PropertiesViewModel : ObservableObject
     }
 
     /// <summary>Which fields of a hole the type needs (the type itself is the choice, so its number never shows).</summary>
-    private static bool IsFieldOfType(string parameter, HoleType type) => parameter switch
+    private static bool IsFieldOfType(string parameter, HoleType type, bool through) => parameter switch
     {
-        "type" => false,
+        "type" or "through" => false, // both are a choice or a checkbox
+        "depth" => !through,
         "endDiameter" => type == HoleType.Conical,
         "sinkDiameter" => type is HoleType.Countersink or HoleType.Counterbore,
         "sinkAngle" => type == HoleType.Countersink,
@@ -151,8 +164,9 @@ public sealed partial class PropertiesViewModel : ObservableObject
             if (IsHoleShape)
             {
                 var type = HoleType;
+                var through = HoleThrough;
                 for (var i = 0; i < Parameters.Count && generator is not null; i++)
-                    Parameters[i].IsVisible = IsFieldOfType(generator.Parameters[i].Name, type);
+                    Parameters[i].IsVisible = IsFieldOfType(generator.Parameters[i].Name, type, through);
             }
         }
 

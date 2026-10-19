@@ -159,7 +159,10 @@ public sealed partial class HoleToolViewModel : ObservableObject
         {
             ["type"] = ((int)Type).ToString(CultureInfo.InvariantCulture),
             ["diameter"] = _texts["diameter"],
+            // a through hole also keeps the depth it had when it was placed: it is what a hole outside a group shows and what comes back
+            // when "through all" is switched off; inside a group the evaluator makes the hole as deep as the body needs
             ["depth"] = Through ? Math.Round(throughDepth, 2).ToString("0.##", CultureInfo.InvariantCulture) : _texts["depth"],
+            ["through"] = Through ? "1" : "0",
         };
         if (ShowEndDiameter) parameters["endDiameter"] = _texts["endDiameter"];
         if (ShowHead) parameters["sinkDiameter"] = _texts["sinkDiameter"];

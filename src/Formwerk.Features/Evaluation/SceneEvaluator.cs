@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Text;
 using Formwerk.Core.Model;
 using Formwerk.Features.Shapes;
@@ -152,6 +153,7 @@ public sealed class SceneEvaluator(IGeometryKernel kernel, MeshStore? meshes = n
     {
         var parts = new List<ScenePart>();
         foreach (var child in group.Children) parts.AddRange(Eval(child, c));
+        parts = ResolveThroughHoles(group, parts, c);
 
         var holes = parts.Where(p => p.Kind == PartKind.Hole).ToList();
         if (holes.Count > 0)
@@ -195,6 +197,78 @@ public sealed class SceneEvaluator(IGeometryKernel kernel, MeshStore? meshes = n
         }
 
         return Finish(group, parts);
+    }
+
+
+    // ---- holes that go through all (F-HOL-02) -------------------------------------------------------
+
+    /// <summary>
+    /// A hole with <c>through = 1</c> is as deep as it takes to leave the solids of its container on the far side: from its
+    /// origin along its axis to the farthest corner of the boxes of those solids, plus 1 mm. So the hole stays through when the body
+    /// is resized or moved. A hole that is not in a group or merge (it cuts nothing, it is only a ghost) keeps its stored depth.
+    /// </summary>
+    private List<ScenePart> ResolveThroughHoles(Node container, List<ScenePart> parts, Context c)
+    {
+        if (!parts.Any(p => p.Kind == PartKind.Hole && p.Source is PrimitiveNode { GeneratorId: "hole" })) return parts;
+
+        var corners = new List<Vector3>();
+        foreach (var solid in parts.Where(p => p.Kind == PartKind.Solid && !p.Mesh.IsEmpty))
+        {
+            var b = solid.Mesh.ComputeBounds();
+            foreach (var x in new[] { b.Min.X, b.Max.X })
+            foreach (var y in new[] { b.Min.Y, b.Max.Y })
+            foreach (var z in new[] { b.Min.Z, b.Max.Z }) corners.Add(new Vector3(x, y, z));
+        }
+
+        if (corners.Count == 0) return parts;
+
+        var result = new List<ScenePart>(parts.Count);
+        foreach (var part in parts)
+        {
+            result.Add(part.Kind == PartKind.Hole && part.Source is PrimitiveNode { GeneratorId: "hole" } hole
+                       && ThroughPart(container, part, hole, corners, c) is { } deeper
+                ? deeper
+                : part);
+        }
+
+        return result;
+    }
+
+    private ScenePart? ThroughPart(Node container, ScenePart part, PrimitiveNode hole, List<Vector3> corners, Context c)
+    {
+        var values = hole.EvaluateParameters(c.Variables, out var errors);
+        if (errors.Count > 0 || values.GetValueOrDefault("through") < 0.5) return null;
+
+        // hole space to the space of the container (the container's own transform is applied later, to all parts together)
+        var matrix = Matrix4x4.Identity;
+        for (Node? node = hole; node is not null && node != container; node = node.Parent) matrix *= node.Transform.ToMatrix();
+
+        var origin = Vector3.Transform(Vector3.Zero, matrix);
+        var axisVector = Vector3.TransformNormal(Vector3.UnitZ, matrix);
+        var scale = axisVector.Length();
+        if (scale < 1e-9f) return null;
+        var axis = axisVector / scale;
+
+        var reach = corners.Max(corner => Vector3.Dot(origin - corner, axis)) + 1f;
+        values["depth"] = Math.Clamp(Math.Max(reach, 0.1f) / scale, 0.01, 10000);
+
+        var generator = ShapeLibrary.Hole;
+        var key = PrimitiveKey(generator, values);
+        if (!_cache.TryGetValue(key, out var local))
+        {
+            try
+            {
+                local = generator.Generate(values);
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+
+            Store(key, local);
+        }
+
+        return part with { Mesh = local.Transformed(matrix) };
     }
 
     // ---- cutting holes out of a solid, incrementally while one hole is dragged (F-BOO-03, Q-03) ----------------
@@ -362,6 +436,7 @@ public sealed class SceneEvaluator(IGeometryKernel kernel, MeshStore? meshes = n
     {
         var parts = new List<ScenePart>();
         foreach (var child in node.Children) parts.AddRange(Eval(child, c));
+        parts = ResolveThroughHoles(node, parts, c);
         var solids = parts.Where(p => p.Kind == PartKind.Solid).Select(p => p.Mesh).ToList();
         var holes = parts.Where(p => p.Kind == PartKind.Hole).Select(p => p.Mesh).ToList();
 

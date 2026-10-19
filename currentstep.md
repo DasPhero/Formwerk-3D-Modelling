@@ -18,18 +18,8 @@
 
 ## Active step
 
-**Status:** in progress
-**Step name:** Hole caveats: through-all follows the body, snap to face center and grid (two commits)
-**Goal:** close the limits listed after the hole block: (1) the click snaps to the face center and the grid (F-HOL-01), (2) a "through all" hole stays through when the body is resized (F-HOL-02).
-**Requirement IDs:** F-HOL-01, F-HOL-02 (follow-ups).
-**Design (decided):**
-- Through all: new integer parameter `through` (0/1) of the hole. `SceneEvaluator` (group and merge) regenerates the cutter of such a hole with the depth that reaches from the hole origin to the farthest corner of the boxes of the solids of the same container along the axis, + 1 mm, so resizing/moving the body keeps it through. `depth` stays stored as the value at placement (used for a hole outside a group and when "through" is switched off). Tool and properties get a checkbox; the depth field only shows when through is off. Not covered: holes inside a boolean node (operands).
-- Snap (commit 1): `FaceFinder` in `Formwerk.Geometry` (coplanar, connected triangles around the clicked one; centroid, extent, `Contains`). `FacePick` gets `NoSnap` (Alt or Shift held, like the gizmo). `PlaceHole` snaps to the face center when the click is within a radius (15% of the face size, 1 to 8 mm) and "Snap to objects" is on; otherwise to the grid step on the two world axes in the face when the face is axis-aligned and "Snap to grid" is on, only if the snapped point still lies on the face. No hover preview.
-**Checklist:**
-- [x] 1. Snap: `FaceFinder` (Geometry), `FacePick.NoSnap`, `SnappedHolePoint`, hint; 18 new tests; real exe: the click snapped to the grid (X -4, Y -3 instead of -4.412, -2.614); docs; commit + push next
-- [ ] 2. Through all: tests first (evaluator: resize follows; properties checkbox; tool), generator param, evaluator, tool + properties + placement, build, real-exe check, docs, commit + push
-**Files touched so far:** Geometry `FaceFinder.cs`; Viewport `ViewportControl.FacePick.cs`; App `MainViewModel.Holes.cs`, `Strings.resx`; tests `FaceFinderTests`, `HoleSnapTests`, `HolePlacementTests` (one click uses NoSnap now); `Documentation.md`
-**Notes / decisions / problems:** the schematic picture (not the real body) is E-06 (section view) territory and stays; the missing Co-Authored-By line of 77f2867 stays (history is not rewritten).
+**Status:** none
+(Last finished: hole caveats, see "Done". Next candidates: variable table F-PAR-03, hole presets and tolerance F-HOL-03/04, patterns F-PAT.)
 
 <!-- Template for a new active step:
 
@@ -74,7 +64,7 @@ Done (fully): F-LIB-01 (all 12 shapes), F-GRP-02, F-GRP-04, F-CPY-01, F-ROT-04, 
 
 ## Current state of the project (snapshot)
 
-- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1516 tests green at last run, about 30 s, test projects run one at a time). Executable: `binary\Formwerk.exe`.
+- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1548 tests green at last run, about 30 s, test projects run one at a time). Executable: `binary\Formwerk.exe`.
 - Working application: add box/cylinder/sphere, typed editing of position/rotation/dimensions (numbers, expressions, `+10`, `150%`, variables), selection (viewport and list), hole/group/merge/boolean, duplicate/delete, undo history panel, STL export, **STL/OBJ import (File > Import, Ctrl+I, drag and drop onto the window, unit question for tiny/huge models, lands on the plate, saved in the project)**, 3D view with build plate and orbit camera, new/open/save/save as of `.fwp` projects, modified marker, unsaved-changes questions, autosave every 2 minutes, crash recovery, **move gizmo (arrows + plane handles), rotate gizmo (rings), scale gizmo (box with 6 face and 8 corner handles, Proportional switch, Ctrl = from center, shapes change their dimensions), tools Select/Move/Rotate/Scale (Q/W/E/R), grid and angle snapping and **snapping to other objects (edges and centers flush/centered, floor, bed center, pink guide frames, tolerance 10 px at any zoom, "Objects" switch)**, Alt/Shift suppress snapping, live readout at the cursor, Esc cancels, one undo step per drag, drop to floor (B)**.
 - Also working now (after the lines above were written): settings dialog (File > Settings, Ctrl+,), 3MF export and import, Open in Slicer, mesh check banner with one-click repair. Not done: repair of self-intersections and non-manifold edges, OBJ export, scaling several objects at once, snap point markers / circle centers / face-to-face gap / align tool, edge lines, DirectX renderer, more shapes, holes tool, patterns, templates, "Open in Slicer", `thumbnail.png` in the project file. (Settings dialog and persistent snap settings are done.)
 - Verified in the real exe with real input (UI automation + real mouse events): start, add shapes, title and `*` marker, menus, unsaved-changes dialog on close, crash recovery after a killed process, **mouse drag of the X arrow (0 to 22 mm, readout and highlight, one "Move Box" entry), mouse drag of the Z ring (30 degrees, readout, one "Rotate Box" entry), Esc during a drag (nothing changes, no history entry), mouse drag of the scale corner handle (41 x 41 x 41 mm, proportional) and of the +X face handle (20 to 22 mm, only the width changes, one "Scale Box" entry), mouse drag of a box towards another box (pink guide frame at the flush plane, ends exactly flush at X = -20, one "Move Box 2" entry)**. The user confirmed picking and the camera controls work.
@@ -83,6 +73,12 @@ Done (fully): F-LIB-01 (all 12 shapes), F-GRP-02, F-GRP-04, F-CPY-01, F-ROT-04, 
 - Tooling notes: .NET 10 SDK installed via winget; WPF project uses `LangVersion preview` for CommunityToolkit.Mvvm partial properties; UI automation, screenshot and real-mouse helper scripts live in the session scratchpad (not part of the repo); speed tests use best-of-N and the build script runs test projects sequentially.
 
 ## Done (newest first)
+
+### 2026-10-19 - Hole caveats: snap to face center and grid, through all follows the body (F-HOL-01, F-HOL-02)
+- Functional: the hole click snaps to the middle of the face (when near it) and otherwise to the grid on the two directions of the face; Alt or Shift while clicking switches the snap off. "Through all" is now a real property of the hole (checkbox in the tool and in the properties): the hole keeps going through the body when the body is resized or moved, and it cuts every solid of its group in the way; switching it off gives the stored depth back.
+- Technical: `FaceFinder`/`FaceInfo` (Geometry), `FacePick.NoSnap`, `MainViewModel.SnappedHolePoint`; hole parameter `through`, `SceneEvaluator.ResolveThroughHoles` (group and merge), `PropertiesViewModel.HoleThrough`. Two commits (2e72cb1 snap, then through). Tests: 1548 in total (Features 162, Geometry 56, App 597).
+- Real exe checks: the click snapped to the grid (X -4, Y -3 instead of -4.412, -2.614); the properties of a new hole show the "Through all" checkbox and no depth field.
+- Not done / caveats: no preview marker of the snap point before the click; the section picture stays schematic (the real section of the body is E-06, phase 2); holes inside a boolean node (operands) are not made through; the missing Co-Authored-By line of 77f2867 stays.
 
 ### 2026-10-19 - Holes: tool, four types, section picture (F-HOL-01, F-HOL-02, F-HOL-05; phase 2 block 1)
 - Functional: "Drill Hole" (toolbar, Edit menu): click a face, the hole stands perpendicular to it, also on a slanted face; type (cylindrical, conical, countersink, counterbore), diameter, head size/angle/depth, through or depth in a panel with a cross-section picture; the hole joins the group around the clicked part (or a new group) and cuts live; it stays an object that can be moved with the handles, changed in the properties (type choice, picture, only the fields of the type) and deleted.

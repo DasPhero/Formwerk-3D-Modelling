@@ -21,6 +21,7 @@ public class HoleToolTests
         Assert.Equal("0", parameters["type"]);
         Assert.Equal("3.4", parameters["diameter"]);
         Assert.Equal("25", parameters["depth"]);
+        Assert.Equal("1", parameters["through"]); // the evaluator keeps it through when the body changes
     }
 
     [Fact]
@@ -59,6 +60,7 @@ public class HoleToolTests
 
         tool.Through = false;
         Assert.Equal("7.5", tool.BuildParameters(30)["depth"]);
+        Assert.Equal("0", tool.BuildParameters(30)["through"]);
     }
 
     [Fact]
@@ -91,17 +93,17 @@ public class HoleToolTests
     public void The_parameters_hold_only_what_the_type_needs()
     {
         var tool = NewTool();
-        Assert.Equal(["depth", "diameter", "type"], tool.BuildParameters(10).Keys.Order().ToArray());
+        Assert.Equal(["depth", "diameter", "through", "type"], tool.BuildParameters(10).Keys.Order().ToArray());
 
         tool.Type = HoleType.Countersink;
-        Assert.Equal(["depth", "diameter", "sinkAngle", "sinkDiameter", "type"], tool.BuildParameters(10).Keys.Order().ToArray());
+        Assert.Equal(["depth", "diameter", "sinkAngle", "sinkDiameter", "through", "type"], tool.BuildParameters(10).Keys.Order().ToArray());
         Assert.Equal("2", tool.BuildParameters(10)["type"]);
 
         tool.Type = HoleType.Counterbore;
-        Assert.Equal(["depth", "diameter", "sinkDepth", "sinkDiameter", "type"], tool.BuildParameters(10).Keys.Order().ToArray());
+        Assert.Equal(["depth", "diameter", "sinkDepth", "sinkDiameter", "through", "type"], tool.BuildParameters(10).Keys.Order().ToArray());
 
         tool.Type = HoleType.Conical;
-        Assert.Equal(["depth", "diameter", "endDiameter", "type"], tool.BuildParameters(10).Keys.Order().ToArray());
+        Assert.Equal(["depth", "diameter", "endDiameter", "through", "type"], tool.BuildParameters(10).Keys.Order().ToArray());
     }
 
     [Fact]

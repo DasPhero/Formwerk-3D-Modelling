@@ -245,7 +245,7 @@ Try a different location or file name.</value></data>
   <data name="Hole.Type.Countersink" xml:space="preserve"><value>Countersink</value></data>
   <data name="Hole.Type.Counterbore" xml:space="preserve"><value>Counterbore</value></data>
   <data name="Hole.Through" xml:space="preserve"><value>Through all</value></data>
-  <data name="Hole.Through.Tip" xml:space="preserve"><value>The hole goes all the way through the body (its depth is worked out when you click). Switch off to type a depth.</value></data>
+  <data name="Hole.Through.Tip" xml:space="preserve"><value>The hole goes all the way through the body and stays through when the body is resized or moved. Switch off to type a depth.</value></data>
   <data name="Hole.Err.Range" xml:space="preserve"><value>{0} must be between {1} and {2}.</value></data>
   <data name="Msg.FaceAlready" xml:space="preserve"><value>That face already lies on the floor.</value></data>
   <data name="Msg.FaceLocked" xml:space="preserve"><value>{0} is locked and cannot be turned.</value></data>

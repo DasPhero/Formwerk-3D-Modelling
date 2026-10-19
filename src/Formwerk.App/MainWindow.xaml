@@ -123,6 +123,8 @@
                         <ComboBox ItemsSource="{Binding HoleTypes}" DisplayMemberPath="Label" SelectedValuePath="Type" SelectedValue="{Binding HoleType}"
                                   Margin="0,0,0,6" AutomationProperties.AutomationId="PropertiesHoleType" />
                         <ContentControl Content="{Binding Section}" Margin="0,0,0,6" />
+                        <CheckBox Content="{res:Loc Hole.Through}" ToolTip="{res:Loc Hole.Through.Tip}" IsChecked="{Binding HoleThrough}" Margin="0,2,0,4"
+                                  AutomationProperties.AutomationId="PropertiesHoleThrough" />
                     </StackPanel>
                     <ItemsControl ItemsSource="{Binding Parameters}" />
                 </StackPanel>

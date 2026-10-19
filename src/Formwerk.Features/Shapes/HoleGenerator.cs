@@ -41,6 +41,7 @@ public sealed class HoleGenerator : ShapeGenerator
         new("diameter", "Diameter", 3.4, 0.01, 1000, IsDetail: true),
         new("endDiameter", "End diameter", 1.7, 0, 1000, IsDetail: true),
         new("depth", "Depth", 10, 0.01, 10000, IsDetail: true),
+        new("through", "Through all", 0, 0, 1, IsInteger: true), // 1: the evaluator makes the hole as deep as the body needs (F-HOL-02)
         new("sinkDiameter", "Head diameter", 6.4, 0.01, 1000, IsDetail: true),
         new("sinkAngle", "Head angle", 90, 10, 170, IsDetail: true, Unit: "°"),
         new("sinkDepth", "Head depth", 3, 0.01, 1000, IsDetail: true),
