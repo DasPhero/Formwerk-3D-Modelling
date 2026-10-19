@@ -351,6 +351,63 @@ public sealed class TemplateFlowTests : IDisposable
         Assert.Equal(before, vm.Document.Root.Children.Count);
     }
 
+    // ---- the list follows the folder ------------------------------------------------------------------
+
+    [UiFact]
+    public async Task A_template_that_appears_while_the_program_runs_is_listed_after_a_refresh()
+    {
+        var (vm, _, _) = NewViewModel();
+        Assert.Empty(vm.Templates);
+        var (other, _, _) = NewViewModel(Named("From elsewhere")); // another program or another copy of this one
+        await Add(other, "box");
+        other.SaveTemplateCommand.Execute(null);
+
+        vm.RefreshTemplatesCommand.Execute(null);
+
+        Assert.Equal(["From elsewhere"], vm.Templates.Select(t => t.Name));
+    }
+
+    [UiFact]
+    public async Task A_template_that_was_deleted_from_the_folder_disappears_from_the_list_after_a_refresh()
+    {
+        var (vm, _, _) = NewViewModel(Named("Gone soon"));
+        await Add(vm, "box");
+        vm.SaveTemplateCommand.Execute(null);
+        File.Delete(vm.Templates.Single().Path);
+
+        vm.RefreshTemplatesCommand.Execute(null);
+
+        Assert.Empty(vm.Templates);
+    }
+
+    [UiFact]
+    public async Task A_refresh_without_a_change_leaves_the_list_alone()
+    {
+        var (vm, _, _) = NewViewModel(Named("Stays"));
+        await Add(vm, "box");
+        vm.SaveTemplateCommand.Execute(null);
+        var item = vm.Templates.Single();
+        var changes = 0;
+        vm.Templates.CollectionChanged += (_, _) => changes++;
+
+        vm.RefreshTemplatesCommand.Execute(null);
+        vm.RefreshTemplatesCommand.Execute(null);
+
+        Assert.Same(item, vm.Templates.Single());
+        Assert.Equal(0, changes); // no flicker whenever the window is activated
+    }
+
+    [UiFact]
+    public async Task A_refresh_without_a_template_folder_does_nothing()
+    {
+        var vm = new MainViewModel(new ManifoldKernel(), new FakeDialogs());
+        await Add(vm, "box");
+
+        vm.RefreshTemplatesCommand.Execute(null);
+
+        Assert.Empty(vm.Templates);
+    }
+
     [UiFact]
     public async Task Without_a_template_folder_the_commands_are_not_available()
     {

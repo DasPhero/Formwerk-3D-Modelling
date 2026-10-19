@@ -45,12 +45,21 @@ public sealed partial class MainViewModel
     /// <summary>The saved templates, as shown under "My Templates".</summary>
     public ObservableCollection<TemplateItemViewModel> Templates { get; } = [];
 
-    private void RefreshTemplates()
+    private void LoadTemplateList()
     {
-        Templates.Clear();
         if (_templateStore is null) return;
-        foreach (var entry in _templateStore.List()) Templates.Add(new TemplateItemViewModel(entry));
+        var entries = _templateStore.List();
+
+        // unchanged: leave the list alone (it is refreshed whenever the window is activated, that must not flicker)
+        if (entries.Select(e => (e.Path, e.Info.Name, e.Info.Category)).SequenceEqual(Templates.Select(t => (t.Path, t.Name, t.Category)))) return;
+
+        Templates.Clear();
+        foreach (var entry in entries) Templates.Add(new TemplateItemViewModel(entry));
     }
+
+    /// <summary>Reads the template folder again: files that came or went while the program ran (called when the window is activated).</summary>
+    [RelayCommand]
+    private void RefreshTemplates() => LoadTemplateList();
 
     private bool CanSaveTemplate() => _templateStore is not null && HasSelection();
 
@@ -123,7 +132,7 @@ public sealed partial class MainViewModel
             return;
         }
 
-        RefreshTemplates();
+        LoadTemplateList();
         SetNotice(Texts.Format("Msg.TemplateSaved", info.Name));
     }
 

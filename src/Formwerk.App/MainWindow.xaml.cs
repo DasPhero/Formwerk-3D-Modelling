@@ -52,6 +52,12 @@ public partial class MainWindow : Window
         if (e.Data.GetData(DataFormats.FileDrop) is string[] files && DataContext is MainViewModel vm) await vm.ImportFilesAsync(files);
     }
 
+    /// <summary>The template folder may have changed while another program was in front.</summary>
+    private void OnActivated(object? sender, EventArgs e)
+    {
+        if (DataContext is MainViewModel vm) vm.RefreshTemplatesCommand.Execute(null);
+    }
+
     /// <summary>Esc leaves an open group (F-BOO-04) unless something else in the view already used the key.</summary>
     private void OnKeyDown(object sender, KeyEventArgs e)
     {

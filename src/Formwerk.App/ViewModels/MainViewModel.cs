@@ -73,7 +73,7 @@ public sealed partial class MainViewModel : ObservableObject
         };
         _history.Executed += (_, command) => ExpectFloorCheck(command);
         RebuildHistory();
-        RefreshTemplates();
+        LoadTemplateList();
         _ = RequestEvaluation();
     }
 

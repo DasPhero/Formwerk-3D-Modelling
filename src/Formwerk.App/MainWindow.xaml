@@ -11,7 +11,7 @@
         d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
-        PreviewKeyDown="OnPreviewKeyDown" KeyDown="OnKeyDown" DragOver="OnDragOver" Drop="OnDrop">
+        PreviewKeyDown="OnPreviewKeyDown" KeyDown="OnKeyDown" Activated="OnActivated" DragOver="OnDragOver" Drop="OnDrop">
 
     <Window.InputBindings>
         <KeyBinding Key="N" Modifiers="Ctrl" Command="{Binding NewCommand}" />
