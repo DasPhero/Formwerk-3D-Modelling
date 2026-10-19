@@ -15,6 +15,14 @@ namespace Formwerk.Viewport;
 public sealed partial class ViewportControl
 {
     private const double HoverPixelTolerance = 12;
+
+    /// <summary>
+    /// Above this many triangles in the scene the hover markers are off: every mouse move would hit test all of them (WPF takes about 40 ms
+    /// for a million triangles, measured by the speed tests), which would make the mouse feel sticky. Clicks and drags are not affected.
+    /// </summary>
+    public const int HoverMarkerTriangleLimit = 300_000;
+
+    public static bool HoverMarkersAllowed(int sceneTriangles) => sceneTriangles <= HoverMarkerTriangleLimit;
     private static readonly Color HoverMarkerColor = Color.FromRgb(0xD8, 0xDE, 0xE9);
     private static readonly Color SnapMarkerColor = Color.FromRgb(0xFF, 0xD1, 0x4C);
 
@@ -40,7 +48,7 @@ public sealed partial class ViewportControl
     /// <summary>The snap points of the object under the mouse. Throttled: a hit test per mouse move would be too much for big meshes.</summary>
     private void UpdateSnapHover(Point position)
     {
-        if (ActiveTool != ViewportTool.Move || FacePickMode || _gizmoDragging)
+        if (ActiveTool != ViewportTool.Move || FacePickMode || _gizmoDragging || !HoverMarkersAllowed(SceneTriangleCount()))
         {
             ClearSnapHover();
             return;
@@ -79,6 +87,23 @@ public sealed partial class ViewportControl
         if (nearest == _hoverNearest && _markerVisual.Content is not null) return;
         _hoverNearest = nearest;
         UpdateGizmoTransform();
+    }
+
+    private int _sceneTrianglesFor = -1;
+    private int _sceneTriangles;
+
+    /// <summary>The number of triangles shown, counted again only when the items changed.</summary>
+    private int SceneTriangleCount()
+    {
+        var items = Items;
+        if (items is null) return 0;
+        if (_sceneTrianglesFor != System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(items))
+        {
+            _sceneTriangles = items.Sum(i => i.Mesh.TriangleCount);
+            _sceneTrianglesFor = System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode(items);
+        }
+
+        return _sceneTriangles;
     }
 
     private void ClearSnapHover()

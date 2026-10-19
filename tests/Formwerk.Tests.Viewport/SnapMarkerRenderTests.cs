@@ -79,6 +79,18 @@ public class SnapMarkerRenderTests
         Assert.Equal(0, YellowPixelsAround(pixels, x, y));
     }
 
+    // Hovering an object does a hit test per mouse move (about 40 ms for a million triangles): big scenes get no hover markers.
+    [Theory]
+    [InlineData(0, true)]
+    [InlineData(5_000, true)]
+    [InlineData(ViewportControl.HoverMarkerTriangleLimit, true)]
+    [InlineData(ViewportControl.HoverMarkerTriangleLimit + 1, false)]
+    [InlineData(1_000_000, false)]
+    public void Hover_markers_are_only_shown_for_scenes_that_can_be_tested_quickly(int triangles, bool allowed)
+    {
+        Assert.Equal(allowed, ViewportControl.HoverMarkersAllowed(triangles));
+    }
+
     [Fact]
     public void The_marker_is_not_drawn_far_from_its_point()
     {

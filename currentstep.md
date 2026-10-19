@@ -64,7 +64,7 @@ Done (fully): F-LIB-01 (all 12 shapes), F-GRP-02, F-GRP-04, F-CPY-01, F-ROT-04, 
 
 ## Current state of the project (snapshot)
 
-- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1436 tests green at last run, about 30 s, test projects run one at a time). Executable: `artifacts\publish\Formwerk.exe`.
+- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1446 tests green at last run, about 30 s, test projects run one at a time). Executable: `artifacts\publish\Formwerk.exe`.
 - Working application: add box/cylinder/sphere, typed editing of position/rotation/dimensions (numbers, expressions, `+10`, `150%`, variables), selection (viewport and list), hole/group/merge/boolean, duplicate/delete, undo history panel, STL export, **STL/OBJ import (File > Import, Ctrl+I, drag and drop onto the window, unit question for tiny/huge models, lands on the plate, saved in the project)**, 3D view with build plate and orbit camera, new/open/save/save as of `.fwp` projects, modified marker, unsaved-changes questions, autosave every 2 minutes, crash recovery, **move gizmo (arrows + plane handles), rotate gizmo (rings), scale gizmo (box with 6 face and 8 corner handles, Proportional switch, Ctrl = from center, shapes change their dimensions), tools Select/Move/Rotate/Scale (Q/W/E/R), grid and angle snapping and **snapping to other objects (edges and centers flush/centered, floor, bed center, pink guide frames, tolerance 10 px at any zoom, "Objects" switch)**, Alt/Shift suppress snapping, live readout at the cursor, Esc cancels, one undo step per drag, drop to floor (B)**.
 - Also working now (after the lines above were written): settings dialog (File > Settings, Ctrl+,), 3MF export and import, Open in Slicer, mesh check banner with one-click repair. Not done: repair of self-intersections and non-manifold edges, OBJ export, scaling several objects at once, snap point markers / circle centers / face-to-face gap / align tool, edge lines, DirectX renderer, more shapes, holes tool, patterns, templates, "Open in Slicer", `thumbnail.png` in the project file. (Settings dialog and persistent snap settings are done.)
 - Verified in the real exe with real input (UI automation + real mouse events): start, add shapes, title and `*` marker, menus, unsaved-changes dialog on close, crash recovery after a killed process, **mouse drag of the X arrow (0 to 22 mm, readout and highlight, one "Move Box" entry), mouse drag of the Z ring (30 degrees, readout, one "Rotate Box" entry), Esc during a drag (nothing changes, no history entry), mouse drag of the scale corner handle (41 x 41 x 41 mm, proportional) and of the +X face handle (20 to 22 mm, only the width changes, one "Scale Box" entry), mouse drag of a box towards another box (pink guide frame at the flush plane, ends exactly flush at X = -20, one "Move Box 2" entry)**. The user confirmed picking and the camera controls work.
@@ -73,6 +73,16 @@ Done (fully): F-LIB-01 (all 12 shapes), F-GRP-02, F-GRP-04, F-CPY-01, F-ROT-04, 
 - Tooling notes: .NET 10 SDK installed via winget; WPF project uses `LangVersion preview` for CommunityToolkit.Mvvm partial properties; UI automation, screenshot and real-mouse helper scripts live in the session scratchpad (not part of the repo); speed tests use best-of-N and the build script runs test projects sequentially.
 
 ## Done (newest first)
+
+### 2026-10-19 - Pick speed on huge meshes measured; hover markers limited (N-PRF)
+- Measured: a hit test (a click, a hover) over a mesh with 1,044,480 triangles takes 38 to 47 ms in WPF; fine for clicks. Hover markers test on every mouse move, so they are off above 300,000 triangles in the scene (`ViewportControl.HoverMarkersAllowed`).
+- Tests: Viewport 216 (6 new: the speed test and the limit); total 1446.
+- Not done / caveats: the measurement is on this machine only; other GPUs and drivers unmeasured.
+
+### 2026-10-19 - Template list follows the folder (F-TPL-02)
+- App: `RefreshTemplatesCommand`, called when the main window is activated; an unchanged folder leaves the list alone.
+- Tests: App 535 (4 new). Not checked in the real program (a one-line hook to the command; the command is tested).
+- Decided: project variables in templates are not merged on insert: there is no UI to create variables yet (F-PAR-03, phase 2).
 
 ### 2026-10-19 - Themed questions and messages (F-VIS-07: no white windows)
 - App: `MessageViewModel`, `Views/MessageWindow`, `DialogService` uses it for the unsaved-changes question, the recovery question and errors; six button texts in the resources. No `MessageBox` is left in the code.
