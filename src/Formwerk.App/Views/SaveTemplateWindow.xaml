@@ -1,0 +1,53 @@
+<Window x:Class="Formwerk.App.Views.SaveTemplateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:res="clr-namespace:Formwerk.App.Resources"
+        Title="{res:Loc Dlg.SaveTemplateTitle}" SizeToContent="Height" Width="460"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False"
+        Background="{DynamicResource WindowBrush}" Foreground="{DynamicResource TextBrush}">
+    <StackPanel Margin="20">
+        <TextBlock Text="{res:Loc Tpl.Name}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,4" />
+        <TextBox x:Name="NameBox" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.AutomationId="TemplateName" />
+
+        <TextBlock Text="{Binding Error}" Foreground="{DynamicResource ErrorBrush}" TextWrapping="Wrap" Margin="0,6,0,0">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Error}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+        <Button Command="{Binding UseSuggestionCommand}" HorizontalAlignment="Left" Margin="0,6,0,0" AutomationProperties.AutomationId="TemplateUseSuggestion">
+            <Button.Content>
+                <TextBlock Text="{Binding Suggestion, StringFormat='Use &quot;{0}&quot;'}" />
+            </Button.Content>
+            <Button.Style>
+                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Suggestion}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Button.Style>
+        </Button>
+
+        <TextBlock Text="{res:Loc Tpl.Category}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,12,0,4" />
+        <ComboBox IsEditable="True" ItemsSource="{Binding Categories}" Text="{Binding Category, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.AutomationId="TemplateCategory" />
+
+        <TextBlock Text="{res:Loc Tpl.Description}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,12,0,4" />
+        <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="64" MaxHeight="120"
+                 VerticalScrollBarVisibility="Auto" AutomationProperties.AutomationId="TemplateDescription" />
+
+        <TextBlock Text="{res:Loc Tpl.Tags}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,12,0,4" />
+        <TextBox Text="{Binding TagsText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.AutomationId="TemplateTags" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="{res:Loc Tpl.Save}" IsDefault="True" MinWidth="90" Margin="0,0,8,0" Click="OnOk" IsEnabled="{Binding IsValid}" AutomationProperties.AutomationId="TemplateSave" />
+            <Button Content="{res:Loc Tpl.Cancel}" IsCancel="True" MinWidth="90" AutomationProperties.AutomationId="TemplateCancel" />
+        </StackPanel>
+    </StackPanel>
+</Window>

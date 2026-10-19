@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <!-- English UI only: no folders with the Windows runtime texts of other languages in the published program -->
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>Formwerk</AssemblyName>
+    <RootNamespace>Formwerk.App</RootNamespace>
+    <!-- CommunityToolkit.Mvvm generates partial properties only with the preview language version. -->
+    <LangVersion>preview</LangVersion>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <!-- Fluent theme (ThemeMode) is still marked experimental in WPF. -->
+    <NoWarn>$(NoWarn);WPF0001</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Formwerk.Core\Formwerk.Core.csproj" />
+    <ProjectReference Include="..\Formwerk.Geometry\Formwerk.Geometry.csproj" />
+    <ProjectReference Include="..\Formwerk.Features\Formwerk.Features.csproj" />
+    <ProjectReference Include="..\Formwerk.Repair\Formwerk.Repair.csproj" />
+    <ProjectReference Include="..\Formwerk.IO\Formwerk.IO.csproj" />
+    <ProjectReference Include="..\Formwerk.Library\Formwerk.Library.csproj" />
+    <ProjectReference Include="..\Formwerk.Viewport\Formwerk.Viewport.csproj" />
+    <ProjectReference Include="..\Formwerk.Kernel\Formwerk.Kernel.csproj" />
+  </ItemGroup>
+
+</Project>

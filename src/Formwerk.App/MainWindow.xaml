@@ -1,0 +1,393 @@
+﻿<Window x:Class="Formwerk.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:res="clr-namespace:Formwerk.App.Resources"
+        xmlns:vm="clr-namespace:Formwerk.App.ViewModels"
+        xmlns:views="clr-namespace:Formwerk.App.Views"
+        xmlns:vp="clr-namespace:Formwerk.Viewport;assembly=Formwerk.Viewport"
+        xmlns:core="clr-namespace:Formwerk.Core.Model;assembly=Formwerk.Core"
+        Title="{Binding WindowTitle}" AllowDrop="True" Width="1440" Height="880" MinWidth="900" MinHeight="560"
+        Background="{DynamicResource WindowBrush}" Foreground="{DynamicResource TextBrush}"
+        d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
+        PreviewKeyDown="OnPreviewKeyDown" KeyDown="OnKeyDown" DragOver="OnDragOver" Drop="OnDrop">
+
+    <Window.InputBindings>
+        <KeyBinding Key="N" Modifiers="Ctrl" Command="{Binding NewCommand}" />
+        <KeyBinding Key="I" Modifiers="Ctrl" Command="{Binding ImportCommand}" />
+        <KeyBinding Key="O" Modifiers="Ctrl" Command="{Binding OpenCommand}" />
+        <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveProjectCommand}" />
+        <KeyBinding Key="S" Modifiers="Ctrl+Shift" Command="{Binding SaveProjectAsCommand}" />
+        <KeyBinding Key="Z" Modifiers="Ctrl" Command="{Binding UndoCommand}" />
+        <KeyBinding Key="Y" Modifiers="Ctrl" Command="{Binding RedoCommand}" />
+        <KeyBinding Key="Z" Modifiers="Ctrl+Shift" Command="{Binding RedoCommand}" />
+        <KeyBinding Key="D" Modifiers="Ctrl" Command="{Binding DuplicateCommand}" />
+        <KeyBinding Key="C" Modifiers="Ctrl" Command="{Binding CopyCommand}" />
+        <KeyBinding Key="V" Modifiers="Ctrl" Command="{Binding PasteCommand}" />
+        <KeyBinding Key="G" Modifiers="Ctrl" Command="{Binding GroupCommand}" />
+        <KeyBinding Key="G" Modifiers="Ctrl+Shift" Command="{Binding UngroupCommand}" />
+        <KeyBinding Key="M" Modifiers="Ctrl" Command="{Binding MergeCommand}" />
+        <KeyBinding Key="E" Modifiers="Ctrl" Command="{Binding ExportStlCommand}" />
+        <KeyBinding Key="E" Modifiers="Ctrl+Shift" Command="{Binding Export3mfCommand}" />
+        <KeyBinding Key="OemComma" Modifiers="Ctrl" Command="{Binding OpenSettingsCommand}" />
+    </Window.InputBindings>
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+
+        <Style x:Key="PanelHeader" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+        </Style>
+
+        <Style x:Key="Panel" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource PanelBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10" />
+        </Style>
+
+        <!-- Numeric field: label, text box, unit. Red border when the input is invalid. -->
+        <DataTemplate DataType="{x:Type vm:FieldViewModel}">
+            <Grid Margin="0,2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="86" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="30" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="{Binding Label}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                <TextBox Grid.Column="1" Text="{Binding Text, UpdateSourceTrigger=LostFocus}"
+                         views:TextBoxBehavior.CommitOnEnter="True" ToolTip="{Binding Error}">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasError}" Value="True">
+                                    <Setter Property="BorderBrush" Value="{DynamicResource ErrorBrush}" />
+                                    <Setter Property="BorderThickness" Value="1.5" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
+                <TextBlock Grid.Column="2" Text="{Binding Unit}" Margin="6,0,0,0" VerticalAlignment="Center"
+                           Foreground="{DynamicResource MutedTextBrush}" />
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:NodeItemViewModel}">
+            <StackPanel Orientation="Horizontal">
+                <Border Width="{Binding Indent}" />
+                <CheckBox IsChecked="{Binding Visible}" ToolTip="{res:Loc Tip.Visible}" MinWidth="0" Padding="0" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding Glyph}" Margin="4,0,6,0" VerticalAlignment="Center" Foreground="{DynamicResource MutedTextBrush}" />
+                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" />
+                <TextBlock Text=" ◌" ToolTip="{res:Loc Tip.Hole}" Foreground="#FF8A5C" VerticalAlignment="Center"
+                           Visibility="{Binding IsHole, Converter={StaticResource BoolToVisibility}}" />
+                <TextBlock Text=" ⚠" ToolTip="{Binding ErrorText}" Foreground="{DynamicResource ErrorBrush}" VerticalAlignment="Center"
+                           Visibility="{Binding HasError, Converter={StaticResource BoolToVisibility}}" />
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate DataType="{x:Type vm:PropertiesViewModel}">
+            <StackPanel>
+                <ContentControl Content="{Binding NameField}" />
+                <CheckBox Content="{res:Loc Props.Hole}" IsChecked="{Binding IsHole}" Margin="0,8,0,0" />
+
+                <StackPanel Visibility="{Binding IsBoolean, Converter={StaticResource BoolToVisibility}}" Margin="0,8,0,0">
+                    <TextBlock Text="{res:Loc Props.Operation}" Style="{StaticResource PanelHeader}" />
+                    <ComboBox ItemsSource="{Binding Operations}" SelectedItem="{Binding Operation}" />
+                </StackPanel>
+
+                <TextBlock Text="{res:Loc Props.Position}" Style="{StaticResource PanelHeader}" Margin="0,14,0,6" />
+                <ItemsControl ItemsSource="{Binding Position}" />
+
+                <TextBlock Text="{res:Loc Props.Rotation}" Style="{StaticResource PanelHeader}" Margin="0,14,0,6" />
+                <ItemsControl ItemsSource="{Binding Rotation}" />
+
+                <StackPanel Visibility="{Binding HasParameters, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Text="{res:Loc Props.Parameters}" Style="{StaticResource PanelHeader}" Margin="0,14,0,6" />
+                    <ItemsControl ItemsSource="{Binding Parameters}" />
+                </StackPanel>
+
+                <TextBlock Text="{res:Loc Props.Size}" Style="{StaticResource PanelHeader}" Margin="0,14,0,2" />
+                <TextBlock Text="{Binding SizeText}" />
+
+                <TextBlock Text="{res:Loc Props.InputHint}" TextWrapping="Wrap" Margin="0,16,0,0"
+                           Foreground="{DynamicResource MutedTextBrush}" FontSize="11" />
+            </StackPanel>
+        </DataTemplate>
+    </Window.Resources>
+
+    <DockPanel>
+        <Menu DockPanel.Dock="Top">
+            <MenuItem Header="{res:Loc Menu.File}">
+                <MenuItem Header="{res:Loc Menu.File.New}" Command="{Binding NewCommand}" InputGestureText="Ctrl+N" />
+                <MenuItem Header="{res:Loc Menu.File.Open}" Command="{Binding OpenCommand}" InputGestureText="Ctrl+O" />
+                <MenuItem Header="{res:Loc Menu.File.Save}" Command="{Binding SaveProjectCommand}" InputGestureText="Ctrl+S" />
+                <MenuItem Header="{res:Loc Menu.File.SaveAs}" Command="{Binding SaveProjectAsCommand}" InputGestureText="Ctrl+Shift+S" />
+                <Separator />
+                <MenuItem Header="{res:Loc Menu.File.Import}" Command="{Binding ImportCommand}" InputGestureText="Ctrl+I" />
+                <MenuItem Header="{res:Loc Menu.File.ExportStl}" Command="{Binding ExportStlCommand}" InputGestureText="Ctrl+E" />
+                <MenuItem Header="{res:Loc Menu.File.Export3mf}" Command="{Binding Export3mfCommand}" InputGestureText="Ctrl+Shift+E" />
+                <MenuItem Header="{res:Loc Menu.File.ExportObj}" Command="{Binding ExportObjCommand}" />
+                <MenuItem Header="{res:Loc Menu.File.OpenInSlicer}" Command="{Binding OpenInSlicerCommand}" />
+                <Separator />
+                <MenuItem Header="{res:Loc Menu.File.Settings}" Command="{Binding OpenSettingsCommand}" InputGestureText="Ctrl+," />
+                <Separator />
+                <MenuItem Header="{res:Loc Menu.File.Exit}" Click="OnExit" />
+            </MenuItem>
+            <MenuItem Header="{res:Loc Menu.Edit}">
+                <MenuItem Header="{res:Loc Menu.Edit.Undo}" Command="{Binding UndoCommand}" InputGestureText="Ctrl+Z" />
+                <MenuItem Header="{res:Loc Menu.Edit.Redo}" Command="{Binding RedoCommand}" InputGestureText="Ctrl+Y" />
+                <Separator />
+                <MenuItem Header="{res:Loc Menu.Edit.Copy}" Command="{Binding CopyCommand}" InputGestureText="Ctrl+C" />
+                <MenuItem Header="{res:Loc Menu.Edit.Paste}" Command="{Binding PasteCommand}" InputGestureText="Ctrl+V" />
+                <MenuItem Header="{res:Loc Menu.Edit.Duplicate}" Command="{Binding DuplicateCommand}" InputGestureText="Ctrl+D" />
+                <MenuItem Header="{res:Loc Menu.Edit.Delete}" Command="{Binding DeleteCommand}" InputGestureText="Del" />
+                <Separator />
+                <MenuItem Header="{res:Loc Menu.Edit.Group}" Command="{Binding GroupCommand}" InputGestureText="Ctrl+G" />
+                <MenuItem Header="{res:Loc Menu.Edit.Ungroup}" Command="{Binding UngroupCommand}" InputGestureText="Ctrl+Shift+G" />
+                <MenuItem Header="{res:Loc Menu.Edit.Merge}" Command="{Binding MergeCommand}" InputGestureText="Ctrl+M" />
+                <MenuItem Header="{res:Loc Menu.Edit.Flatten}" Command="{Binding FlattenCommand}" />
+                <MenuItem Header="{res:Loc Menu.Edit.DropToFloor}" Command="{Binding DropToFloorCommand}" InputGestureText="B" />
+                <MenuItem Header="{res:Loc Menu.Edit.FaceOnFloor}" Command="{Binding FaceOnFloorCommand}" />
+                <MenuItem Header="{res:Loc Menu.Edit.Rotate90}">
+                    <MenuItem Header="{res:Loc Rot.XPlus}" Command="{Binding Rotate90Command}" CommandParameter="X" />
+                    <MenuItem Header="{res:Loc Rot.XMinus}" Command="{Binding Rotate90Command}" CommandParameter="-X" />
+                    <MenuItem Header="{res:Loc Rot.YPlus}" Command="{Binding Rotate90Command}" CommandParameter="Y" />
+                    <MenuItem Header="{res:Loc Rot.YMinus}" Command="{Binding Rotate90Command}" CommandParameter="-Y" />
+                    <MenuItem Header="{res:Loc Rot.ZPlus}" Command="{Binding Rotate90Command}" CommandParameter="Z" />
+                    <MenuItem Header="{res:Loc Rot.ZMinus}" Command="{Binding Rotate90Command}" CommandParameter="-Z" />
+                </MenuItem>
+                <MenuItem Header="{res:Loc Menu.Edit.ToggleHole}" Command="{Binding ToggleHoleCommand}" InputGestureText="H" />
+                <MenuItem Header="{res:Loc Menu.Edit.Boolean}">
+                    <MenuItem Header="{res:Loc Menu.Edit.Union}" Command="{Binding BooleanCommand}"
+                              CommandParameter="{x:Static core:BooleanOperation.Union}" />
+                    <MenuItem Header="{res:Loc Menu.Edit.Difference}" Command="{Binding BooleanCommand}"
+                              CommandParameter="{x:Static core:BooleanOperation.Difference}" />
+                    <MenuItem Header="{res:Loc Menu.Edit.Intersection}" Command="{Binding BooleanCommand}"
+                              CommandParameter="{x:Static core:BooleanOperation.Intersection}" />
+                </MenuItem>
+                <Separator />
+                <MenuItem Header="{res:Loc Menu.Edit.SaveTemplate}" Command="{Binding SaveTemplateCommand}" />
+            </MenuItem>
+            <MenuItem Header="{res:Loc Menu.View}">
+                <MenuItem Header="{res:Loc Menu.View.Frame}" Command="{Binding FrameSelectionCommand}" InputGestureText="F" />
+                <Separator />
+                <MenuItem Header="{res:Loc Menu.View.Front}" Command="{Binding SetViewCommand}" CommandParameter="{x:Static vp:ViewPreset.Front}" InputGestureText="1" />
+                <MenuItem Header="{res:Loc Menu.View.Back}" Command="{Binding SetViewCommand}" CommandParameter="{x:Static vp:ViewPreset.Back}" InputGestureText="2" />
+                <MenuItem Header="{res:Loc Menu.View.Left}" Command="{Binding SetViewCommand}" CommandParameter="{x:Static vp:ViewPreset.Left}" InputGestureText="3" />
+                <MenuItem Header="{res:Loc Menu.View.Right}" Command="{Binding SetViewCommand}" CommandParameter="{x:Static vp:ViewPreset.Right}" InputGestureText="4" />
+                <MenuItem Header="{res:Loc Menu.View.Top}" Command="{Binding SetViewCommand}" CommandParameter="{x:Static vp:ViewPreset.Top}" InputGestureText="5" />
+                <MenuItem Header="{res:Loc Menu.View.Bottom}" Command="{Binding SetViewCommand}" CommandParameter="{x:Static vp:ViewPreset.Bottom}" InputGestureText="6" />
+                <MenuItem Header="{res:Loc Menu.View.Isometric}" Command="{Binding SetViewCommand}" CommandParameter="{x:Static vp:ViewPreset.Isometric}" InputGestureText="7" />
+                <Separator />
+                <MenuItem Header="{res:Loc Menu.View.Orthographic}" IsCheckable="True" IsChecked="{Binding IsOrthographic, Mode=TwoWay}" InputGestureText="P" />
+                <MenuItem Header="{res:Loc Menu.View.ShowHoles}" IsCheckable="True" IsChecked="{Binding ShowHoles, Mode=TwoWay}" />
+                <MenuItem Header="{res:Loc Menu.View.LightTheme}" IsCheckable="True" IsChecked="{Binding LightTheme, Mode=TwoWay}" />
+                <MenuItem Header="{res:Loc Menu.View.Display}" InputGestureText="Z">
+                    <MenuItem Header="{res:Loc Display.Shaded}" IsCheckable="True" IsChecked="{Binding IsShadedMode, Mode=TwoWay}" />
+                    <MenuItem Header="{res:Loc Display.ShadedEdges}" IsCheckable="True" IsChecked="{Binding IsShadedWithEdgesMode, Mode=TwoWay}" />
+                    <MenuItem Header="{res:Loc Display.Wireframe}" IsCheckable="True" IsChecked="{Binding IsWireframeMode, Mode=TwoWay}" />
+                    <MenuItem Header="{res:Loc Display.XRay}" IsCheckable="True" IsChecked="{Binding IsXRayMode, Mode=TwoWay}" />
+                </MenuItem>
+            </MenuItem>
+        </Menu>
+
+        <!-- Tool bar: select / move / rotate and drop to floor -->
+        <Border DockPanel.Dock="Top" Background="{DynamicResource PanelBrush}" BorderBrush="{DynamicResource PanelBorderBrush}"
+                BorderThickness="0,0,0,1" Padding="8,4">
+            <StackPanel Orientation="Horizontal">
+                <ToggleButton Content="{res:Loc Tool.Select}" ToolTip="{res:Loc Tool.Select.Tip}" IsChecked="{Binding IsSelectTool}" MinWidth="70" Margin="0,0,4,0" />
+                <ToggleButton Content="{res:Loc Tool.Move}" ToolTip="{res:Loc Tool.Move.Tip}" IsChecked="{Binding IsMoveTool}" MinWidth="70" Margin="0,0,4,0" />
+                <ToggleButton Content="{res:Loc Tool.Rotate}" ToolTip="{res:Loc Tool.Rotate.Tip}" IsChecked="{Binding IsRotateTool}" MinWidth="70" Margin="0,0,4,0" />
+                <ToggleButton Content="{res:Loc Tool.Scale}" ToolTip="{res:Loc Tool.Scale.Tip}" IsChecked="{Binding IsScaleTool}" MinWidth="70" Margin="0,0,8,0" />
+                <CheckBox Content="{res:Loc Tool.Proportional}" ToolTip="{res:Loc Tool.Proportional.Tip}" IsChecked="{Binding ScaleLinked}" MinWidth="0" Margin="0,0,16,0" />
+                <Button Content="{res:Loc Tool.DropToFloor}" ToolTip="{res:Loc Tool.DropToFloor.Tip}" Command="{Binding DropToFloorCommand}" />
+                <Button Content="{res:Loc Tool.FaceOnFloor}" ToolTip="{res:Loc Tool.FaceOnFloor.Tip}" Command="{Binding FaceOnFloorCommand}" Margin="6,0,0,0" />
+            </StackPanel>
+        </Border>
+
+        <StatusBar DockPanel.Dock="Bottom" Background="{DynamicResource PanelBrush}">
+            <StatusBarItem DockPanel.Dock="Right">
+                <StackPanel Orientation="Horizontal">
+                    <CheckBox Content="{res:Loc Floor.Keep}" ToolTip="{res:Loc Floor.Keep.Tip}" IsChecked="{Binding AlwaysOnFloor}" MinWidth="0" Margin="0,0,16,0" />
+                    <CheckBox Content="{res:Loc Snap.Objects}" ToolTip="{res:Loc Snap.Objects.Tip}" IsChecked="{Binding SnapToObjects}" MinWidth="0" Margin="0,0,16,0" />
+                    <CheckBox Content="{res:Loc Snap.Grid}" ToolTip="{res:Loc Snap.Grid.Tip}" IsChecked="{Binding SnapToGrid}" MinWidth="0" Margin="0,0,4,0" />
+                    <ComboBox ItemsSource="{Binding GridSteps}" SelectedItem="{Binding GridStep}" ToolTip="{res:Loc Snap.Grid.Tip}" MinWidth="64" Margin="0,0,16,0" />
+                    <CheckBox Content="{res:Loc Snap.Angle}" ToolTip="{res:Loc Snap.Angle.Tip}" IsChecked="{Binding SnapAngles}" MinWidth="0" Margin="0,0,4,0" />
+                    <ComboBox ItemsSource="{Binding AngleSteps}" SelectedItem="{Binding AngleStep}" ToolTip="{res:Loc Snap.Angle.Tip}" MinWidth="58" Margin="0,0,20,0" />
+                    <ProgressBar IsIndeterminate="True" Width="70" Height="6" Margin="0,0,10,0"
+                                 Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisibility}}" />
+                    <TextBlock Text="{Binding StatusText}" />
+                </StackPanel>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock x:Name="HintLine" Text="{Binding HintText}" ToolTip="{Binding HintText}" TextTrimming="CharacterEllipsis" Foreground="{DynamicResource MutedTextBrush}" />
+            </StatusBarItem>
+        </StatusBar>
+
+        <Grid Margin="6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="250" MinWidth="160" />
+                <ColumnDefinition Width="6" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="6" />
+                <ColumnDefinition Width="300" MinWidth="200" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: shapes, objects, history -->
+            <Border Style="{StaticResource Panel}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="6" />
+                        <RowDefinition Height="160" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel>
+                        <TextBlock Text="{res:Loc Panel.Shapes}" Style="{StaticResource PanelHeader}" />
+                        <ItemsControl ItemsSource="{Binding Shapes}" Margin="0,0,0,12">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:ShapeEntryViewModel}">
+                                    <Button Content="{Binding DisplayName}" Margin="0,0,6,6" MinWidth="64"
+                                            Command="{Binding DataContext.AddShapeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding Id}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Text="{res:Loc Panel.Templates}" Style="{StaticResource PanelHeader}" />
+                        <TextBlock Text="{res:Loc Panel.Templates.Empty}" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,10">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Templates.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto" Margin="0,0,0,12">
+                            <ItemsControl ItemsSource="{Binding Templates}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:TemplateItemViewModel}">
+                                        <Button Margin="0,0,0,4" HorizontalContentAlignment="Stretch" ToolTip="{Binding Tooltip}"
+                                                Command="{Binding DataContext.InsertTemplateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                CommandParameter="{Binding}">
+                                            <DockPanel LastChildFill="True">
+                                                <Image DockPanel.Dock="Left" Source="{Binding PreviewPng}" Width="40" Height="40" Margin="0,0,8,0" />
+                                                <StackPanel VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="{Binding Category}" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                                </StackPanel>
+                                            </DockPanel>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </StackPanel>
+
+                    <DockPanel Grid.Row="1">
+                        <TextBlock DockPanel.Dock="Top" Text="{res:Loc Panel.Objects}" Style="{StaticResource PanelHeader}" />
+                        <ListBox ItemsSource="{Binding Nodes}" SelectionMode="Extended" Background="Transparent" BorderThickness="0">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                    <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                        </ListBox>
+                    </DockPanel>
+
+                    <DockPanel Grid.Row="3">
+                        <TextBlock DockPanel.Dock="Top" Text="{res:Loc Panel.History}" Style="{StaticResource PanelHeader}" />
+                        <ListBox ItemsSource="{Binding HistoryEntries}" SelectedIndex="{Binding HistorySelectedIndex, Mode=TwoWay}"
+                                 Background="Transparent" BorderThickness="0">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:HistoryEntryViewModel}">
+                                    <TextBlock Text="{Binding Name}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsFuture}" Value="True">
+                                                        <Setter Property="Opacity" Value="0.45" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+                </Grid>
+            </Border>
+
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Stretch" Background="Transparent" />
+
+            <!-- Center: 3D view -->
+            <Border Grid.Column="2" BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1">
+                <Grid>
+                <vp:ViewportControl x:Name="Viewport"
+                                    Items="{Binding ViewportItems}"
+                                    SelectedIds="{Binding SelectedIds}"
+                                    BuildVolume="{Binding BuildVolume}"
+                                    PickCommand="{Binding PickCommand}"
+                                    MarqueeCommand="{Binding MarqueeCommand}"
+                                    OpenGroupCommand="{Binding OpenGroupCommand}"
+                                    ActiveTool="{Binding ActiveTool}"
+                                    PreviewTransforms="{Binding PreviewTransforms}"
+                                    FacePickMode="{Binding IsPickingFace}"
+                                    FacePickCommand="{Binding FacePickedCommand}"
+                                    Orthographic="{Binding IsOrthographic}"
+                                    LightTheme="{Binding LightTheme}"
+                                    ViewCubeLabels="{Binding ViewCubeLabels}"
+                                    DisplayMode="{Binding DisplayMode}"
+                                    EdgeAngle="{Binding EdgeAngle}"
+                                    GizmoPivot="{Binding GizmoPivot}"
+                                    ScaleBox="{Binding GizmoScaleBox}"
+                                    SnapGuides="{Binding SnapGuides}"
+                                    SnapMarkers="{Binding SnapMarkers}"
+                                    Dimensions="{Binding ViewportDimensions}"
+                                    DimensionCommand="{Binding EditDimensionCommand}"
+                                    GizmoTarget="{Binding GizmoTargetObject}" />
+
+                <!-- Mesh check: what is wrong with the selected imported meshes, and the one-click repair (F-IMP-03) -->
+                <Border VerticalAlignment="Top" Margin="12" Padding="10,6" CornerRadius="4" BorderThickness="1"
+                        BorderBrush="#B8860B" Background="#E6302A1A"
+                        Visibility="{Binding IsRepairBannerVisible, Converter={StaticResource BoolToVisibility}}">
+                    <DockPanel LastChildFill="True">
+                        <Button DockPanel.Dock="Right" Content="{res:Loc Repair.Button}" ToolTip="{res:Loc Repair.Tip}"
+                                Command="{Binding RepairMeshCommand}" Margin="12,0,0,0" MinWidth="80" VerticalAlignment="Center"
+                                AutomationProperties.AutomationId="RepairButton" />
+                        <TextBlock Text="{Binding RepairBannerText}" TextWrapping="Wrap" VerticalAlignment="Center"
+                                   Foreground="#F2D98A" AutomationProperties.AutomationId="RepairBanner" />
+                    </DockPanel>
+                </Border>
+                </Grid>
+            </Border>
+
+            <GridSplitter Grid.Column="3" HorizontalAlignment="Stretch" Background="Transparent" />
+
+            <!-- Right: properties -->
+            <Border Grid.Column="4" Style="{StaticResource Panel}">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="{res:Loc Panel.Properties}" Style="{StaticResource PanelHeader}" />
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock Text="{Binding PropertiesMessage}" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" />
+                            <ContentControl Content="{Binding Properties}" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+        </Grid>
+    </DockPanel>
+</Window>

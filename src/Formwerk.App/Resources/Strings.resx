@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- All user-visible text of the application (English only, spec section 7). -->
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="App.Title" xml:space="preserve"><value>Formwerk</value></data>
+
+  <data name="Menu.File" xml:space="preserve"><value>_File</value></data>
+  <data name="Menu.File.New" xml:space="preserve"><value>_New</value></data>
+  <data name="Menu.File.Open" xml:space="preserve"><value>_Open...</value></data>
+  <data name="Menu.File.Save" xml:space="preserve"><value>_Save</value></data>
+  <data name="Menu.File.SaveAs" xml:space="preserve"><value>Save _As...</value></data>
+  <data name="Menu.File.Import" xml:space="preserve"><value>_Import...</value></data>
+  <data name="Menu.File.ExportStl" xml:space="preserve"><value>_Export STL...</value></data>
+  <data name="Menu.File.Exit" xml:space="preserve"><value>E_xit</value></data>
+  <data name="Menu.Edit" xml:space="preserve"><value>_Edit</value></data>
+  <data name="Menu.Edit.Undo" xml:space="preserve"><value>_Undo</value></data>
+  <data name="Menu.Edit.Redo" xml:space="preserve"><value>_Redo</value></data>
+  <data name="Menu.Edit.Duplicate" xml:space="preserve"><value>_Duplicate</value></data>
+  <data name="Menu.Edit.Delete" xml:space="preserve"><value>De_lete</value></data>
+  <data name="Menu.Edit.Group" xml:space="preserve"><value>_Group</value></data>
+  <data name="Menu.Edit.Ungroup" xml:space="preserve"><value>U_ngroup</value></data>
+  <data name="Menu.Edit.Merge" xml:space="preserve"><value>_Merge</value></data>
+  <data name="Menu.Edit.ToggleHole" xml:space="preserve"><value>Toggle Solid/_Hole</value></data>
+  <data name="Menu.Edit.DropToFloor" xml:space="preserve"><value>Drop to _Floor</value></data>
+  <data name="Menu.Edit.Boolean" xml:space="preserve"><value>_Boolean</value></data>
+  <data name="Menu.Edit.Union" xml:space="preserve"><value>_Union</value></data>
+  <data name="Menu.Edit.Difference" xml:space="preserve"><value>_Difference</value></data>
+  <data name="Menu.Edit.Intersection" xml:space="preserve"><value>_Intersection</value></data>
+  <data name="Menu.View" xml:space="preserve"><value>_View</value></data>
+  <data name="Menu.View.Frame" xml:space="preserve"><value>_Frame Selection</value></data>
+  <data name="Menu.View.Front" xml:space="preserve"><value>Front</value></data>
+  <data name="Menu.View.Back" xml:space="preserve"><value>Back</value></data>
+  <data name="Menu.View.Left" xml:space="preserve"><value>Left</value></data>
+  <data name="Menu.View.Right" xml:space="preserve"><value>Right</value></data>
+  <data name="Menu.View.Top" xml:space="preserve"><value>Top</value></data>
+  <data name="Menu.View.Bottom" xml:space="preserve"><value>Bottom</value></data>
+  <data name="Menu.View.Isometric" xml:space="preserve"><value>Isometric</value></data>
+
+  <data name="Tool.Select" xml:space="preserve"><value>Select</value></data>
+  <data name="Tool.Select.Tip" xml:space="preserve"><value>Select objects without handles (Q). Drag a rectangle in the view to select several</value></data>
+  <data name="Tool.Move" xml:space="preserve"><value>Move</value></data>
+  <data name="Tool.Move.Tip" xml:space="preserve"><value>Move with arrows and plane handles (W)</value></data>
+  <data name="Tool.Rotate" xml:space="preserve"><value>Rotate</value></data>
+  <data name="Tool.Rotate.Tip" xml:space="preserve"><value>Rotate with rings (E)</value></data>
+  <data name="Tool.Scale" xml:space="preserve"><value>Scale</value></data>
+  <data name="Tool.Scale.Tip" xml:space="preserve"><value>Resize with the box handles (R). Ctrl scales from the center.</value></data>
+  <data name="Tool.Proportional" xml:space="preserve"><value>Proportional</value></data>
+  <data name="Tool.Proportional.Tip" xml:space="preserve"><value>Every scale handle changes all three sizes together</value></data>
+  <data name="Tool.DropToFloor" xml:space="preserve"><value>Drop to Floor</value></data>
+  <data name="Tool.DropToFloor.Tip" xml:space="preserve"><value>Put the lowest point of the selection on the build plate (B)</value></data>
+
+  <data name="Snap.Grid" xml:space="preserve"><value>Grid</value></data>
+  <data name="Snap.Grid.Tip" xml:space="preserve"><value>Snap moves to the grid (hold Alt to switch off while dragging)</value></data>
+  <data name="Snap.Objects" xml:space="preserve"><value>Objects</value></data>
+  <data name="Snap.Objects.Tip" xml:space="preserve"><value>Snap moves to the edges and centers of other objects, the floor and the bed center (hold Alt to switch off while dragging)</value></data>
+  <data name="Snap.Angle" xml:space="preserve"><value>Angle</value></data>
+  <data name="Snap.Angle.Tip" xml:space="preserve"><value>Snap rotations to steps (hold Shift to switch off while dragging)</value></data>
+
+  <data name="Readout.Position" xml:space="preserve"><value>X {0}   Y {1}   Z {2} mm</value></data>
+  <data name="Readout.Size" xml:space="preserve"><value>{0} × {1} × {2} mm</value></data>
+  <data name="Readout.Angle" xml:space="preserve"><value>{0}°</value></data>
+
+  <data name="Panel.Shapes" xml:space="preserve"><value>Shapes</value></data>
+  <data name="Panel.Objects" xml:space="preserve"><value>Objects</value></data>
+  <data name="Panel.History" xml:space="preserve"><value>History</value></data>
+  <data name="Panel.Properties" xml:space="preserve"><value>Properties</value></data>
+
+  <data name="Props.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Props.Hole" xml:space="preserve"><value>Hole (cuts other objects)</value></data>
+  <data name="Props.Position" xml:space="preserve"><value>Position (mm)</value></data>
+  <data name="Props.Rotation" xml:space="preserve"><value>Rotation (degrees)</value></data>
+  <data name="Props.Parameters" xml:space="preserve"><value>Dimensions</value></data>
+  <data name="Props.Operation" xml:space="preserve"><value>Operation</value></data>
+  <data name="Props.Size" xml:space="preserve"><value>Size</value></data>
+  <data name="Props.NothingSelected" xml:space="preserve"><value>Nothing selected. Add a shape or click an object.</value></data>
+  <data name="Props.MultipleSelected" xml:space="preserve"><value>{0} objects selected.</value></data>
+  <data name="Props.InputHint" xml:space="preserve"><value>You can type numbers, expressions (20/2+3), relative values (+10) and percentages (150%).</value></data>
+
+  <data name="Tip.Visible" xml:space="preserve"><value>Show or hide</value></data>
+  <data name="Tip.Hole" xml:space="preserve"><value>Hole: this object cuts the solids in its group</value></data>
+
+  <data name="Hint.Default" xml:space="preserve"><value>Add a shape on the left, then click it. Drag to orbit, middle-drag to pan, wheel to zoom to the mouse, P switches orthographic, F frames the selection, 1-7 change the view.</value></data>
+  <data name="Hint.Selected" xml:space="preserve"><value>Drag handles to move, rotate or scale. Alt/Shift: no snap. Ctrl: scale from center. Esc cancels. Keys: Q W E R tools, B floor, H hole.</value></data>
+
+  <data name="Hint.ScaleSingle" xml:space="preserve"><value>Scaling works on one object at a time. Select a single object, or group the objects first (Ctrl+G).</value></data>
+
+  <data name="Status.Ready" xml:space="preserve"><value>Ready</value></data>
+  <data name="Status.Computing" xml:space="preserve"><value>Computing...</value></data>
+  <data name="Status.Scene" xml:space="preserve"><value>{0} objects, {1} triangles</value></data>
+  <data name="Status.Problems" xml:space="preserve"><value>{0} problem(s): {1}</value></data>
+
+  <data name="Msg.SameParent" xml:space="preserve"><value>Select objects that are in the same group first.</value></data>
+  <data name="Msg.NothingToExport" xml:space="preserve"><value>There is nothing to export yet.</value></data>
+  <data name="Msg.Exported" xml:space="preserve"><value>Exported {0} triangles to {1}.</value></data>
+  <data name="Msg.ExportFailed" xml:space="preserve"><value>The file could not be saved: {0}</value></data>
+  <data name="Msg.ExportTitle" xml:space="preserve"><value>Export STL</value></data>
+  <data name="Msg.ExportFilter" xml:space="preserve"><value>STL files (*.stl)|*.stl</value></data>
+
+  <data name="Title.Untitled" xml:space="preserve"><value>Untitled</value></data>
+  <data name="Title.Format" xml:space="preserve"><value>{0}{1} - Formwerk</value></data>
+
+  <data name="Dlg.OpenTitle" xml:space="preserve"><value>Open project</value></data>
+  <data name="Dlg.SaveTitle" xml:space="preserve"><value>Save project</value></data>
+  <data name="Dlg.ProjectFilter" xml:space="preserve"><value>Formwerk projects (*.fwp)|*.fwp</value></data>
+  <data name="Dlg.Unsaved" xml:space="preserve"><value>Do you want to save the changes to {0}?</value></data>
+  <data name="Dlg.Recover" xml:space="preserve"><value>Formwerk was not closed properly. Do you want to recover the unsaved changes to {0} (autosaved {1})?</value></data>
+  <data name="Dlg.RecoverUntitled" xml:space="preserve"><value>Formwerk was not closed properly. Do you want to recover your unsaved work (autosaved {0})?</value></data>
+  <data name="Dlg.OpenFailed" xml:space="preserve"><value>The project could not be opened.
+
+{0}</value></data>
+  <data name="Dlg.SaveFailed" xml:space="preserve"><value>The project could not be saved.
+
+{0}
+
+Try a different location or file name.</value></data>
+
+  <data name="Dlg.ImportTitle" xml:space="preserve"><value>Import models</value></data>
+  <data name="Dlg.ImportFilter" xml:space="preserve"><value>3D models (*.stl;*.obj;*.3mf)|*.stl;*.obj;*.3mf|STL files (*.stl)|*.stl|OBJ files (*.obj)|*.obj|3MF files (*.3mf)|*.3mf</value></data>
+  <data name="Dlg.ImportFailed" xml:space="preserve"><value>"{0}" could not be imported.
+
+{1}</value></data>
+  <data name="Dlg.ImportUnsupported" xml:space="preserve"><value>Formwerk can import STL, OBJ and 3MF files. These files were skipped:
+
+{0}</value></data>
+  <data name="Dlg.UnitTitle" xml:space="preserve"><value>Import unit</value></data>
+  <data name="Dlg.UnitQuestion" xml:space="preserve"><value>The model "{0}" is {1} mm in its longest direction as written in the file, which is unusual for a printed part. In which unit was it designed?</value></data>
+  <data name="Dlg.UnitOption" xml:space="preserve"><value>{0}  (becomes {1} mm)</value></data>
+  <data name="Dlg.UnitCancel" xml:space="preserve"><value>Cancel import</value></data>
+  <data name="Unit.Millimeters" xml:space="preserve"><value>Millimeters</value></data>
+  <data name="Unit.Centimeters" xml:space="preserve"><value>Centimeters</value></data>
+  <data name="Unit.Inches" xml:space="preserve"><value>Inches</value></data>
+
+  <data name="Status.Importing" xml:space="preserve"><value>Importing {0}...</value></data>
+  <data name="Msg.Imported" xml:space="preserve"><value>Imported {0} ({1} triangles).</value></data>
+  <data name="Msg.ImportedOpen" xml:space="preserve"><value>Imported {0} ({1} triangles). The mesh has errors (see the message above the 3D view); cutting it with other objects will fail until it is repaired.</value></data>
+  <data name="Msg.Saved" xml:space="preserve"><value>Saved {0}</value></data>
+  <data name="Msg.Opened" xml:space="preserve"><value>Opened {0}</value></data>
+  <data name="Msg.Recovered" xml:space="preserve"><value>Recovered your unsaved work. Save it to keep it.</value></data>
+
+  <data name="Hist.Initial" xml:space="preserve"><value>Initial state</value></data>
+
+  <data name="Err.Empty" xml:space="preserve"><value>Enter a value.</value></data>
+  <data name="Err.NameEmpty" xml:space="preserve"><value>The name cannot be empty.</value></data>
+  <data name="Err.Range" xml:space="preserve"><value>{0} must be between {1} and {2}.</value></data>
+
+  <data name="Name.DropToFloor" xml:space="preserve"><value>Drop to floor</value></data>
+  <data name="Name.Group" xml:space="preserve"><value>Group</value></data>
+  <data name="Name.Merge" xml:space="preserve"><value>Merge</value></data>
+  <data name="Name.Boolean" xml:space="preserve"><value>{0}</value></data>
+  <data name="Name.Copy" xml:space="preserve"><value>{0} copy</value></data>
+  <data name="Menu.File.Settings" xml:space="preserve"><value>Se_ttings...</value></data>
+  <data name="Status.Outside" xml:space="preserve"><value>Outside the build area: {0}</value></data>
+  <data name="Tip.Outside" xml:space="preserve"><value>This object reaches outside the build area</value></data>
+  <data name="Msg.SettingsNotSaved" xml:space="preserve"><value>The settings could not be saved ({0}). They apply until you close the program.</value></data>
+  <data name="Dlg.SettingsTitle" xml:space="preserve"><value>Settings</value></data>
+  <data name="Settings.Project" xml:space="preserve"><value>This project</value></data>
+  <data name="Settings.BuildVolume" xml:space="preserve"><value>Build volume</value></data>
+  <data name="Settings.Preset" xml:space="preserve"><value>Printer preset</value></data>
+  <data name="Settings.Nozzle" xml:space="preserve"><value>Nozzle diameter</value></data>
+  <data name="Settings.Tolerance" xml:space="preserve"><value>Print tolerance</value></data>
+  <data name="Settings.UseForNew" xml:space="preserve"><value>Also use these values for new projects</value></data>
+  <data name="Settings.ProjectHint" xml:space="preserve"><value>Saved in the project file and can be undone. The presets are typical values; check the data sheet of your printer.</value></data>
+  <data name="Settings.App" xml:space="preserve"><value>Program</value></data>
+  <data name="Settings.GridStep" xml:space="preserve"><value>Grid size</value></data>
+  <data name="Settings.AngleStep" xml:space="preserve"><value>Angle step</value></data>
+  <data name="Settings.SnapTolerance" xml:space="preserve"><value>Snap distance</value></data>
+  <data name="Settings.Autosave" xml:space="preserve"><value>Autosave every</value></data>
+  <data name="Settings.Slicer" xml:space="preserve"><value>Slicer program</value></data>
+  <data name="Settings.Browse" xml:space="preserve"><value>Browse...</value></data>
+  <data name="Settings.ProgramFilter" xml:space="preserve"><value>Programs (*.exe)|*.exe|All files (*.*)|*.*</value></data>
+  <data name="Settings.AppHint" xml:space="preserve"><value>Remembered on this computer. The slicer program is used by &quot;Open in Slicer&quot; once that exists.</value></data>
+  <data name="Settings.Range" xml:space="preserve"><value>Enter a number from {0} to {1}.</value></data>
+  <data name="Settings.SlicerMissing" xml:space="preserve"><value>This file does not exist.</value></data>
+  <data name="Settings.Ok" xml:space="preserve"><value>OK</value></data>
+  <data name="Settings.Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Menu.File.Export3mf" xml:space="preserve"><value>Export _3MF...</value></data>
+  <data name="Menu.File.OpenInSlicer" xml:space="preserve"><value>Open in S_licer</value></data>
+  <data name="Dlg.Export3mfTitle" xml:space="preserve"><value>Export 3MF</value></data>
+  <data name="Dlg.Export3mfFilter" xml:space="preserve"><value>3MF files (*.3mf)|*.3mf</value></data>
+  <data name="Msg.Exported3mf" xml:space="preserve"><value>Exported {0} object(s) to {1}.</value></data>
+  <data name="Dlg.SlicerTitle" xml:space="preserve"><value>Choose your slicer program</value></data>
+  <data name="Dlg.SlicerFailed" xml:space="preserve"><value>{0} could not be started: {1}</value></data>
+  <data name="Msg.OpenedInSlicer" xml:space="preserve"><value>Opened in {0}.</value></data>
+  <data name="Repair.Banner.One" xml:space="preserve"><value>{0} has mesh problems: {1}</value></data>
+  <data name="Repair.Banner.Many" xml:space="preserve"><value>{0} objects have mesh problems: {1}</value></data>
+  <data name="Repair.Button" xml:space="preserve"><value>Repair</value></data>
+  <data name="Repair.Tip" xml:space="preserve"><value>Fix holes, wrongly turned triangles and other mesh errors in the selected objects (can be undone)</value></data>
+  <data name="Repair.Holes" xml:space="preserve"><value>{0} hole(s)</value></data>
+  <data name="Repair.Flipped" xml:space="preserve"><value>{0} wrongly turned edge(s)</value></data>
+  <data name="Repair.Inside" xml:space="preserve"><value>{0} piece(s) turned inside out</value></data>
+  <data name="Repair.Junk" xml:space="preserve"><value>{0} degenerate or doubled triangle(s)</value></data>
+  <data name="Repair.Unwelded" xml:space="preserve"><value>{0} unconnected vertices</value></data>
+  <data name="Repair.Specks" xml:space="preserve"><value>{0} tiny loose piece(s)</value></data>
+  <data name="Repair.NonManifold" xml:space="preserve"><value>{0} edge(s) shared by more than two triangles</value></data>
+  <data name="Act.Welded" xml:space="preserve"><value>connected {0} vertices</value></data>
+  <data name="Act.Holes" xml:space="preserve"><value>closed {0} hole(s)</value></data>
+  <data name="Act.Flipped" xml:space="preserve"><value>turned {0} triangle(s)</value></data>
+  <data name="Act.Inside" xml:space="preserve"><value>turned {0} piece(s) right side out</value></data>
+  <data name="Act.Junk" xml:space="preserve"><value>removed {0} unusable triangle(s)</value></data>
+  <data name="Act.Specks" xml:space="preserve"><value>removed {0} tiny loose piece(s)</value></data>
+  <data name="Msg.Repaired" xml:space="preserve"><value>Repaired {0}: {1}. {2}</value></data>
+  <data name="Msg.RepairedFine" xml:space="preserve"><value>The mesh is closed and ready.</value></data>
+  <data name="Msg.RepairedLeft" xml:space="preserve"><value>Still wrong: {0}.</value></data>
+  <data name="Msg.RepairNothing" xml:space="preserve"><value>Nothing could be repaired automatically.</value></data>
+  <data name="Status.Repairing" xml:space="preserve"><value>Repairing {0}...</value></data>
+  <data name="Menu.View.Orthographic" xml:space="preserve"><value>_Orthographic</value></data>
+  <data name="Menu.View.Display" xml:space="preserve"><value>_Display</value></data>
+  <data name="Display.Shaded" xml:space="preserve"><value>_Shaded</value></data>
+  <data name="Display.ShadedEdges" xml:space="preserve"><value>Shaded with _edges</value></data>
+  <data name="Display.Wireframe" xml:space="preserve"><value>_Wireframe</value></data>
+  <data name="Display.XRay" xml:space="preserve"><value>_X-ray</value></data>
+  <data name="Settings.EdgeAngle" xml:space="preserve"><value>Edge angle</value></data>
+  <data name="Settings.EdgeAngle.Tip" xml:space="preserve"><value>Edges between faces that meet at this angle or more are drawn as lines</value></data>
+  <data name="Menu.Edit.Flatten" xml:space="preserve"><value>Fl_atten</value></data>
+  <data name="Msg.Flattened" xml:space="preserve"><value>Flattened {0} into one mesh ({1} triangles). It can no longer be edited by its dimensions; undo brings the original back.</value></data>
+  <data name="Msg.NothingToFlatten" xml:space="preserve"><value>There is nothing to flatten: select a group, a boolean or a shape that is not locked and has a visible solid part.</value></data>
+  <data name="Menu.Edit.Copy" xml:space="preserve"><value>_Copy</value></data>
+  <data name="Menu.Edit.Paste" xml:space="preserve"><value>_Paste</value></data>
+  <data name="Msg.Copied" xml:space="preserve"><value>Copied {0}. Paste with Ctrl+V.</value></data>
+  <data name="Menu.Edit.FaceOnFloor" xml:space="preserve"><value>Face on _Floor</value></data>
+  <data name="Menu.Edit.Rotate90" xml:space="preserve"><value>Rotate _90°</value></data>
+  <data name="Rot.XPlus" xml:space="preserve"><value>About X, +90°</value></data>
+  <data name="Rot.XMinus" xml:space="preserve"><value>About X, -90°</value></data>
+  <data name="Rot.YPlus" xml:space="preserve"><value>About Y, +90°</value></data>
+  <data name="Rot.YMinus" xml:space="preserve"><value>About Y, -90°</value></data>
+  <data name="Rot.ZPlus" xml:space="preserve"><value>About Z, +90°</value></data>
+  <data name="Rot.ZMinus" xml:space="preserve"><value>About Z, -90°</value></data>
+  <data name="Tool.FaceOnFloor" xml:space="preserve"><value>Face on Floor</value></data>
+  <data name="Tool.FaceOnFloor.Tip" xml:space="preserve"><value>Click a face of an object; the object turns so that this face lies flat on the build plate</value></data>
+  <data name="Hint.FacePick" xml:space="preserve"><value>Click the face that should lie on the floor. Esc cancels.</value></data>
+  <data name="Msg.FaceAlready" xml:space="preserve"><value>That face already lies on the floor.</value></data>
+  <data name="Msg.FaceLocked" xml:space="preserve"><value>{0} is locked and cannot be turned.</value></data>
+  <data name="Hint.SelectTool" xml:space="preserve"><value>Drag a rectangle: to the right takes what lies completely inside, to the left everything it touches. Ctrl/Shift adds. Esc cancels. Right-drag orbits, middle-drag pans.</value></data>
+  <data name="Floor.Keep" xml:space="preserve"><value>Keep on floor</value></data>
+  <data name="Floor.Keep.Tip" xml:space="preserve"><value>After every change, put the lowest point of each object back on the build plate. Switch off to stack or lift objects.</value></data>
+  <data name="ViewCube.Front" xml:space="preserve"><value>Front</value></data>
+  <data name="ViewCube.Back" xml:space="preserve"><value>Back</value></data>
+  <data name="ViewCube.Left" xml:space="preserve"><value>Left</value></data>
+  <data name="ViewCube.Right" xml:space="preserve"><value>Right</value></data>
+  <data name="ViewCube.Top" xml:space="preserve"><value>Top</value></data>
+  <data name="ViewCube.Bottom" xml:space="preserve"><value>Bottom</value></data>
+  <data name="Menu.File.ExportObj" xml:space="preserve"><value>Export _OBJ...</value></data>
+  <data name="Dlg.ExportObjTitle" xml:space="preserve"><value>Export OBJ</value></data>
+  <data name="Dlg.ExportObjFilter" xml:space="preserve"><value>OBJ files (*.obj)|*.obj</value></data>
+  <data name="Msg.ExportedObj" xml:space="preserve"><value>Exported {0} object(s) to {1}.</value></data>
+  <data name="Hint.GroupOpen" xml:space="preserve"><value>Editing inside {0}: click parts to select and move them. Double-click empty space or press Esc to leave.</value></data>
+  <data name="Menu.View.ShowHoles" xml:space="preserve"><value>Show _Holes</value></data>
+  <data name="Panel.Templates" xml:space="preserve"><value>My Templates</value></data>
+  <data name="Panel.Templates.Empty" xml:space="preserve"><value>No templates yet. Select objects and choose Edit > Save as Template...</value></data>
+  <data name="Menu.Edit.SaveTemplate" xml:space="preserve"><value>Save as _Template...</value></data>
+  <data name="Dlg.SaveTemplateTitle" xml:space="preserve"><value>Save as Template</value></data>
+  <data name="Tpl.Name" xml:space="preserve"><value>Name</value></data>
+  <data name="Tpl.Description" xml:space="preserve"><value>Description (optional)</value></data>
+  <data name="Tpl.Category" xml:space="preserve"><value>Category (optional)</value></data>
+  <data name="Tpl.Tags" xml:space="preserve"><value>Tags (optional, separated by commas)</value></data>
+  <data name="Tpl.Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Tpl.Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Tpl.DefaultName" xml:space="preserve"><value>Template</value></data>
+  <data name="Tpl.InsertTip" xml:space="preserve"><value>Click to insert {0}</value></data>
+  <data name="Tpl.Err.NameRequired" xml:space="preserve"><value>A template needs a name.</value></data>
+  <data name="Tpl.Err.NameLong" xml:space="preserve"><value>The name can have at most {0} characters.</value></data>
+  <data name="Tpl.Err.NameChars" xml:space="preserve"><value>The name cannot contain control characters.</value></data>
+  <data name="Tpl.Err.Taken" xml:space="preserve"><value>A template named "{0}" already exists in this category.</value></data>
+  <data name="Tpl.Err.Category" xml:space="preserve"><value>The category can have at most {0} characters.</value></data>
+  <data name="Tpl.Err.Description" xml:space="preserve"><value>The description can have at most {0} characters.</value></data>
+  <data name="Tpl.Err.Tags" xml:space="preserve"><value>Use at most {0} tags of at most {1} characters each.</value></data>
+  <data name="Name.InsertTemplate" xml:space="preserve"><value>Insert template {0}</value></data>
+  <data name="Msg.TemplateSaved" xml:space="preserve"><value>Saved template {0}.</value></data>
+  <data name="Msg.TemplateTaken" xml:space="preserve"><value>A template named "{0}" already exists in this category. Try "{1}".</value></data>
+  <data name="Msg.TemplateSaveFailed" xml:space="preserve"><value>The template could not be saved: {0}</value></data>
+  <data name="Msg.TemplateLoadFailed" xml:space="preserve"><value>The template could not be inserted: {0}</value></data>
+  <data name="Msg.TemplateNothing" xml:space="preserve"><value>There is nothing to save as a template in this selection.</value></data>
+  <data name="Menu.View.LightTheme" xml:space="preserve"><value>_Light Theme</value></data>
+  <data name="Settings.LightTheme" xml:space="preserve"><value>Light theme (the dark theme is the default)</value></data>
+</root>

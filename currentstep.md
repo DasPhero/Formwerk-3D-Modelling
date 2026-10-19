@@ -1,0 +1,293 @@
+﻿# Current step
+
+> **Purpose:** if a run is interrupted (token limit, crash, closed window), the next session continues from this file without chaos.
+> **Rule:** before starting any step, write it here first (goal, plan, checklist). Tick items off and add to "Done" while working. Keep "Resume instructions" accurate at all times.
+>
+> Last updated: 2026-10-19
+
+## Resume instructions (read this first)
+
+1. Read this file, then `CLAUDE.md` (rules, reporting format) and `Documentation.md` (code map).
+2. Check the **Active step** below. If its status is `in progress`, continue with the first unticked item. Do not redo ticked items; verify them with `.\scripts\build.ps1` if unsure.
+3. If the status is `none`, ask the user which step to start (see "Candidate next steps"), then fill in the Active step section **before** writing code.
+4. After every finished item: tick it, run `.\scripts\build.ps1`, update `Documentation.md` if projects/types/tests/requirement status changed.
+4a. After every finished feature: `git add -A` and commit (message starts with the requirement ID, see CLAUDE.md).
+5. When the step is finished: move it to "Done" (newest first), set Active step to `none`.
+6. Git: local repository, one commit per finished feature, never push (see CLAUDE.md).
+7. Report each step to the user as: brief plan before, brief result after, each time functional overview first, then technical view.
+
+## Active step
+
+**Status:** in progress
+**Step name:** Own accent color and closing the gaps of the last report (F-VIS-07 and others)
+**Goal:** the program uses its own accent color instead of the one of Windows, and the known gaps that are real problems are fixed.
+**Requirement IDs:** F-VIS-07 (fixed accent color; acceptance: "all dialogs, menus and tooltips in the dark theme, no white windows"), F-TPL-03 (structure stays usable: variables of a template), N-PRF-02 (speed).
+**Plan (checklist):**
+- [x] 0. Plan written
+- [ ] 1. Accent: `SystemAccentColor` and its six shades (the Fluent theme reads these) from the palette of the theme, applied by `ThemeManager`; tests first (derived shades, resources set)
+- [ ] 2. Message boxes: the standard Windows message boxes are white in the dark theme: a themed `MessageWindow` for the unsaved-changes question, the recovery question and the error messages; tests first (button results, texts)
+- [ ] 3. Templates: variables of a template are merged into the project on insert (missing ones only, one undo step with the insert); the template list refreshes when the window is activated (files that appear while the program runs)
+- [ ] 4. Pick speed: measure the hit test on a 1 M triangle mesh (picking, hover markers); fix if it is slow
+- [ ] 5. Build green, one real check of the accent and a message window, docs and this file closed
+**Files touched so far:** currentstep.md
+**Notes:** the title bar color of a window is a Windows setting ("show accent color on title bars"); it is not changed here.
+
+<!-- Template for a new active step:
+
+**Status:** in progress | blocked (reason) | finished
+**Step name:**
+**Goal:** one sentence.
+**Requirement IDs:** F-xxx-nn, ...
+**Functional plan:** what the user will be able to do.
+**Technical plan:** types, files, decisions.
+**Checklist:**
+- [ ] 1. ...
+- [ ] Tests written first / passing
+- [ ] Undo/redo works, mouse + typed input, English texts in Strings.resx
+- [ ] `.\scripts\build.ps1` green
+- [ ] Documentation.md, ADR, open-questions updated
+**Files touched so far:** ...
+**Notes / decisions / problems:** ...
+-->
+
+## Phase 1: what is left (as of 2026-10-19, 44 requirements in P1)
+
+Done (fully): F-LIB-01 (all 12 shapes), F-GRP-02, F-GRP-04, F-CPY-01, F-ROT-04, F-SEL-01, F-FLR-01, F-VIS-05, F-VIS-06, E-03, F-BOO-02, F-BOO-04, F-VIS-07, F-BOO-03, F-TPL-01, F-TPL-02, F-TPL-03, F-PAR-02, F-SNP-01, F-SNP-06, F-VIS-04, F-IMP-01/02, F-TRF-01/02, F-ROT-01/02, F-SNP-02/05, F-SCL-01/02/03/04/06, F-PAR-01, F-VIS-03, F-BOO-01/05, F-GRP-01, F-SET-01/02, E-01, E-05, N-SEC-01/02/03.
+
+**All 44 requirements of phase 1 are done (checked 2026-10-19 against the status table in Documentation.md).** The one exception is decided: F-VIS-02 SSAO is dropped with the GPU decision (ADR 0005); the rest of F-VIS-02 is done. Open points that remain are listed per step under "Done" as caveats (no system clipboard, no real-slicer check, unmeasured picking speed on huge meshes, other GPUs).
+
+## Candidate next steps (user decides; recommended order)
+
+1. **Snapping follow-ups** (F-SNP-03/04, phase 2): face to face, align tool
+2. **Repair follow-ups:** highlight the places of a problem in the viewport (F-REP-01), before/after overlay (F-REP-04), self-intersections, simplification (F-REP-05), Windows repair engine (F-REP-03, P3). Imported meshes are often not watertight, so booleans with them fail until repaired.
+3. ~~Render spike D-03~~ closed: no GPU renderer for now (ADR 0005).
+4. Real-slicer check of the 3MF and OBJ files (no slicer installed here).
+5. **Holes tool, patterns, mirror** (F-HOL-*, F-PAT-*), more shapes (rest of F-LIB-01), template management (F-TPL-04..07: rename, update, shared parameters, exchange).
+6. **Gizmo follow-ups:** scale for several selected objects, local/global gizmo orientation, choice of rotation pivot (F-ROT-03), free dragging on the work plane (F-TRF-01), 90 degree rotations and "face on floor" (F-ROT-04), persisting the snap settings (F-SET-02).
+
+## Open questions waiting for the user
+
+- Q-01 Group vs. hole semantics (hole in a group cuts the group's solids - implemented, please confirm).
+- Q-02 Group scale with rotated children: the scale gizmo now scales groups through their scale value; this renders exactly (matrices), but ungrouping such a group cannot represent shear and is approximated. Decide whether groups may be scaled non-uniformly.
+- Q-03 Boolean speed: 50 holes ~280 ms warm (goal 200 ms). Dragging a hole relies on this for live feedback.
+- D-03 Render library decision.
+(Details in `docs/open-questions.md`.)
+
+## Current state of the project (snapshot)
+
+- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1406 tests green at last run, about 30 s, test projects run one at a time). Executable: `artifacts\publish\Formwerk.exe`.
+- Working application: add box/cylinder/sphere, typed editing of position/rotation/dimensions (numbers, expressions, `+10`, `150%`, variables), selection (viewport and list), hole/group/merge/boolean, duplicate/delete, undo history panel, STL export, **STL/OBJ import (File > Import, Ctrl+I, drag and drop onto the window, unit question for tiny/huge models, lands on the plate, saved in the project)**, 3D view with build plate and orbit camera, new/open/save/save as of `.fwp` projects, modified marker, unsaved-changes questions, autosave every 2 minutes, crash recovery, **move gizmo (arrows + plane handles), rotate gizmo (rings), scale gizmo (box with 6 face and 8 corner handles, Proportional switch, Ctrl = from center, shapes change their dimensions), tools Select/Move/Rotate/Scale (Q/W/E/R), grid and angle snapping and **snapping to other objects (edges and centers flush/centered, floor, bed center, pink guide frames, tolerance 10 px at any zoom, "Objects" switch)**, Alt/Shift suppress snapping, live readout at the cursor, Esc cancels, one undo step per drag, drop to floor (B)**.
+- Also working now (after the lines above were written): settings dialog (File > Settings, Ctrl+,), 3MF export and import, Open in Slicer, mesh check banner with one-click repair. Not done: repair of self-intersections and non-manifold edges, OBJ export, scaling several objects at once, snap point markers / circle centers / face-to-face gap / align tool, edge lines, DirectX renderer, more shapes, holes tool, patterns, templates, "Open in Slicer", `thumbnail.png` in the project file. (Settings dialog and persistent snap settings are done.)
+- Verified in the real exe with real input (UI automation + real mouse events): start, add shapes, title and `*` marker, menus, unsaved-changes dialog on close, crash recovery after a killed process, **mouse drag of the X arrow (0 to 22 mm, readout and highlight, one "Move Box" entry), mouse drag of the Z ring (30 degrees, readout, one "Rotate Box" entry), Esc during a drag (nothing changes, no history entry), mouse drag of the scale corner handle (41 x 41 x 41 mm, proportional) and of the +X face handle (20 to 22 mm, only the width changes, one "Scale Box" entry), mouse drag of a box towards another box (pink guide frame at the flush plane, ends exactly flush at X = -20, one "Move Box 2" entry)**. The user confirmed picking and the camera controls work.
+- Verified with real input also: File > Import through the real Windows file dialog, the unit dialog (centimeters chosen, model became 2 mm), a 1,044,480 triangle model (imported and displayed in 2.6 s). Not verified with real input: real drag and drop of files onto the window (5 lines of glue, the list-based import is tested), the Windows Save/Open file dialogs (faked in tests), dragging a very large imported model (every move re-converts the mesh for display; expected to be slow until the DirectX renderer), Alt/Shift/Ctrl with the physical keys while dragging (logic is tested), multi-selection drags in the real window (logic is tested), scaling a cylinder/sphere/group in the real window (tested at view-model level), Alt to suppress object snapping with the physical key.
+- Known caveats: interim WPF-3D viewport (ADR 0004; a 1 M triangle model needs about 1.3 GB of memory because every triangle gets its own vertices); imported OBJ files with several objects become ONE mesh; self-intersections of imported meshes are not detected; accent color follows Windows; standard Windows message boxes show system-language buttons; object snapping uses world-axis-aligned bounding boxes (a turned object snaps by its world box) and only applies to moves; move/rotate gizmo axes are global (the scale box is oriented like the object); rotation pivot is the center of the selection (F-ROT-03 choices missing); a scaled dimension that was a variable expression becomes a plain number.
+- Tooling notes: .NET 10 SDK installed via winget; WPF project uses `LangVersion preview` for CommunityToolkit.Mvvm partial properties; UI automation, screenshot and real-mouse helper scripts live in the session scratchpad (not part of the repo); speed tests use best-of-N and the build script runs test projects sequentially.
+
+## Done (newest first)
+
+### 2026-10-19 - Light theme (F-VIS-07)
+- IO: `UserSettings.LightTheme`. App: `ThemePalette`, `ThemeManager`, `MainViewModel.LightTheme` and `ToggleThemeCommand`, settings check box, View menu item, theme applied in `App.xaml.cs`; all palette brushes in XAML are now `DynamicResource`. Viewport: `LightTheme` (background, plate, markers, dimension lines).
+- Tests: IO 293, Viewport 210, App 501; total 1406. Real exe check: View > Light Theme turned the main window, the panels, the 3D view and the settings dialog light; the choice was saved and loaded at the next start.
+- Found by the real check: with `StaticResource` brushes the panels stayed dark while the controls turned light (dark text on dark panels). All uses are `DynamicResource` now and the test suite guards that.
+- Not done / caveats: standard Windows message boxes (unsaved-changes question etc.) keep the system look; the accent color of standard controls follows Windows (magenta on this machine), the own accent stays blue; no "follow Windows" automatic mode; the ViewCube is dark in both themes.
+
+### 2026-10-19 - Fast holes (F-BOO-03, Q-03)
+- Features: `MeshUnion` (`Compute`, `Partition`), `SceneEvaluator` uses it for hole and merge unions and cuts a dragged hole incrementally (`CutSolid`). No change outside the evaluator.
+- Tests: Features 131 (new: `MeshUnionTests`, `IncrementalCutTests`, a 50-hole speed test with the Q-03 setup); total 1390. The measurement found the union of the 50 holes (600 to 700 ms) to be the main cost, not the cut (150 to 250 ms).
+- Not done / caveats: the first step of a drag and every non-drag edit still take the full time (about 300 ms for 50 holes); holes that overlap a lot still go through the engine; the speed test is wall-clock (best of 7) and depends on the machine; the cut memory holds a copy of the plate without the other holes.
+
+### 2026-10-19 - Templates (F-TPL-01, F-TPL-02, F-TPL-03)
+- IO: `TemplateFile` (`.fwt` zip), `TemplateInfo`, `TemplateNames`, `TemplateLimits`, `TemplateStore`. App: `SaveTemplateViewModel` and window, `ITemplatePreview` with `TemplatePreviewRenderer`, `MainViewModel.Templates.cs`, "My Templates" in the left panel, Edit menu item, texts. Viewport: `ShowViewCube`. Tests: `UiFact` now runs on an STA thread like the real UI thread.
+- Tests: IO 292 (46 new), App 489 (28 new); total 1365. Real exe check with the real dialog: saved "Hex post" in category Checks, it appeared in My Templates with its picture, a click inserted it (new object in the list, one history entry). Found by the check: the suggested name was not selected in the dialog (typing was added to it); the focus is now set after the window is shown.
+- Not done / caveats: no management (rename, delete, update) and no drag from the panel (F-TPL-04..07 are later phases); project variables are stored but not merged on insert (an expression that needs a missing variable shows an error); the picture is a fixed isometric view; the template folder is not watched, a new file in it shows up after restart.
+
+### 2026-10-19 - Dimensions in the 3D view (F-PAR-02)
+- Viewport: `ViewportDimension`, `DimensionEdit`, `ViewportControl.Dimensions.cs` (lines on the handle overlay, value labels, inline input box, key guard). App: `MainViewModel.Dimensions.cs` (`ViewportDimensions`, `EditDimension`), bindings.
+- Tests: App 461 (12 new); total 1291. Real exe check: three labels shown, a click on one opened the input box at the object, typed 45 and Enter set the box height to 45. The first look was too large (lines as long as the box, one below the plate); the offset is now 2 % of the viewing distance and the lines stay in the floor plane.
+- Not done / caveats: no automated render test of the lines and labels (checked by eye); labels can overlap at a small zoom; dimensions only for parametric shapes; the label is placed next to the line, not hidden behind objects.
+
+### 2026-10-19 - Snap points and priorities (F-SNP-01, F-SNP-06)
+- Core: `ObjectSnapper.Lattice`, point priority in `Snap`, `SnapResult.Marker`. Viewport: `ViewportControl.Markers.cs` (`SnapMarkers`, hover markers). App: `SnapMarkers` property.
+- Tests: Core 154 (7 new), Viewport 207 (3 new offscreen render tests), App 449 (4 new); total 1279. Real exe check: hovering a box shows the 27 white markers with one highlighted yellow near the mouse.
+- Not done / caveats: points come from the world bounding box (a turned cylinder has no true circle center marker; imported meshes get box points only); markers of hidden points show through the object (overlay); edge and face are not separated further than the per-axis alignments of before; hover markers only with the Move tool.
+
+### 2026-10-19 - Hatched hole ghosts (F-VIS-04)
+- Viewport: `GhostHatch` (stripe coordinate, `LayoutFor`, `HatchLayout`), hatch material as a hard-edged `LinearGradientBrush`, texture coordinates on a cloned geometry for ghosts. App: `ShowHoles` property, View > Show Holes, text.
+- Tests: Viewport 204 (9 new, incl. 3 offscreen render tests), App 445 (4 new); total 1265.
+- Found on the way: adding texture coordinates to the converter's frozen geometry threw inside the scene rebuild; the exception was swallowed by the binding, the old scene stayed on screen and the real app looked as if nothing had happened. Also WPF 3D clamps texture coordinates beyond 0..1 and drew `DrawingBrush`/`ImageBrush` tiles as nothing, so the stripes are a gradient with hard stops. The offscreen render test catches both.
+- Not done / caveats: stripe look not configurable; the real app was not re-checked by eye after the final change (the offscreen render shows the stripes); hatch spacing is 5 mm along (1,1,1).
+
+### 2026-10-19 - Open a group by double-click (F-BOO-04, F-BOO-02)
+- Viewport: `ViewportItem.Dimmed` (faint material, no edges, skipped by the rectangle), `OpenGroupCommand` (double click, before the handle check).
+- App: `MainViewModel.OpenGroup.cs` (`OpenContainerId`, `OpenGroup`, `ExitGroup`, `BuildViewportItems`), `SelectableFor`/`Pick`/`Marquee` respect the open container, hint `Hint.GroupOpen`, Esc in MainWindow.
+- Tests: Viewport 192 (2 new), App 441 (14 new); total 1243. Real exe check: grouped box and sphere, real double click on the box: hint "Editing inside Group...", the loose cylinder drawn faint, Esc left the mode. Found by the real check: a double click on a selected object often hits a Move handle, so the double click is now handled before the handle check.
+- Not done / caveats: dimming is a fixed faint look (no setting); the object list does not mark the open group; clicking a dimmed object leaves the mode at once.
+
+### 2026-10-19 - OBJ export (E-03)
+- IO: `ObjWriter` (`Write`, `SaveAtomic`, `Extension`) and `ObjObject`.
+- App: `MainViewModel.ExportObj.cs` (`ExportObjCommand`, same objects as the 3MF export, background atomic write, `.obj` appended, messages), File > Export OBJ... menu item, four texts, command state refreshed with the other exports.
+- Tests: IO 246 (18 new), App 427 (10 new); total 1233. Real exe check with the real Windows save dialog (German system language): menu item, dialog "Export OBJ" with the suggestion Untitled.obj and the OBJ filter, a typed path; the file has `o Box`, `o Sphere`, 1,994 points, 3,980 faces (as many as the status bar showed), no BOM, no carriage returns, and the status bar reported 2 objects and the path.
+- Not done / caveats: no MTL file (colors stay a 3MF feature); no keyboard shortcut; the exported file was read back by the program's own importer in tests only, not opened in another program (none installed here).
+- Docs: Documentation.md (IO project line, OBJ paragraph, tests, status E-03).
+
+### 2026-10-19 - ViewCube (F-VIS-05, F-VIS-06 acceptance)
+- Viewport: `ViewCubeRegion`, `ViewCubeKind`, `ViewCubeMath` (`StateFor`, `CameraPosition`, `IsActingClick`), `ViewCubeGeometry` (54 fields, `FrameOf`), `ViewCubeLabels`, `ViewportControl.ViewCube.cs` (own small view, label textures, hover, hit test, click to glide).
+- App: `MainViewModel.ViewCubeLabels` from `Strings.resx` (six new texts), binding in MainWindow.
+- Tests: Viewport 190 (23 new), App 417 (1 new); total 1205.
+- Real exe check with real input: the cube shows Front and Right in the starting view with readable labels; hovering the Right face lit it up; a click glided to the exact right view; a click on the corner field gave the symmetric isometric view; a real double click on the Top face ends in the exact top view. No history entries were added by any of it.
+- Found and fixed while checking: the second click of a double click hit another field of the already turning cube (view ended at the back-top edge), and then it stopped the glide half way (`StopGlide` ran first). Now only the first click acts and the cube click is handled before `StopGlide`.
+- Not done / caveats: dragging the cube to orbit is not part of it; no tooltips on the fields; the view of the cube does not follow the Windows UI scale specially (fixed 112 DIPs); the hover is not cleared when the window loses focus while the mouse is on the cube (it clears on mouse leave).
+- Docs: Documentation.md (ViewCube paragraph, tests, status F-VIS-05).
+
+### 2026-10-19 - Camera: zoom to cursor, orthographic view, animated view changes (F-VIS-06)
+- Viewport: `OrbitCamera.IsOrthographic`, `ZoomAt`, `State`, `PresetState`, `FramedState`; `CameraState`, `CameraAnimation`; `ViewportControl.Camera.cs` (Orthographic property, glide); the control swaps a perspective and an orthographic camera for the scene and the gizmo view, wheel zooms to the mouse, SetView and FrameSelection glide.
+- App: `IsOrthographic` and `ToggleProjectionCommand`, View > Orthographic, key P, texts (hint line mentions P and zoom to the mouse).
+- Tests: Viewport 167 (32 new), App 416 (4 new); total 1181. Real exe check with real input: P switched to a parallel view (plate edges parallel, same size at any depth), 4 wheel notches over the right-hand plate corner kept that corner under the mouse, key 5 gave a mid-glide frame and then the exact top view (the box is a square).
+- Not done / caveats: the choice perspective/orthographic is not remembered between sessions; zoom to cursor uses the plane through the camera target (not the surface under the mouse); the glide is not covered by an automated test (only its math is); the menu check state of View > Orthographic was not read in the real app (the key and the picture were).
+- Docs: Documentation.md (OrbitCamera, camera paragraph, tests, status F-VIS-06).
+
+### 2026-10-19 - Global option "keep on floor" (F-FLR-01)
+- Core: `UndoHistory.Executed` event and `AmendLast`.
+- IO: `UserSettings.AlwaysOnFloor` (default off, saved as `alwaysOnFloor`).
+- App: `MainViewModel.Floor.cs` (`ExpectFloorCheck`, `RequestFloorCheck`, `KeepOnFloor`), `FloorChanges` shared with Drop to Floor, `AlwaysOnFloor` property (persisted, switching on checks at once), status bar check box, settings dialog check box, texts `Floor.Keep`.
+- Tests: Core 147 (6 new), IO 228 (1 new), App 412 (15 new; also fixed an order-dependent assertion in `MarqueeTests`); total 1145.
+- Also answered: prism "Sides" (3..64) and tube "Wall" thickness already existed; nothing added.
+- Not done / caveats: NOT checked in the real exe with real input, because the screen was locked (the published exe starts, the check box exists and toggles via UI automation, but typing a rotation could not be done); applies to all top-level objects, so stacking needs the option off; undo, redo, opening files are not corrected; objects that are only holes stay where they are.
+- Docs: Documentation.md (UndoHistory, Keep on floor paragraph, tests, status F-FLR-01).
+
+### 2026-10-19 - Rectangle selection (F-SEL-01)
+- Viewport: `ScreenRect`, `MarqueeMode`, `MarqueeRequest`, `MarqueeSelection` (pure math: window and crossing, triangle test up to 20,000 triangles, box test above), `ViewportControl.Marquee.cs` (rubber band overlay, left drag in the Select tool, Esc and lost capture cancel, `MarqueeCommand`).
+- App: `MainViewModel.Marquee` (replace or add), `SelectableFor` shared with `Pick`, `Hint.SelectTool`, new tool tip text, binding in MainWindow.
+- Tests: Viewport 135 (23 new), App 397 (14 new); total 1123. Real exe check with a real mouse in the Select tool: left-to-right drag around the sphere took only the sphere (the box was partly inside), right-to-left drag over sphere and box took both, an empty rectangle cleared the selection; the list followed each time; solid outline while dragging a window, dashed for a crossing.
+- Not done / caveats: no depth test (objects hidden behind others are taken too); triangles reaching behind the camera are skipped in a crossing; meshes above 20,000 triangles are judged by their box; Ctrl/Shift while dragging checked only in tests; no rectangle on other tools (their left drag orbits).
+- Docs: Documentation.md (rectangle paragraph, tests, status F-SEL-01).
+
+### 2026-10-19 - 90 degree rotations and face on floor (F-ROT-04)
+- Core: `TransformOps.LaidOnFloor`.
+- Viewport: `FacePick`, `FaceMath.TriangleNormal`, `FacePickMode` and `FacePickCommand` on the control (one-shot click mode, nearest solid, Esc, cross cursor, no handle drag while on).
+- App: `MainViewModel.Orientation.cs` (`Rotate90`, the mode `IsPickingFace`, `FacePicked`, public `LayFaceOnFloor`), Edit > Rotate 90° (six entries), Edit > Face on Floor, toolbar button, texts.
+- Tests: Core 141 (16 new), Viewport 112 (7 new), App 383 (21 new); total 1086. Real exe check: Face on Floor button, then a real mouse click on the slope of a wedge: history entry "Lay Wedge on a face", rotation X 135 degrees, size 20 x 28.3 x 14.1 mm (lying on the 45 degree slope), the hint returned to normal.
+- Not done / caveats: no keyboard shortcut for the mode or the 90 degree turns; the face is the clicked triangle (a facet on curved surfaces); parts of the object below the face stick through the plate; the real-mouse check covered one face of one shape.
+- Docs: Documentation.md (TransformOps, orientation paragraph, tests, status F-ROT-04).
+
+### 2026-10-19 - Copy, paste and "Ctrl+D repeats the last offset" (F-CPY-01)
+- App: `MainViewModel.Clipboard.cs` (`_lastOffset`, `Duplicate` moved here and changed to the world offset, `Copy`, `Paste`, copy names without "copy copy"), `PropertiesViewModel` reports typed position moves, `CommitDrag` reports move drags, Ctrl+C and Ctrl+V key bindings, Edit menu entries, texts.
+- Tests: App 362 (20 new in `CopyPasteTests`); total 1042. Real keyboard check in the real exe: X typed as 20, three times Ctrl+D gave copies at 40, 60, 80 named "Box copy", "Box copy 2", "Box copy 3"; Ctrl+C then Ctrl+V pasted at 100 and again at 120.
+- Not done / caveats: no system clipboard (copying between two program windows or to other programs does not work), no cut; DropToFloor does not count as an offset; undo does not restore the previous offset.
+- Docs: Documentation.md (App paragraph, tests, status F-CPY-01).
+
+### 2026-10-19 - Flatten (F-GRP-04)
+- Geometry: `MeshCombine.Concat`.
+- App: `MainViewModel.Flatten.cs` (async, waits for the evaluation, builds a `MeshNode` per selected object from the visible solid parts in the parent's space with the origin at the bottom center, one `CompositeCommand` of `RemoveNodeCommand` and `AddNodeCommand` at the same index, selects the result), Edit > Flatten, texts, `RaiseCommandStates`.
+- Tests: Geometry 47 (6 new), App 342 (16 new); total 1022. Real exe check: flatten turned the cylinder into a mesh (list glyph changed, dimension fields gone, status message), undo brought the shape back.
+- Not done / caveats: no keyboard shortcut; after undo nothing is selected; a flattened object cannot be edited by its dimensions any more; overlapping solids in one flattened group stay separate shells (Merge first); F-GRP-02 (merge and separate) is now in the status table.
+- Docs: Documentation.md (Geometry, App, tests, status F-GRP-02 and F-GRP-04).
+
+### 2026-10-19 - The nine missing basic shapes (F-LIB-01)
+- Features: `HemisphereGenerator`, `ConeGenerator`, `FrustumGenerator`, `PyramidGenerator`, `PrismGenerator`, `WedgeGenerator`, `TorusGenerator`, `TubeGenerator`, `CapsuleGenerator` in `MoreShapes.cs`, registered in `ShapeLibrary` (12 shapes); `ParameterDefinition.IsDetail` (a size that sets no extent, for the wall of the tube); impossible combinations are corrected quietly.
+- App: `FreeSpot` continues in further rows (Y = +50, -50, ...) when a row is full up to the edge of the build plate, so twelve shapes added one after the other all fit inside the plate (before: the row ran off the plate and the red tint appeared).
+- Tests: Features 106 (31 new in `MoreShapesTests`, the binding tests treat parameters of the same axes together), App 326 (10 new in `ShapePanelTests`); total 998 plus 2 for the placement = 1000.
+- Real exe check with a screenshot: all twelve shapes on the plate in two rows, none outside; the properties panel of the capsule shows Diameter, Height, Segments, Rings per end and Size 20 x 20 x 40 mm.
+- Not done / caveats: no per-shape preview icons on the buttons (text only); the prism has a corner on the X axis; the shapes have no chamfer or rounding parameters yet (F-EDG-01 is Phase 2); crash-recovery leftovers from my test runs (the app was killed several times) were deleted from `%LOCALAPPDATA%\Formwerk\autosave` so that you do not get a recovery question for test data.
+- Docs: Documentation.md (Shapes, placement, tests, status F-LIB-01).
+
+### 2026-10-19 - Decision D-03 (no GPU renderer) and smooth dragging / lighter memory
+- Decision: benchmark of the real viewport on an Intel Iris Xe laptop GPU, recorded as ADR 0005 and in the spec (docs/spec.md and specifications.md, identical): D-03 decided (WPF 3D for now), N-PRF-01 and N-GPU-01..04, 06 postponed with the replacement target 20 fps at 1 M triangles and smooth dragging.
+- Viewport: `PreviewTransforms` (node id to world delta matrix, applied as `MatrixTransform3D`), `PreviewMath`, edge lines as one model per object, `MeshConverter` with shared vertices.
+- App: `MainViewModel.Gizmo.cs` drag preview for move and rotate when every dragged object sits in the scene root (no evaluation per mouse move; handles, position fields and readout follow); objects inside groups, scale drags and a drag that starts before the last result arrived keep the live recalculation; the preview stays until the result after the release is applied.
+- Test infrastructure: `[UiFact]` (`Tests.App/UiFact.cs`): each view model test runs on its own thread with a message pump like the UI thread. Found by probing: xUnit's `AsyncTestSyncContext` moved continuations to other threads, which was the root cause of the intermittent test failures of the last steps (the earlier "one test thread" setting did not help and was removed). 8 loaded runs of the App suite without a failure.
+- Numbers (same benchmark, before to after): dragging 1 M triangles: 575 ms per frame to 59 fps; orbiting 1 M triangles 24 to 47 fps, 2 M triangles 9 to 36 fps; memory at 1 M triangles 1.4 to 0.77 GB.
+- Tests: Viewport 105, App 316 (13 new drag preview tests), Geometry 41; total 931. Real mouse drag in the real app with a 297,024 triangle STL: sphere, handles and position field followed the mouse, the readout showed X 16 mm, release committed "Move big-sphere" at X = 35 mm, status "1 objects, 297024 triangles". The mesh banner also appeared for that generated STL ("1 hole(s), 817 unconnected vertices").
+- Not verified / caveats: once, in the first screenshot during the real drag, the status bar showed "Computing..."; it did not appear in 20 polls of a second drag and the unit test shows no evaluation during a drag, so the cause is unknown (probably the evaluation of the import that was still finishing). Picking speed on huge meshes and other GPUs are still not measured. During a fast-preview drag the red outside tint, the status text and the mesh check update only after the release.
+- Docs: Documentation.md (viewport, view model, tests, test infrastructure, decisions), ADR 0005 with before and after numbers, docs/open-questions.md (D-03 closed).
+
+### 2026-10-19 - Edge lines and display modes (F-VIS-02, F-VIS-03) + edge angle setting
+- Geometry: `FeatureEdges` (`Extract` sharp, boundary and non-manifold edges by fold angle, inclusive; `AllEdges` for the wireframe; adjacency by corner position) and `EdgeSet`.
+- Viewport: `ViewportDisplayMode`, `EdgeGeometry` (two crossing quads per edge, about 1.6 px wide, rebuilt when the zoom changes by more than 20%), `EdgeColors` (dark on light, light on dark, blue tint when selected, light in the wireframe), `ViewportControl.Edges.cs` (separate edge visual so picking ignores it, edge sets cached per mesh instance, no edges above 200,000 triangles), mode dependent surface opacity (wireframe 5%, X-ray 30%).
+- IO/App: `UserSettings.EdgeAngleDegrees`, `MainViewModel.Display.cs` (`DisplayMode`, `EdgeAngle`, key Z, View > Display), settings dialog field, texts. This completes F-SET-02.
+- Tests: Geometry 41 (19 new), Viewport 98 (28 new), App 303 (19 new); total 911.
+- Real exe check with screenshots of the app window: box edges, cylinder rims and a smooth sphere without lines in "shaded with edges"; the wireframe (all triangle edges, light lines); X-ray (transparent surfaces with edges). The first wireframe screenshot showed dark lines that were hard to see on the dark background, so wireframe lines are light now.
+- Not done / caveats: no ambient occlusion; the edge geometry is made for the interim WPF viewport and is throw-away if D-03 picks the DirectX renderer; display mode is not remembered between sessions; with big scenes (more than 200,000 triangles) there are no edges; while dragging, edges of the moved objects are recomputed each frame (fine for small objects, untested for large ones); the render library decision D-03 is still open and needs your decision (new dependency).
+- Docs: Documentation.md (Geometry, Viewport, App, tests, status F-VIS-02/03, F-SET-02), docs/open-questions.md (D-03 status).
+
+### 2026-10-19 - Mesh repair (step B of "mesh repair + 3MF")
+- Core: `MeshNode.MeshId` settable, `SetMeshCommand`.
+- Repair: `MeshReport`, `MeshAnalyzer` (sort-based edge table, union-find, spatial hash; counts holes, non-manifold edges, wrongly turned edges, degenerate/doubled triangles, near-duplicate vertices, loose parts, specks, inside-out bodies with cavity exception; skipped above 3 M triangles), `MeshRepair` (weld, clean, orient by flood fill flipping the smaller half, hole loops traced with pinch handling and triangulated by ear clipping or a center fan, inside-out bodies flipped by signed volume, specks removed, compact), `RepairResult`/`RepairActions`.
+- App: `MainViewModel.Repair.cs` (check on selection change, cached analyses, banner state, `RepairMeshCommand` as one undo step, copies repaired once), `RepairText`, banner in the main window, texts; the import notice now points to the banner.
+- Tests: Core 125, Repair 54 (new project content), App 284 (14 new); total 845. Under CPU load found and fixed: the banner check key must contain the objects, not only the mesh ids (copies share a mesh).
+- Real exe check (UI automation): imported a broken STL (missing bottom, one flipped triangle): banner "broken-box has mesh problems: 1 hole(s), 3 wrongly turned edge(s)", Repair closed it ("closed 1 hole(s), turned 1 triangle(s). The mesh is closed and ready."), undo brought the banner back, redo removed it again.
+- Not done / caveats: self-intersections and non-manifold edges are reported or ignored, not repaired; no highlighting of problem places; no before/after overlay; repair of a 1 M triangle mesh takes about 9 s on a background thread (the UI stays responsive, the status bar says "Repairing"); the specks rule (at most 100 triangles and under 1% of the model size) is a guess that may need tuning with real files; "tiny loose parts" are removed silently except for the message.
+- Docs: Documentation.md (Repair project, Core, App, tests, status F-IMP-03, F-REP-01/02/04).
+
+### 2026-10-19 - 3MF import (step A of "mesh repair + 3MF")
+- IO: `ThreeMfReader` + `ThreeMfLimits` (ZIP read without extracting; model part through `_rels/.rels` with fallback; secure streaming XML: no DTD, no resolver; entry count, entry size, compression ratio, counted bytes, unsafe names and targets, loops, depth, component expansion limit; meshes, components with transforms, production `p:path` parts, build item transforms, mirrored transforms, units, object colors, welding), `ImportedMesh` (+`ColorArgb`, `UnitKnown`), `MeshImport.LoadAll`, `.3mf` in `IsSupported` and the filter.
+- App: `ImportOneAsync` handles several meshes (group named like the file, children keep names, colors and the arrangement, one undo step, no unit question for 3MF), texts for the file filter and the unsupported-files message.
+- Test infrastructure: `xunit.runner.json` with one test thread for `Tests.App` (the view models expect to live on one thread; with several workers the tests raced against the view model's own background continuations, found with CPU load: `Collection was modified` in `SelectedNodes`). The failures went from 2 in 12 loaded runs to 1 in 25 under extreme load (8 busy processes); the remaining one, in a gizmo test, could not be reproduced again (assertions for the drag start were added to catch the cause).
+- Tests: IO 227 (72 new), App 270 (12 new); total 772.
+- Real exe check (UI automation, screen unlocked): export 3MF through the real save dialog (2 objects, 268 triangles), import of that file through the real open dialog (group "real-export" with Box and Cylinder, no unit question, status "Imported real-export (268 triangles)"), Open in Slicer asked for the program and started the stand-in (Notepad), path remembered. The test settings file was deleted afterwards.
+- Not verified: 3MF files from real slicers (none installed; the `p:path` structure follows the production specification and is tested with hand-made files), real drag and drop.
+- Docs: Documentation.md (IO, import section, tests, status table F-IMP-01, N-SEC).
+
+### 2026-10-19 - 3MF export and "Open in Slicer"
+- IO: `ThreeMfWriter` (core spec package: content types, relationships, `3D/3dmodel.model`; one object per solid with name and color via `basematerials`; millimetres; streamed XML; clean names; no exponent numbers; deterministic ZIP; atomic save) - no new dependency.
+- App: `MainViewModel.Slicer.cs` (`Export3mf`, `OpenInSlicer`, background write, temp file `%TEMP%\Formwerk\<project>.3mf`), `ISlicerLauncher` + `Views/SlicerLauncher` (process without shell), slicer path asked once and remembered, File menu entries, Ctrl+Shift+E, texts.
+- Fix found on the way: importing several files quickly could place them on top of each other (the next file looked for a free spot before the previous object was evaluated); now the import waits for the evaluation.
+- Test hygiene: several tests recorded `PropertyChanged` in a plain `List` while the constructor's background evaluation raised events from another thread; this made single tests fail now and then right after a rebuild. They use a `ConcurrentQueue` now.
+- Tests: IO 155 (20 new), App 258 (23 new incl. the real launcher); total 688.
+- Not verified: real file dialog and real slicer. The real-exe check could not run because the PC was on the lock screen (no keyboard input reaches the app); the menu entries and dialogs did open through UI automation. Not tested against Bambu Studio/OrcaSlicer/PrusaSlicer/Cura (none installed).
+- Docs: Documentation.md (IO, App, tests, status table E-03 and F-VIS-01).
+
+### 2026-10-19 - Settings: build plate size, nozzle, tolerance, snapping, autosave interval, slicer path
+- Core: `DocumentSettings.Clone/CopyFrom/SameAs`, `SetSettingsCommand` (one undo step, `HasEffect`).
+- IO: `UserSettings` (record, defaults, `Normalized()` clamping), `UserSettingsStore` (`%APPDATA%\Formwerk\settings.json`, atomic write, tolerant read).
+- Viewport: `ViewportItem.Outside` (red tint, part of the material cache key), faint outline of the build height in `RebuildBed`.
+- App: `MainViewModel.Settings.cs` (load/save/apply, `SnapTolerancePixels` and `AutosaveMinutes` properties, snap toggles persisted, `OpenSettings`/`ApplySettings`, new projects take the defaults, outside detection, status text), `BuildVolume` change notification, `NodeItemViewModel.IsOutside` (warning in the list), `SettingsViewModel`, `Views/SettingsWindow`, `IDialogService.ShowSettings`, File > Settings (Ctrl+,), autosave timer follows the setting, grid/angle choices list grows with custom values.
+- Tests: Core 120, IO 135, Viewport 70, App 241 (35 new in `SettingsFlowTests`); total 651. Real exe check (UI automation): Ctrl+, opens the dialog, OK stays disabled with a bad nozzle value, project turns modified, `settings.json` written, grid 2.5 and autosave 7 min still there after a restart. The test settings file was deleted afterwards (none existed before).
+- Not done / caveats: edge highlight angle (no edge lines yet); slicer path and nozzle/tolerance are stored but nothing uses them yet; the red tint and plate redraw were verified by tests of the view model data, not by a screenshot.
+- Docs: Documentation.md (IO, commands, App settings section, tests, status table).
+
+### 2026-10-19 - Import STL and OBJ (dialog + drag and drop), unit question, meshes stored in the project
+- Geometry: `MeshStore` (thread-safe, append-only), `MeshPlacement` (unit scaling, origin at bottom center).
+- IO: `StlReader` (binary + ASCII, welding), `ObjReader` (fans, negative indices, welding, unused points dropped), `MeshImport`, limits (`MeshImportLimits`), `MeshFormat` (`FWM1` codec), `ProjectFile`/`AutosaveStore` read and write `meshes/<id>.bin` (only referenced meshes, deterministic, missing/damaged = error; separate size limits).
+- Features: `SceneEvaluator` evaluates `MeshNode` (also as group member with holes and as boolean operand). Fix found on the way: a Boolean operand flagged as hole is an operand like any other.
+- App: `MainViewModel.Import.cs`, `IDialogService.PickImportFiles/PickImportUnit`, `Views/ImportUnitWindow`, one `MeshStore` for save/open/new/autosave/recovery, File > Import (Ctrl+I), drop on the window.
+- Tests: Geometry 22, IO 121 (incl. fuzzing), Features 47, App 206 + speed tests; total 598. Speed: 1,044,480 triangles read and welded 0.46 s, import plus evaluation 1.0 s, display conversion 0.25 s, real app 2.6 s until imported and responsive.
+- Docs: Documentation.md, docs/project-format.md (meshes section).
+
+### 2026-10-19 - Snapping to other objects (flush/centered alignment with guides) + STL export tests with holes
+- Core: `SnapBox`, `SnapGuide`, `SnapResult`, `ObjectSnapper` (pure: per axis min/center/max of the moving box against every target box, floor and bed center as virtual targets, closest match within the tolerance, guides).
+- Viewport: `GizmoDrag.WorldPerPixel`, `OrbitCamera.WorldPerPixelAt`, `SnapGuides` property drawn as pink rectangle outlines in the overlay (rebuilt with the camera).
+- App: `SnapToObjects`, `SnapGuides`, `PrepareObjectSnapping`, `SnapMove` (object snap first, grid on the remaining axes, handle-axis constraint enforced), status-bar "Objects" switch, texts.
+- Export: `ExportCutTests` prove that the STL contains the cut (group, merge, boolean), not the ghost, not hidden objects, not a loose hole's effect.
+- Bugs found by tests and fixed: the grid step discarded object-snapped axes; a Boolean operand flagged as hole was silently ignored (now an operand like any other).
+- Tests: Core 115, Features 40, Viewport 69, App 175; total 479. Real mouse check: a box dragged towards another ends exactly flush, with the guide visible.
+- Docs: Documentation.md (Core, Viewport, App, boolean semantics, tests, status table).
+
+### 2026-10-19 - Scale gizmo: resize by dragging box handles, shapes change their dimensions
+- Core: `CompositeCommand`, `TransformOps.FrameOf` + `NodeFrame`. Features: `ScaleAxes`, `ScaleBinding`, `IShapeGenerator.ScaleBindings` (box, cylinder, sphere).
+- Viewport: `ViewportTool.Scale`, 14 scale handle kinds + `GizmoHandles` helpers, `ScaleGizmoBox`, `GizmoDrag.ScaleFactor/FromCenter`, `ScaleMath`, scale handles in the overlay viewport (rebuilt with the camera, size capped relative to the object), `GizmoGeometry.AddBox`.
+- App: `MainViewModel.Scale.cs` (oriented box from the evaluated parts, `ScaleSession`, grid snap, minimum size, reference side/center, shapes via parameters, containers via scale value, commit as one `CompositeCommand`, cancel), `ScaleLinked`, toolbar Scale + Proportional, key R, readout `B x T x H mm`, hint for multi-selection; the hint line truncates with a tooltip.
+- Tests: Core 91, Features 39, Viewport 63, App 149 (40 new scale tests); total 422. Found by real-mouse testing: hit areas of handles overlapped on small objects, fixed by capping handle sizes relative to the object.
+- Docs: Documentation.md (Core, Features, Viewport, App, tests, status table).
+
+### 2026-10-19 - Transform gizmos: move and rotate by dragging, with snapping
+- Core: `TransformOps` (world-space move/rotate for nodes in nested groups), `SetTransformsCommand`.
+- Viewport: `Ray`, `GizmoMath`, `OrbitCamera.CreateRay/Project`, `GizmoGeometry`, `ViewportControl.Gizmo.cs` (overlay `Viewport3D` sharing the camera, invisible fat hit targets, hover highlight, drag handling, readout, Esc, `IGizmoTarget`), `ViewportTool`.
+- App: `MainViewModel.Gizmo.cs` (tools, snap settings, pivot, live preview through the normal evaluation, snapping, commit/cancel, drop to floor), toolbar, status-bar snap controls, keys Q/W/E/B, Edit menu item, texts.
+- Tests: Core 87, Viewport 41, App 109 (40 new drag tests); total 353. Build script now runs test projects one at a time.
+- Docs: Documentation.md (5.2, 5.7, 5.8, tests, status table).
+
+### 2026-10-19 - Save and load projects, autosave, crash recovery
+- Core: `UndoHistory.Clear`, `FormwerkDocument.ReplaceWith`, `InternalsVisibleTo` Formwerk.IO. IO: `ProjectFile` (schema v1, deterministic ZIP+JSON, untrusted-input limits, migration hook), atomic save, `AutosaveStore`. App: `IDialogService`, file state and dirty tracking, New/Open/Save/Save As, unsaved-changes prompts, closing guard, autosave timer, recovery at startup. Docs: `docs/project-format.md`.
+
+### 2026-10-19 - WPF shell with 3D view and usable editing
+- Core: `Node.Clone`, `FormwerkDocument.Snapshot`, `SetVisibleCommand`, `SetBooleanOperationCommand`, `EulerAngles`. IO: binary STL export. Viewport: `ViewportControl`, `MeshConverter`, `OrbitCamera`. App: `MainWindow`, view models, `Strings.resx`, Fluent dark theme. ADR 0004. Exe renamed to `Formwerk.exe`.
+
+### 2026-10-19 - Boolean kernel and scene evaluator
+- `Formwerk.Kernel` with `ManifoldKernel` (ManifoldSharp 0.5.0, ADR 0003); `SceneEvaluator` with caching, last-valid fallback, hole-in-group semantics (Q-01). Benchmarks recorded (Q-03).
+
+### 2026-10-18 - Foundation
+- Solution and module layout, build script, `CLAUDE.md`, `Documentation.md`, ADR 0001/0002.
+- Core: node tree, commands, unlimited undo with jump (E-01), safe expression parser, `NumericInput`. Geometry: `MeshData` metrics, `IGeometryKernel`. Features: box, cylinder, sphere generators.
+
+

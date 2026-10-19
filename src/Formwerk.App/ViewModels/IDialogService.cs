@@ -1,0 +1,59 @@
+namespace Formwerk.App.ViewModels;
+
+public enum UnsavedChoice
+{
+    Save,
+    Discard,
+    Cancel,
+}
+
+/// <summary>Everything that needs a modal window. Implemented with real dialogs in the app and faked in tests.</summary>
+public interface IDialogService
+{
+    /// <summary>Returns the chosen path or null when the user cancelled.</summary>
+    string? PickSaveFile(string title, string filter, string defaultFileName);
+
+    /// <summary>Returns the chosen path or null when the user cancelled.</summary>
+    string? PickOpenFile(string title, string filter);
+
+    UnsavedChoice ConfirmUnsavedChanges(string documentName);
+
+    /// <summary>True when the user wants the autosaved work back.</summary>
+    bool ConfirmRecovery(DateTime savedLocalTime, string? documentName);
+
+    void ShowError(string message);
+
+    /// <summary>Lets the user choose model files to import; empty when cancelled.</summary>
+    IReadOnlyList<string> PickImportFiles(string title, string filter);
+
+    /// <summary>
+    /// Asks in which unit a model was designed (F-IMP-02). Null when the user cancelled the import.
+    /// <paramref name="largestExtentInFile"/> is the size of the model's longest side as it stands in the file.
+    /// </summary>
+    ImportUnit? PickImportUnit(string modelName, double largestExtentInFile);
+
+    /// <summary>Shows the settings dialog with the current values. Null when the user cancelled.</summary>
+    /// <summary>The "Save as Template" dialog (F-TPL-01); true when the user confirmed a valid description.</summary>
+    bool ShowSaveTemplate(SaveTemplateViewModel viewModel);
+
+    SettingsResult? ShowSettings(Formwerk.Core.Model.DocumentSettings project, Formwerk.IO.UserSettings user);
+}
+
+/// <summary>The unit a model file was designed in.</summary>
+public enum ImportUnit
+{
+    Millimeters,
+    Centimeters,
+    Inches,
+}
+
+public static class ImportUnitExtensions
+{
+    /// <summary>How many millimetres one unit of the file is.</summary>
+    public static double ToMillimeters(this ImportUnit unit) => unit switch
+    {
+        ImportUnit.Centimeters => 10,
+        ImportUnit.Inches => 25.4,
+        _ => 1,
+    };
+}

@@ -1,0 +1,8 @@
+# Open questions
+
+Questions that came up during implementation. Format: `ID - question - date - status`.
+
+- D-03 - Render library: closed on 2026-10-19, no GPU renderer for now (ADR 0005, spec section 11). Revisit when users work with scans of several million triangles.
+- Q-01 - 2026-10-18 - Spec 4.10 (F-BOO-01: a hole *grouped* with a box cuts it) and spec 4.11 (Group: "geometry unchanged") disagree. Implemented: a hole inside a Group cuts the solids of that same group (Bambu style); the hole stays visible as a ghost; holes outside any group only show as ghosts. Group still moves everything together and does not merge solids. Please confirm. Open.
+- Q-02 - 2026-10-18 - Ungrouping with a non-uniform group scale and a rotated child cannot be expressed as position/rotation/scale; currently approximated. Decide whether scale is allowed on groups at all. Open.
+- Q-03 - 2026-10-19 - Boolean speed (N-PRF-02, 200 ms for <= 50 nodes): a plate with 50 holes (32 segments each) takes ~280 ms warm and ~900 ms on the first call with ManifoldSharp. Planned optimizations: (a) cache the union of unchanged holes and only union the moved hole, (b) evaluate on a background thread and show the previous result (already required), (c) warm up the kernel at startup with a tiny boolean, (d) lower default segment count while dragging. Re-measure when the UI exists. CLOSED 2026-10-19: (a) done in a better way (separate holes are not united at all, `MeshUnion`; a dragged hole is cut incrementally, `CutSolid`); (c) and (d) not needed; 50 holes of 32 segments now move in under 200 ms (was about 900 ms in the test setup).
