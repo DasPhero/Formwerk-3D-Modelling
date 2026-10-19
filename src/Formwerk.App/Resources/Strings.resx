@@ -276,4 +276,10 @@ Try a different location or file name.</value></data>
   <data name="Msg.TemplateNothing" xml:space="preserve"><value>There is nothing to save as a template in this selection.</value></data>
   <data name="Menu.View.LightTheme" xml:space="preserve"><value>_Light Theme</value></data>
   <data name="Settings.LightTheme" xml:space="preserve"><value>Light theme (the dark theme is the default)</value></data>
+  <data name="Msg.Button.Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Msg.Button.DontSave" xml:space="preserve"><value>Don't save</value></data>
+  <data name="Msg.Button.Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Msg.Button.Yes" xml:space="preserve"><value>Yes</value></data>
+  <data name="Msg.Button.No" xml:space="preserve"><value>No</value></data>
+  <data name="Msg.Button.Ok" xml:space="preserve"><value>OK</value></data>
 </root>

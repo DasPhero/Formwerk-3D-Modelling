@@ -28,13 +28,11 @@ public sealed class DialogService : IDialogService
 
     public UnsavedChoice ConfirmUnsavedChanges(string documentName)
     {
-        var answer = MessageBox.Show(
-            Texts.Format("Dlg.Unsaved", documentName), Texts.Get("App.Title"),
-            MessageBoxButton.YesNoCancel, MessageBoxImage.Warning, MessageBoxResult.Yes);
+        var answer = MessageWindow.Ask(MessageViewModel.UnsavedChanges(Texts.Format("Dlg.Unsaved", documentName)));
         return answer switch
         {
-            MessageBoxResult.Yes => UnsavedChoice.Save,
-            MessageBoxResult.No => UnsavedChoice.Discard,
+            MessageViewModel.SaveId => UnsavedChoice.Save,
+            MessageViewModel.DiscardId => UnsavedChoice.Discard,
             _ => UnsavedChoice.Cancel,
         };
     }
@@ -44,8 +42,7 @@ public sealed class DialogService : IDialogService
         var text = documentName is null
             ? Texts.Format("Dlg.RecoverUntitled", savedLocalTime.ToString("g"))
             : Texts.Format("Dlg.Recover", documentName, savedLocalTime.ToString("g"));
-        return MessageBox.Show(text, Texts.Get("App.Title"), MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.Yes)
-               == MessageBoxResult.Yes;
+        return MessageWindow.Ask(MessageViewModel.Question(text)) == MessageViewModel.YesId;
     }
 
     public IReadOnlyList<string> PickImportFiles(string title, string filter)
@@ -60,8 +57,7 @@ public sealed class DialogService : IDialogService
         return window.ShowDialog() == true ? window.Choice : null;
     }
 
-    public void ShowError(string message) =>
-        MessageBox.Show(message, Texts.Get("App.Title"), MessageBoxButton.OK, MessageBoxImage.Error);
+    public void ShowError(string message) => MessageWindow.Ask(MessageViewModel.Error(message));
 
     public bool ShowSaveTemplate(Formwerk.App.ViewModels.SaveTemplateViewModel viewModel) =>
         new SaveTemplateWindow(viewModel) { Owner = Application.Current?.MainWindow }.ShowDialog() == true;

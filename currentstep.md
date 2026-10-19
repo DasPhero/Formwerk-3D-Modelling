@@ -64,7 +64,7 @@ Done (fully): F-LIB-01 (all 12 shapes), F-GRP-02, F-GRP-04, F-CPY-01, F-ROT-04, 
 
 ## Current state of the project (snapshot)
 
-- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1428 tests green at last run, about 30 s, test projects run one at a time). Executable: `artifacts\publish\Formwerk.exe`.
+- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1436 tests green at last run, about 30 s, test projects run one at a time). Executable: `artifacts\publish\Formwerk.exe`.
 - Working application: add box/cylinder/sphere, typed editing of position/rotation/dimensions (numbers, expressions, `+10`, `150%`, variables), selection (viewport and list), hole/group/merge/boolean, duplicate/delete, undo history panel, STL export, **STL/OBJ import (File > Import, Ctrl+I, drag and drop onto the window, unit question for tiny/huge models, lands on the plate, saved in the project)**, 3D view with build plate and orbit camera, new/open/save/save as of `.fwp` projects, modified marker, unsaved-changes questions, autosave every 2 minutes, crash recovery, **move gizmo (arrows + plane handles), rotate gizmo (rings), scale gizmo (box with 6 face and 8 corner handles, Proportional switch, Ctrl = from center, shapes change their dimensions), tools Select/Move/Rotate/Scale (Q/W/E/R), grid and angle snapping and **snapping to other objects (edges and centers flush/centered, floor, bed center, pink guide frames, tolerance 10 px at any zoom, "Objects" switch)**, Alt/Shift suppress snapping, live readout at the cursor, Esc cancels, one undo step per drag, drop to floor (B)**.
 - Also working now (after the lines above were written): settings dialog (File > Settings, Ctrl+,), 3MF export and import, Open in Slicer, mesh check banner with one-click repair. Not done: repair of self-intersections and non-manifold edges, OBJ export, scaling several objects at once, snap point markers / circle centers / face-to-face gap / align tool, edge lines, DirectX renderer, more shapes, holes tool, patterns, templates, "Open in Slicer", `thumbnail.png` in the project file. (Settings dialog and persistent snap settings are done.)
 - Verified in the real exe with real input (UI automation + real mouse events): start, add shapes, title and `*` marker, menus, unsaved-changes dialog on close, crash recovery after a killed process, **mouse drag of the X arrow (0 to 22 mm, readout and highlight, one "Move Box" entry), mouse drag of the Z ring (30 degrees, readout, one "Rotate Box" entry), Esc during a drag (nothing changes, no history entry), mouse drag of the scale corner handle (41 x 41 x 41 mm, proportional) and of the +X face handle (20 to 22 mm, only the width changes, one "Scale Box" entry), mouse drag of a box towards another box (pink guide frame at the flush plane, ends exactly flush at X = -20, one "Move Box 2" entry)**. The user confirmed picking and the camera controls work.
@@ -74,11 +74,16 @@ Done (fully): F-LIB-01 (all 12 shapes), F-GRP-02, F-GRP-04, F-CPY-01, F-ROT-04, 
 
 ## Done (newest first)
 
+### 2026-10-19 - Themed questions and messages (F-VIS-07: no white windows)
+- App: `MessageViewModel`, `Views/MessageWindow`, `DialogService` uses it for the unsaved-changes question, the recovery question and errors; six button texts in the resources. No `MessageBox` is left in the code.
+- Tests: App 531 (8 new); total 1436. Real exe check: closing with unsaved changes shows the dark question (Save, Don't save, Cancel); Esc is Cancel (the program stays open); Don't save closes it.
+- Not done / caveats: the file open/save dialogs are the Windows common dialogs (they follow the Windows app mode); the window has no icon.
+
 ### 2026-10-19 - Own accent color (F-VIS-07)
 - App: `AccentRecolor` (hue test, HSL, recolor with the same lightness differences), `AccentShades`, `ThemeManager.RecolorFluentAccent` and the `SystemAccentColor*` entries; applied with every theme switch.
 - Tests: App 523 (22 accent tests, among them one over the real Fluent dictionaries); total 1428. Real exe check: Move button, check marks and the selected row are blue, not Windows magenta.
 - Found on the way: the first attempt (setting `SystemAccentColor*` in the application resources) changed nothing in the running program because the Fluent brushes are already resolved; and a test that created an `Application` hung later WPF tests (the dictionaries are loaded without one now).
-- Not done / caveats: the title bar color of the window is a Windows setting ("show accent color on title bars") and is not changed; message boxes still system look (next).
+- Not done / caveats: the title bar color of the window is a Windows setting ("show accent color on title bars") and is not changed; message boxes: see the next entry.
 
 ### 2026-10-19 - Light theme (F-VIS-07)
 - IO: `UserSettings.LightTheme`. App: `ThemePalette`, `ThemeManager`, `MainViewModel.LightTheme` and `ToggleThemeCommand`, settings check box, View menu item, theme applied in `App.xaml.cs`; all palette brushes in XAML are now `DynamicResource`. Viewport: `LightTheme` (background, plate, markers, dimension lines).
