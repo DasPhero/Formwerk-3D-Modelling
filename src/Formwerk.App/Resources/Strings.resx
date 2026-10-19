@@ -235,7 +235,7 @@ Try a different location or file name.</value></data>
   <data name="Tool.Hole" xml:space="preserve"><value>Drill Hole</value></data>
   <data name="Tool.Hole.Tip" xml:space="preserve"><value>Click a face of an object: a hole is made perpendicular to that face. Type and size are set in the panel. Esc ends the tool</value></data>
   <data name="Menu.Edit.Drill" xml:space="preserve"><value>Drill _Hole</value></data>
-  <data name="Hint.HolePlace" xml:space="preserve"><value>Click the face where the hole should start; the hole is perpendicular to the face. Click again for the next hole, Esc ends the tool. A hole stays editable: move it with the handles, change it in the properties or delete it.</value></data>
+  <data name="Hint.HolePlace" xml:space="preserve"><value>Click the face where the hole should start; the hole is perpendicular to the face and snaps to the center of the face and to the grid (Alt or Shift: no snap). Click again for the next hole, Esc ends the tool. A hole stays editable: move it with the handles, change it in the properties or delete it.</value></data>
   <data name="Name.Hole" xml:space="preserve"><value>Hole</value></data>
   <data name="Name.DrillHole" xml:space="preserve"><value>Drill hole in {0}</value></data>
   <data name="Msg.HoleLocked" xml:space="preserve"><value>{0} is locked, no hole can be drilled into it.</value></data>

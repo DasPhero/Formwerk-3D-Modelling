@@ -18,8 +18,18 @@
 
 ## Active step
 
-**Status:** none
-(Last finished: holes, see "Done". Next candidates: variable table F-PAR-03, hole presets and tolerance F-HOL-03/04, patterns F-PAT.)
+**Status:** in progress
+**Step name:** Hole caveats: through-all follows the body, snap to face center and grid (two commits)
+**Goal:** close the limits listed after the hole block: (1) the click snaps to the face center and the grid (F-HOL-01), (2) a "through all" hole stays through when the body is resized (F-HOL-02).
+**Requirement IDs:** F-HOL-01, F-HOL-02 (follow-ups).
+**Design (decided):**
+- Through all: new integer parameter `through` (0/1) of the hole. `SceneEvaluator` (group and merge) regenerates the cutter of such a hole with the depth that reaches from the hole origin to the farthest corner of the boxes of the solids of the same container along the axis, + 1 mm, so resizing/moving the body keeps it through. `depth` stays stored as the value at placement (used for a hole outside a group and when "through" is switched off). Tool and properties get a checkbox; the depth field only shows when through is off. Not covered: holes inside a boolean node (operands).
+- Snap (commit 1): `FaceFinder` in `Formwerk.Geometry` (coplanar, connected triangles around the clicked one; centroid, extent, `Contains`). `FacePick` gets `NoSnap` (Alt or Shift held, like the gizmo). `PlaceHole` snaps to the face center when the click is within a radius (15% of the face size, 1 to 8 mm) and "Snap to objects" is on; otherwise to the grid step on the two world axes in the face when the face is axis-aligned and "Snap to grid" is on, only if the snapped point still lies on the face. No hover preview.
+**Checklist:**
+- [x] 1. Snap: `FaceFinder` (Geometry), `FacePick.NoSnap`, `SnappedHolePoint`, hint; 18 new tests; real exe: the click snapped to the grid (X -4, Y -3 instead of -4.412, -2.614); docs; commit + push next
+- [ ] 2. Through all: tests first (evaluator: resize follows; properties checkbox; tool), generator param, evaluator, tool + properties + placement, build, real-exe check, docs, commit + push
+**Files touched so far:** Geometry `FaceFinder.cs`; Viewport `ViewportControl.FacePick.cs`; App `MainViewModel.Holes.cs`, `Strings.resx`; tests `FaceFinderTests`, `HoleSnapTests`, `HolePlacementTests` (one click uses NoSnap now); `Documentation.md`
+**Notes / decisions / problems:** the schematic picture (not the real body) is E-06 (section view) territory and stays; the missing Co-Authored-By line of 77f2867 stays (history is not rewritten).
 
 <!-- Template for a new active step:
 

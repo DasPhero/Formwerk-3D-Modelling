@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using Formwerk.App.Resources;
 using Formwerk.Core.Commands;
 using Formwerk.Core.Model;
+using Formwerk.Geometry;
 using Formwerk.Viewport;
 
 namespace Formwerk.App.ViewModels;
@@ -75,13 +76,14 @@ public sealed partial class MainViewModel
         var target = container ?? wrap!;
 
         var normal = Vector3.Normalize(pick.Normal);
-        var world = Matrix4x4.CreateFromQuaternion(AlignAxis(normal)) * Matrix4x4.CreateTranslation(pick.Point);
+        var point = SnappedHolePoint(pick, normal);
+        var world = Matrix4x4.CreateFromQuaternion(AlignAxis(normal)) * Matrix4x4.CreateTranslation(point);
         var parentToWorld = container is null ? Matrix4x4.Identity : TransformOps.LocalToWorld(container);
         var invertible = Matrix4x4.Invert(parentToWorld, out var worldToParent);
         var local = invertible ? world * worldToParent : world;
         var transform = Matrix4x4.Decompose(local, out var scale, out var rotation, out var translation)
             ? new Transform(translation, Quaternion.Normalize(rotation), scale)
-            : Transform.FromPosition(invertible ? Vector3.Transform(pick.Point, worldToParent) : pick.Point);
+            : Transform.FromPosition(invertible ? Vector3.Transform(point, worldToParent) : point);
 
         var hole = new PrimitiveNode("hole", UniqueName(Texts.Get("Name.Hole"))) { Role = NodeRole.Hole, Transform = transform };
         foreach (var (name, expression) in HoleTool.BuildParameters(ThroughDepth(container ?? top, normal))) hole.Parameters[name] = expression;
@@ -91,6 +93,47 @@ public sealed partial class MainViewModel
         commands.Add(new AddNodeCommand(_document, target, hole));
         _history.Execute(new CompositeCommand(Texts.Format("Name.DrillHole", target.Name), commands));
         SelectOnly([hole.Id]);
+    }
+
+    /// <summary>
+    /// Where the hole really starts (F-HOL-01). "Snap to objects": a click close to the center of the flat face (within 15% of its
+    /// size, 1 to 8 mm) goes to the center. "Snap to grid": otherwise the two directions in the face are rounded to the grid step
+    /// (for a face that looks along a world axis), as long as the rounded point is still on the face. Alt or Shift while clicking,
+    /// a face that cannot be found (a slanted click that hits no face) or both snaps off keep the clicked point.
+    /// </summary>
+    private Vector3 SnappedHolePoint(FacePick pick, Vector3 normal)
+    {
+        if (pick.NoSnap || (!SnapToObjects && !SnapToGrid)) return pick.Point;
+
+        FaceInfo? face = null;
+        foreach (var item in ViewportItems)
+        {
+            if (item.NodeId != pick.NodeId || item.Kind != ViewportItemKind.Solid) continue;
+            face = FaceFinder.Find(item.Mesh, pick.Point, normal);
+            if (face is not null) break;
+        }
+
+        if (face is null) return pick.Point;
+
+        if (SnapToObjects)
+        {
+            var radius = Math.Clamp(0.15f * face.Extent, 1f, 8f);
+            if (Vector3.Distance(pick.Point, face.Center) <= radius) return face.Center;
+        }
+
+        if (SnapToGrid && GridStep > 0)
+        {
+            var step = (float)GridStep;
+            float Round(float value) => MathF.Round(value / step) * step;
+            var n = Vector3.Abs(face.Normal);
+            Vector3? snapped = n.Z > 0.9999f ? new Vector3(Round(pick.Point.X), Round(pick.Point.Y), pick.Point.Z)
+                : n.Y > 0.9999f ? new Vector3(Round(pick.Point.X), pick.Point.Y, Round(pick.Point.Z))
+                : n.X > 0.9999f ? new Vector3(pick.Point.X, Round(pick.Point.Y), Round(pick.Point.Z))
+                : null;
+            if (snapped is { } candidate && face.Contains(candidate)) return candidate;
+        }
+
+        return pick.Point;
     }
 
     /// <summary>

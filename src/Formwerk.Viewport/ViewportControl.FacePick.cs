@@ -5,8 +5,8 @@ using System.Windows.Media.Media3D;
 
 namespace Formwerk.Viewport;
 
-/// <summary>A face the user clicked: the object it belongs to, the point on it and its outward direction, all in world space.</summary>
-public sealed record FacePick(Guid NodeId, Vector3 Point, Vector3 Normal);
+/// <summary>A face the user clicked: the object it belongs to, the point on it and its outward direction, all in world space. <paramref name="NoSnap"/>: Alt or Shift was held, the click must not snap.</summary>
+public sealed record FacePick(Guid NodeId, Vector3 Point, Vector3 Normal, bool NoSnap = false);
 
 public static class FaceMath
 {
@@ -69,7 +69,7 @@ public sealed partial class ViewportControl
         var normal = FaceMath.TriangleNormal(At(best.VertexIndex1), At(best.VertexIndex2), At(best.VertexIndex3));
         var point = new Vector3((float)best.PointHit.X, (float)best.PointHit.Y, (float)best.PointHit.Z);
 
-        var pick = new FacePick(bestInfo.Item.NodeId, point, normal);
+        var pick = new FacePick(bestInfo.Item.NodeId, point, normal, Keyboard.Modifiers.HasFlag(ModifierKeys.Alt) || Keyboard.Modifiers.HasFlag(ModifierKeys.Shift));
         if (FacePickCommand?.CanExecute(pick) == true) FacePickCommand.Execute(pick);
     }
 }

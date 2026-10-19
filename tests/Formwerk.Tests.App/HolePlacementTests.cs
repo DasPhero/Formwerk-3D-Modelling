@@ -47,7 +47,7 @@ public class HolePlacementTests
     {
         var (vm, box) = await BoxScene();
 
-        var hole = await Drill(vm, TopOf(box, 3, 2));
+        var hole = await Drill(vm, TopOf(box, 3, 2) with { NoSnap = true }); // the click is near the middle: without NoSnap it would snap there
 
         var group = Assert.IsType<GroupNode>(Assert.Single(vm.Document.Root.Children));
         Assert.Equal([box, hole], group.Children);
