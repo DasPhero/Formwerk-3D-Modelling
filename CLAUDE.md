@@ -48,7 +48,7 @@ Run `scripts\build.ps1` after every work step. The executable is `binary\Formwer
 
 ## Conventions
 - Decimal separator in all numeric input is the dot (`0.5`); the comma only separates function arguments (`min(3,4)`).
-- The project is under git (local repository, branch `master`). **After every finished feature (one requirement ID or one clearly named fix) commit everything**: only after the build script is green and `Documentation.md` and `currentstep.md` are updated. The message starts with the ID and a short summary (`F-HOL-02: countersink and counterbore`), a few lines say what and why, and it ends with the `Co-Authored-By` line. Never push, never rewrite history, never commit `binary/`, `bin/`, `obj/` (they are in `.gitignore`).
+- The project is under git (local repository, branch `master`). **After every finished feature (one requirement ID or one clearly named fix) commit everything**: only after the build script is green and `Documentation.md` and `currentstep.md` are updated. The message starts with the ID and a short summary (`F-HOL-02: countersink and counterbore`), a few lines say what and why, and it ends with the `Co-Authored-By` line. Then push to `origin` (GitHub, `git push`); never force push, never rewrite history, never commit `binary/`, `bin/`, `obj/` (they are in `.gitignore`).
 
 ## Definition of done
 Acceptance test green - undo/redo works - mouse and numeric input - dark theme + English resources - save/load keeps state - no new warnings.
