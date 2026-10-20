@@ -19,12 +19,15 @@ public sealed partial class PropertiesViewModel : ObservableObject
     private readonly Func<Guid, string> _sizeProvider;
     private readonly FieldViewModel _name;
     private readonly Action<Vector3>? _positionMoved;
+    private readonly Func<PatternNode, PatternReference?>? _patternReference;
+    private bool _edgeToHoleEdge;
 
     /// <param name="positionMoved">Told by how much (in world space) a typed position moved the object, for "Ctrl+D repeats the last offset".</param>
     public PropertiesViewModel(FormwerkDocument document, UndoHistory history, Node node, Func<Guid, string> sizeProvider,
-        Action<Vector3>? positionMoved = null)
+        Action<Vector3>? positionMoved = null, Func<PatternNode, PatternReference?>? patternReference = null)
     {
         _positionMoved = positionMoved;
+        _patternReference = patternReference;
         _document = document;
         _history = history;
         _node = node;
@@ -45,6 +48,11 @@ public sealed partial class PropertiesViewModel : ObservableObject
             Parameters = [.. PatternParameters.For(pattern.Kind).Select(definition =>
                 new FieldViewModel(definition.Label, definition.Unit ?? (definition.IsInteger ? "" : "mm"), text => ApplyParameter(pattern, definition, text)))];
             SkipField = new FieldViewModel(Texts.Get("Pattern.Skip"), "", text => ApplySkipped(pattern, text));
+            if (pattern.Kind == PatternKind.Circular)
+            {
+                RadiusField = new FieldViewModel(Texts.Get("Pattern.Radius"), "mm", text => ApplyRadius(pattern, text));
+                EdgeDistanceField = new FieldViewModel(Texts.Get("Pattern.EdgeDistance"), "mm", text => ApplyEdgeDistance(pattern, text));
+            }
         }
 
         Refresh();
@@ -54,6 +62,83 @@ public sealed partial class PropertiesViewModel : ObservableObject
 
     /// <summary>The node is a pattern: the choices (direction, total length) and the skipped instances show.</summary>
     public bool IsPattern => _node is PatternNode;
+
+    public bool IsLinearPattern => _node is PatternNode { Kind: PatternKind.Linear };
+
+    public bool IsCircularPattern => _node is PatternNode { Kind: PatternKind.Circular };
+
+    /// <summary>"Direction" for a row, "Axis" for a circle.</summary>
+    public string PatternAxisLabel => Texts.Get(IsCircularPattern ? "Pattern.Axis" : "Pattern.Direction");
+
+    // ---- the radius of a circular pattern (F-PAT-01) -------------------------------------------------
+
+    /// <summary>
+    /// The distance of the source from the axis of a circular pattern. It is not a parameter of the pattern: the source stands where
+    /// it stands, and typing a radius moves the source (and everything else in the pattern) away from or towards the axis.
+    /// </summary>
+    public FieldViewModel? RadiusField { get; }
+
+    /// <summary>The distance from the outer edge of the body around the center, to the middle of the source (or to its edge).</summary>
+    public FieldViewModel? EdgeDistanceField { get; }
+
+    /// <summary>There is a body around the center to measure from; without one the distance from the edge cannot be used.</summary>
+    public bool HasEdgeReference => _node is PatternNode { Kind: PatternKind.Circular } pattern && _patternReference?.Invoke(pattern) is not null;
+
+    /// <summary>The distance from the edge is measured to the edge of the source (a hole), not to its middle.</summary>
+    public bool EdgeToHoleEdge
+    {
+        get => _edgeToHoleEdge;
+        set
+        {
+            if (_edgeToHoleEdge == value) return;
+            _edgeToHoleEdge = value;
+            Refresh();
+        }
+    }
+
+    /// <summary>The distance of the first child from the axis, in the plane of the circle.</summary>
+    private (double Radius, Vector3 Direction) CurrentRadius(PatternNode pattern)
+    {
+        var position = pattern.Children.Count > 0 ? pattern.Children[0].Transform.Position : Vector3.Zero;
+        var axis = IntParameter("axis");
+        var across = axis switch { 0 => new Vector3(0, position.Y, position.Z), 1 => new Vector3(position.X, 0, position.Z), _ => new Vector3(position.X, position.Y, 0) };
+        var radius = across.Length();
+        var direction = radius > 1e-6 ? across / (float)radius : axis switch { 0 => Vector3.UnitY, 1 => Vector3.UnitZ, _ => Vector3.UnitX };
+        return (radius, direction);
+    }
+
+    private string? ApplyRadius(PatternNode pattern, string text)
+    {
+        var current = CurrentRadius(pattern).Radius;
+        var result = NumericInput.Resolve(text, current, _document.ResolveVariables(out _));
+        if (!result.IsSuccess) return result.Error;
+        if (result.Value < 0) return Texts.Get("Err.RadiusNegative");
+        MoveToRadius(pattern, result.Value);
+        return null;
+    }
+
+    private string? ApplyEdgeDistance(PatternNode pattern, string text)
+    {
+        if (_patternReference?.Invoke(pattern) is not { } reference) return Texts.Get("Err.NoEdge");
+        var shown = reference.OuterRadius - CurrentRadius(pattern).Radius - (_edgeToHoleEdge ? reference.SourceHalfWidth : 0);
+        var result = NumericInput.Resolve(text, shown, _document.ResolveVariables(out _));
+        if (!result.IsSuccess) return result.Error;
+
+        var radius = reference.OuterRadius - result.Value - (_edgeToHoleEdge ? reference.SourceHalfWidth : 0);
+        if (radius < 0) return Texts.Get("Err.EdgeTooFar");
+        MoveToRadius(pattern, radius);
+        return null;
+    }
+
+    /// <summary>Moves all children of the pattern radially so that the first one has the radius; one undo step.</summary>
+    private void MoveToRadius(PatternNode pattern, double radius)
+    {
+        var (current, direction) = CurrentRadius(pattern);
+        var shift = direction * (float)(radius - current);
+        if (shift.LengthSquared() < 1e-12f) return;
+        var changes = pattern.Children.Select(c => (c, c.Transform, c.Transform with { Position = c.Transform.Position + shift }));
+        _history.Execute(new SetTransformsCommand(_document, changes, Texts.Format("Name.SetRadius", pattern.Name)));
+    }
 
     /// <summary>The instances to leave out, as typed (<c>2, 5</c> or <c>3-5</c>); null for other nodes.</summary>
     public FieldViewModel? SkipField { get; }
@@ -270,6 +355,14 @@ public sealed partial class PropertiesViewModel : ObservableObject
             }
 
             SkipField?.SetFromModel(PatternNode.FormatSkipped(pattern.Skipped));
+
+            if (RadiusField is not null && EdgeDistanceField is not null)
+            {
+                var radius = CurrentRadius(pattern).Radius;
+                RadiusField.SetFromModel(Format(radius));
+                var reference = _patternReference?.Invoke(pattern);
+                EdgeDistanceField.SetFromModel(reference is null ? "" : Format(reference.OuterRadius - radius - (_edgeToHoleEdge ? reference.SourceHalfWidth : 0)));
+            }
         }
 
         OnPropertyChanged(string.Empty);

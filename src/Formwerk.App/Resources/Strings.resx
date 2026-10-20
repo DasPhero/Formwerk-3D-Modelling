@@ -287,6 +287,18 @@ Try a different location or file name.</value></data>
   <data name="Pattern.Axis.X" xml:space="preserve"><value>X</value></data>
   <data name="Pattern.Axis.Y" xml:space="preserve"><value>Y</value></data>
   <data name="Pattern.Axis.Z" xml:space="preserve"><value>Z</value></data>
+  <data name="Menu.Edit.Pattern.Circular" xml:space="preserve"><value>_Circular pattern</value></data>
+  <data name="Name.CircularPattern" xml:space="preserve"><value>Circular pattern of {0}</value></data>
+  <data name="Name.SetRadius" xml:space="preserve"><value>Set radius of {0}</value></data>
+  <data name="Pattern.Axis" xml:space="preserve"><value>Axis</value></data>
+  <data name="Pattern.Radius" xml:space="preserve"><value>Radius</value></data>
+  <data name="Pattern.Radius.Tip" xml:space="preserve"><value>Distance of the source from the axis. Typing a value moves the source (and everything in the pattern) towards or away from the axis.</value></data>
+  <data name="Pattern.EdgeDistance" xml:space="preserve"><value>From the edge</value></data>
+  <data name="Pattern.EdgeDistance.Tip" xml:space="preserve"><value>Distance from the outer edge of the body around the center to the middle of the source (or to its edge, see below). Typing a value sets the radius.</value></data>
+  <data name="Pattern.EdgeToHoleEdge" xml:space="preserve"><value>Measure to the edge of the source, not its middle</value></data>
+  <data name="Err.RadiusNegative" xml:space="preserve"><value>The radius cannot be negative.</value></data>
+  <data name="Err.NoEdge" xml:space="preserve"><value>There is no body around the center to measure from.</value></data>
+  <data name="Err.EdgeTooFar" xml:space="preserve"><value>That distance is larger than the body: the radius would be negative.</value></data>
   <data name="Msg.FaceAlready" xml:space="preserve"><value>That face already lies on the floor.</value></data>
   <data name="Msg.FaceLocked" xml:space="preserve"><value>{0} is locked and cannot be turned.</value></data>
   <data name="Hint.SelectTool" xml:space="preserve"><value>Drag a rectangle: to the right takes what lies completely inside, to the left everything it touches. Ctrl/Shift adds. Esc cancels. Right-drag orbits, middle-drag pans.</value></data>

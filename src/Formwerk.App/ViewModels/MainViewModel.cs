@@ -611,7 +611,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         if (_selected.Count == 1 && _document.FindNode(_selected.First()) is { } node)
         {
-            if (Properties?.NodeId != node.Id) Properties = new PropertiesViewModel(_document, _history, node, SizeOf, RememberOffset);
+            if (Properties?.NodeId != node.Id) Properties = new PropertiesViewModel(_document, _history, node, SizeOf, RememberOffset, ReferenceOf);
             else Properties.Refresh();
             PropertiesMessage = "";
             HintText = Texts.Get("Hint.Selected");
@@ -766,6 +766,7 @@ public sealed partial class MainViewModel : ObservableObject
         FaceOnFloorCommand.NotifyCanExecuteChanged();
         DrillCommand.NotifyCanExecuteChanged();
         LinearPatternCommand.NotifyCanExecuteChanged();
+        CircularPatternCommand.NotifyCanExecuteChanged();
         BooleanCommand.NotifyCanExecuteChanged();
         ToggleHoleCommand.NotifyCanExecuteChanged();
         DropToFloorCommand.NotifyCanExecuteChanged();

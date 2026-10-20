@@ -110,3 +110,9 @@ public sealed partial class NodeItemViewModel : ObservableObject
 
 /// <summary>One entry of an axis choice (X, Y, Z) of a pattern.</summary>
 public sealed record AxisChoice(int Index, string Label);
+
+/// <summary>
+/// What a circular pattern is measured against (F-PAT-01): the distance from its center to the nearest outer edge of the body around
+/// it (a 40 mm cylinder: 20), and half the width of the source (a 3.4 mm hole: 1.7), for "distance from the outer edge".
+/// </summary>
+public sealed record PatternReference(double OuterRadius, double SourceHalfWidth);
