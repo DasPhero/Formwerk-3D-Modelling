@@ -92,6 +92,7 @@ public sealed class SceneEvaluator(IGeometryKernel kernel, MeshStore? meshes = n
             BooleanNode b => EvalBoolean(b, c),
             MergeNode m => EvalMerge(m, c),
             PatternNode pattern => EvalPattern(pattern, c),
+            MirrorNode mirror => EvalMirror(mirror, c),
             MeshNode mesh => EvalMesh(mesh, c),
             _ => Unsupported(node, c),
         };
@@ -473,6 +474,39 @@ public sealed class SceneEvaluator(IGeometryKernel kernel, MeshStore? meshes = n
             foreach (var part in source) parts.Add(matrix.IsIdentity ? part : part with { Mesh = part.Mesh.Transformed(matrix), Frame = part.Frame * matrix });
         }
 
+        return Finish(node, parts);
+    }
+
+    /// <summary>
+    /// A mirror (F-PAT-04): the parts of the children, plus the same parts mirrored at the plane of the node (the plane through its
+    /// origin with the normal along the chosen local axis). With "only the mirror image" the source is left out, so the node shows a
+    /// mirrored copy. The mirror matrix turns the triangle winding around (<c>MeshData.Transformed</c> does that) and goes into the frame,
+    /// so a through hole is made again mirrored. A wrong parameter is reported and the source is shown alone.
+    /// </summary>
+    private List<ScenePart> EvalMirror(MirrorNode node, Context c)
+    {
+        var source = new List<ScenePart>();
+        foreach (var child in node.Children) source.AddRange(Eval(child, c));
+
+        var values = node.EvaluateParameters(c.Variables, out var parameterErrors);
+        Matrix4x4? reflection = null;
+        var copyOnly = false;
+        if (parameterErrors.Count > 0)
+        {
+            var (name, message) = parameterErrors.First();
+            c.Errors.Add(new EvaluationError(node, $"{name}: {message}"));
+        }
+        else
+        {
+            reflection = MirrorMath.Reflection(values, out copyOnly, out var problem);
+            if (problem is not null) c.Errors.Add(new EvaluationError(node, problem));
+        }
+
+        if (reflection is not { } matrix) return Finish(node, source);
+
+        var parts = new List<ScenePart>(source.Count * 2);
+        if (!copyOnly) parts.AddRange(source);
+        foreach (var part in source) parts.Add(part with { Mesh = part.Mesh.Transformed(matrix), Frame = part.Frame * matrix });
         return Finish(node, parts);
     }
 

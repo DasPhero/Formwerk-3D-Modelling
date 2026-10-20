@@ -93,6 +93,7 @@ public sealed partial class NodeItemViewModel : ObservableObject
             MergeNode => "⊎",
             PatternNode { Kind: PatternKind.Circular } => "◔",
             PatternNode => "▦",
+            MirrorNode => "⇋",
             MeshNode => "△",
             _ => "▣",
         };

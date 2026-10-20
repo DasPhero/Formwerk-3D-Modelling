@@ -114,6 +114,7 @@ public sealed partial class MainViewModel : IGizmoTarget
     private void RefreshScaleHint()
     {
         if (IsPlacingHole) HintText = Texts.Get("Hint.HolePlace");
+        else if (IsPickingMirrorFace) HintText = Texts.Get("Hint.MirrorFace");
         else if (IsPickingFace) HintText = Texts.Get("Hint.FacePick");
         else if (OpenContainer is { } open) HintText = Texts.Format("Hint.GroupOpen", open.Name);
         else if (ActiveTool == ViewportTool.Scale && _selected.Count > 1) HintText = Texts.Get("Hint.ScaleSingle");

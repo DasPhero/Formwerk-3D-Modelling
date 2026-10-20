@@ -55,7 +55,12 @@ public sealed partial class MainViewModel
     private void FaceOnFloor()
     {
         IsPickingFace = !IsPickingFace;
-        if (IsPickingFace) IsPlacingHole = false;
+        if (IsPickingFace)
+        {
+            IsPlacingHole = false;
+            IsPickingMirrorFace = false;
+        }
+
         RefreshScaleHint(); // sets the hint for the mode, or the usual one again
     }
 
@@ -66,12 +71,14 @@ public sealed partial class MainViewModel
         if (pick is null)
         {
             EndFacePick();
-            IsPlacingHole = false; // Esc ends the hole tool as well
+            IsPlacingHole = false; // Esc ends the hole tool and the mirror face mode as well
+            IsPickingMirrorFace = false;
             RefreshScaleHint();
             return;
         }
 
         if (IsPlacingHole) PlaceHole(pick);
+        else if (IsPickingMirrorFace) MirrorAtFace(pick);
         else LayFaceOnFloor(pick);
     }
 

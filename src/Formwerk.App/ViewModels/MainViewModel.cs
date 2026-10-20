@@ -681,7 +681,7 @@ public sealed partial class MainViewModel : ObservableObject
         var isGhost = ViewportItems.Any(i => i.NodeId == id && i.Kind == ViewportItemKind.Ghost);
         if (!isGhost)
         {
-            while (node.Parent is BooleanNode or MergeNode or PatternNode) node = node.Parent;
+            while (node.Parent is BooleanNode or MergeNode or PatternNode or MirrorNode) node = node.Parent;
         }
 
         return node;
@@ -767,6 +767,10 @@ public sealed partial class MainViewModel : ObservableObject
         DrillCommand.NotifyCanExecuteChanged();
         LinearPatternCommand.NotifyCanExecuteChanged();
         CircularPatternCommand.NotifyCanExecuteChanged();
+        LinkedMirrorCommand.NotifyCanExecuteChanged();
+        MirroredCopyCommand.NotifyCanExecuteChanged();
+        LinkedMirrorAtFaceCommand.NotifyCanExecuteChanged();
+        MirroredCopyAtFaceCommand.NotifyCanExecuteChanged();
         BooleanCommand.NotifyCanExecuteChanged();
         ToggleHoleCommand.NotifyCanExecuteChanged();
         DropToFloorCommand.NotifyCanExecuteChanged();

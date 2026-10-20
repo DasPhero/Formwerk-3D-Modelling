@@ -186,21 +186,46 @@ public sealed partial class PropertiesViewModel : ObservableObject
         }
     }
 
+    /// <summary>A whole-number parameter of a pattern or a mirror (a choice such as the axis), with its default when it is missing or broken.</summary>
     private int IntParameter(string name)
     {
-        if (_node is not PatternNode pattern) return 0;
-        var definition = PatternParameters.For(pattern.Kind).FirstOrDefault(d => d.Name == name);
-        if (definition is null) return 0;
-        if (!pattern.Parameters.TryGetValue(name, out var text)) return (int)definition.Default;
+        var definition = ChoiceDefinitions()?.FirstOrDefault(d => d.Name == name);
+        if (_node is not ParametricNode node || definition is null) return 0;
+        if (!node.Parameters.TryGetValue(name, out var text)) return (int)definition.Default;
         return ExpressionParser.Evaluate(text, _document.ResolveVariables(out _)) is { IsSuccess: true } result ? (int)Math.Round(result.Value) : (int)definition.Default;
     }
 
+    private IReadOnlyList<ParameterDefinition>? ChoiceDefinitions() => _node switch
+    {
+        PatternNode pattern => PatternParameters.For(pattern.Kind),
+        MirrorNode => MirrorParameters.Definitions,
+        _ => null,
+    };
+
     private void SetChoice(string name, int value)
     {
-        if (_node is PatternNode pattern && IntParameter(name) != value)
-            _history.Execute(new SetParameterCommand(_document, pattern, name, value.ToString(CultureInfo.InvariantCulture)));
+        if (_node is ParametricNode node && ChoiceDefinitions() is not null && IntParameter(name) != value)
+            _history.Execute(new SetParameterCommand(_document, node, name, value.ToString(CultureInfo.InvariantCulture)));
     }
 
+    // ---- mirror (F-PAT-04) ---------------------------------------------------------------------
+
+    /// <summary>The node is a mirror: the plane and "show the original" are offered.</summary>
+    public bool IsMirror => _node is MirrorNode;
+
+    /// <summary>The normal of the mirror plane (0 X, 1 Y, 2 Z), in the space of the mirror node.</summary>
+    public int MirrorAxis
+    {
+        get => IntParameter("axis");
+        set => SetChoice("axis", value);
+    }
+
+    /// <summary>Off: only the mirror image is shown (an independent mirrored copy).</summary>
+    public bool MirrorShowOriginal
+    {
+        get => IntParameter("copyOnly") == 0;
+        set => SetChoice("copyOnly", value ? 0 : 1);
+    }
     private string? ApplySkipped(PatternNode pattern, string text)
     {
         var numbers = PatternNode.ParseSkipped(text, out var error);
@@ -222,7 +247,7 @@ public sealed partial class PropertiesViewModel : ObservableObject
 
     public IReadOnlyList<FieldViewModel> Parameters { get; } = [];
 
-    public bool HasParameters => Parameters.Count > 0;
+    public bool HasParameters => Parameters.Count > 0 || IsMirror; // a mirror has no number fields but its own controls
 
     /// <summary>The node is a hole (F-HOL-02): the type is a choice, only the fields of the type show, and a picture shows the section.</summary>
     public bool IsHoleShape => _node is PrimitiveNode { GeneratorId: "hole" };

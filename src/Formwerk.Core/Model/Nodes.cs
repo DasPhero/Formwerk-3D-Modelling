@@ -304,6 +304,32 @@ public sealed class PatternNode(string name, PatternKind kind) : ParametricNode(
     }
 }
 
+/// <summary>
+/// Mirrors its children at a plane (F-PAT-04). The plane goes through the origin of the mirror node and its normal is the local axis
+/// X, Y or Z (parameter <c>axis</c>: 0, 1, 2), so moving and turning the node moves and turns the plane, also onto a face. With
+/// <c>copyOnly</c> 0 the mirror is linked: the source stays and its mirror image is added, and changing the source changes the image.
+/// With <c>copyOnly</c> 1 only the mirror image is shown; the node then holds a private copy of the source, an independent mirrored
+/// copy of the original.
+/// </summary>
+public sealed class MirrorNode(string name) : ParametricNode(name)
+{
+    public override bool CanHaveChildren => true;
+
+    protected override Node CreateCopy(Guid id)
+    {
+        var copy = new MirrorNode(Name) { Id = id };
+        CopyParametersTo(copy);
+        return copy;
+    }
+
+    protected override void AppendHashInput(StringBuilder sb, IReadOnlyDictionary<string, double>? variables)
+    {
+        base.AppendHashInput(sb, variables);
+        sb.Append("#mirror");
+        AppendParameters(sb, variables);
+    }
+}
+
 /// <summary>Imported or flattened mesh, stored separately under <see cref="MeshId"/>.</summary>
 public sealed class MeshNode(string name, Guid meshId) : Node(name)
 {

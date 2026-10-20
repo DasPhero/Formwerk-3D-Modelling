@@ -299,6 +299,20 @@ Try a different location or file name.</value></data>
   <data name="Err.RadiusNegative" xml:space="preserve"><value>The radius cannot be negative.</value></data>
   <data name="Err.NoEdge" xml:space="preserve"><value>There is no body around the center to measure from.</value></data>
   <data name="Err.EdgeTooFar" xml:space="preserve"><value>That distance is larger than the body: the radius would be negative.</value></data>
+  <data name="Menu.Edit.Mirror" xml:space="preserve"><value>_Mirror</value></data>
+  <data name="Menu.Edit.Mirror.Linked" xml:space="preserve"><value>_Linked mirror</value></data>
+  <data name="Menu.Edit.Mirror.Copy" xml:space="preserve"><value>Mirrored _copy</value></data>
+  <data name="Menu.Edit.Mirror.LinkedFace" xml:space="preserve"><value>Linked mirror at a _face...</value></data>
+  <data name="Menu.Edit.Mirror.CopyFace" xml:space="preserve"><value>Mirrored copy at a f_ace...</value></data>
+  <data name="Name.Mirror" xml:space="preserve"><value>Mirror</value></data>
+  <data name="Name.LinkedMirror" xml:space="preserve"><value>Mirror {0}</value></data>
+  <data name="Name.MirroredCopy" xml:space="preserve"><value>Mirrored copy of {0}</value></data>
+  <data name="Hint.MirrorFace" xml:space="preserve"><value>Click the face that the mirror plane should lie on. Esc cancels.</value></data>
+  <data name="Msg.MirrorNothing" xml:space="preserve"><value>Select the objects to mirror first (they must have the same parent).</value></data>
+  <data name="Mirror.Axis" xml:space="preserve"><value>Plane normal</value></data>
+  <data name="Mirror.Axis.Tip" xml:space="preserve"><value>The mirror plane goes through the origin of this node; its normal is the X, Y or Z axis of the node. Move or turn the node to move or turn the plane.</value></data>
+  <data name="Mirror.ShowOriginal" xml:space="preserve"><value>Show the original too</value></data>
+  <data name="Mirror.ShowOriginal.Tip" xml:space="preserve"><value>Off: only the mirror image is shown (a mirrored copy).</value></data>
   <data name="Msg.FaceAlready" xml:space="preserve"><value>That face already lies on the floor.</value></data>
   <data name="Msg.FaceLocked" xml:space="preserve"><value>{0} is locked and cannot be turned.</value></data>
   <data name="Hint.SelectTool" xml:space="preserve"><value>Drag a rectangle: to the right takes what lies completely inside, to the left everything it touches. Ctrl/Shift adds. Esc cancels. Right-drag orbits, middle-drag pans.</value></data>

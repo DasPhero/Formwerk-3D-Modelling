@@ -106,3 +106,47 @@ public static class PatternMath
 
     private static Vector3 Axis(int axis) => axis switch { 0 => Vector3.UnitX, 1 => Vector3.UnitY, _ => Vector3.UnitZ };
 }
+
+/// <summary>The editable values of a mirror (F-PAT-04).</summary>
+public static class MirrorParameters
+{
+    public static IReadOnlyList<ParameterDefinition> Definitions { get; } =
+    [
+        new("axis", "Plane normal", 0, 0, 2, IsInteger: true),
+        new("copyOnly", "Only the mirror image", 0, 0, 1, IsInteger: true),
+    ];
+}
+
+/// <summary>The reflection of a mirror (F-PAT-04), in the space of the mirror node: a plane through its origin.</summary>
+public static class MirrorMath
+{
+    /// <summary>
+    /// The matrix that mirrors at the plane whose normal is the local axis X, Y or Z, and whether only the mirror image is shown.
+    /// Missing values use their defaults; a value out of range is a <paramref name="problem"/> (the result is then null).
+    /// </summary>
+    public static Matrix4x4? Reflection(IReadOnlyDictionary<string, double> values, out bool copyOnly, out string? problem)
+    {
+        problem = null;
+        copyOnly = false;
+        var p = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        foreach (var definition in MirrorParameters.Definitions)
+        {
+            var value = values.TryGetValue(definition.Name, out var v) ? v : definition.Default;
+            if (!double.IsFinite(value) || value < definition.Min || value > definition.Max)
+            {
+                problem = $"{definition.Label} must be between {definition.Min:0.###} and {definition.Max:0.###}.";
+                return null;
+            }
+
+            p[definition.Name] = Math.Round(value);
+        }
+
+        copyOnly = p["copyOnly"] >= 0.5;
+        return (int)p["axis"] switch
+        {
+            0 => Matrix4x4.CreateScale(-1, 1, 1),
+            1 => Matrix4x4.CreateScale(1, -1, 1),
+            _ => Matrix4x4.CreateScale(1, 1, -1),
+        };
+    }
+}

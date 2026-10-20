@@ -635,4 +635,46 @@ public class ProjectFileTests
 
         Fails(ZipJson(json));
     }
+
+    // ---- mirror (F-PAT-04) ----
+
+    [Fact]
+    public void A_mirror_roundtrips_with_its_plane_parameters_children_and_transform()
+    {
+        var doc = new FormwerkDocument();
+        var history = new UndoHistory();
+        var mirror = new MirrorNode("Symmetry") { Transform = new Transform(new Vector3(12, 0, 0), new EulerAngles(0, 0, 90).ToQuaternion(), Vector3.One) };
+        mirror.Parameters["axis"] = "1";
+        mirror.Parameters["copyOnly"] = "1";
+        history.Execute(new AddNodeCommand(doc, doc.Root, mirror));
+        history.Execute(new AddNodeCommand(doc, mirror, new PrimitiveNode("box", "Box") { Parameters = { ["width"] = "20" } }));
+
+        var loaded = Open(Save(doc));
+
+        var copy = Assert.IsType<MirrorNode>(Assert.Single(loaded.Root.Children));
+        AssertSameNode(mirror, copy);
+        Assert.Equal("1", copy.Parameters["axis"]);
+        Assert.Equal("1", copy.Parameters["copyOnly"]);
+        Assert.Equal(mirror.Transform, copy.Transform);
+        Assert.Equal("20", ((PrimitiveNode)Assert.Single(copy.Children)).Parameters["width"]);
+        Assert.Equal(mirror.ComputeHash(doc.ResolveVariables(out _)), copy.ComputeHash(loaded.ResolveVariables(out _)));
+    }
+
+    [Fact]
+    public void A_mirror_file_in_the_pinned_shape_loads()
+    {
+        var json = """
+            {
+              "schemaVersion": 1, "application": "Formwerk",
+              "nodes": [
+                { "type": "mirror", "id": "cccccccc-0000-0000-0000-000000000001", "name": "M",
+                  "parameters": { "axis": "2" }, "children": [] }
+              ]
+            }
+            """;
+
+        var mirror = Assert.IsType<MirrorNode>(Open(ZipJson(json)).Root.Children[0]);
+
+        Assert.Equal("2", mirror.Parameters["axis"]);
+    }
 }

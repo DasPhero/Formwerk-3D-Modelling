@@ -168,6 +168,9 @@ public static class ProjectFile
                 foreach (var number in pattern.Skipped) json.WriteNumberValue(number);
                 json.WriteEndArray();
                 break;
+            case MirrorNode mirror:
+                WriteParameters(json, mirror);
+                break;
             case MeshNode mesh:
                 json.WriteString("meshId", mesh.MeshId);
                 break;
@@ -210,6 +213,7 @@ public static class ProjectFile
         BooleanNode => "boolean",
         MergeNode => "merge",
         PatternNode => "pattern",
+        MirrorNode => "mirror",
         _ => throw new NotSupportedException($"Node type {node.GetType().Name} cannot be saved."),
     };
 
@@ -410,6 +414,7 @@ public static class ProjectFile
             "boolean" => new BooleanNode(name, ReadOperation(o)) { Id = id },
             "merge" => new MergeNode(name) { Id = id },
             "pattern" => new PatternNode(name, ReadPatternKind(o)) { Id = id },
+            "mirror" => new MirrorNode(name) { Id = id },
             _ => throw new ProjectFormatException($"The project contains an object type ('{type}') that this version of Formwerk does not know."),
         };
 

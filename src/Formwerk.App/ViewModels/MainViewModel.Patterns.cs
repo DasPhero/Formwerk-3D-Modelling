@@ -57,7 +57,7 @@ public sealed partial class MainViewModel
         var nodes = SelectedTopLevel();
         if (!SameParent(nodes)) return;
 
-        var center = CircleCenter(nodes);
+        var center = BodyCenterNear(nodes);
         var pattern = new PatternNode(UniqueName(Texts.Get("Name.Pattern")), PatternKind.Circular) { Transform = Transform.FromPosition(center) };
         pattern.Parameters["count"] = "3";
         pattern.Parameters["angle"] = "360";
@@ -74,7 +74,7 @@ public sealed partial class MainViewModel
     /// The center of a new circular pattern, in the space of the parent: the middle (in X and Y) of the biggest body that is not part
     /// of the selection and lies in the same container, with Z = 0; the origin without such a body.
     /// </summary>
-    private Vector3 CircleCenter(IReadOnlyCollection<Node> nodes)
+    private Vector3 BodyCenterNear(IReadOnlyCollection<Node> nodes)
     {
         if (_lastResult is null) return Vector3.Zero;
         var selected = new HashSet<Guid>();

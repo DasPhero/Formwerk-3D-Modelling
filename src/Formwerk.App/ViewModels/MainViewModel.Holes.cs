@@ -19,7 +19,7 @@ public sealed partial class MainViewModel
     public partial bool IsPlacingHole { get; set; }
 
     /// <summary>The viewport reports clicks as faces instead of selecting (hole tool or "face on floor").</summary>
-    public bool IsFacePickActive => IsPickingFace || IsPlacingHole;
+    public bool IsFacePickActive => IsPickingFace || IsPlacingHole || IsPickingMirrorFace;
 
     /// <summary>The settings of the next hole.</summary>
     public HoleToolViewModel HoleTool => _holeTool ??= new HoleToolViewModel(() => _document.ResolveVariables(out _));
@@ -37,7 +37,12 @@ public sealed partial class MainViewModel
     private void Drill()
     {
         IsPlacingHole = !IsPlacingHole;
-        if (IsPlacingHole) IsPickingFace = false;
+        if (IsPlacingHole)
+        {
+            IsPickingFace = false;
+            IsPickingMirrorFace = false;
+        }
+
         RefreshScaleHint();
     }
 
