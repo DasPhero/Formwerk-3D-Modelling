@@ -132,4 +132,157 @@ public class HoleToolTests
         Assert.Contains(profile, p => Math.Abs(p.Z + 8) < 1e-4);
         Assert.Contains(profile, p => Math.Abs(p.R - 3.2) < 1e-4);
     }
+
+    // ---- screw presets (F-HOL-03) ----
+
+    private static HoleToolViewModel ToolWithTolerance(double tolerance = 0.2) =>
+        new(() => new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase) { ["Tolerance"] = tolerance });
+
+    [Fact]
+    public void A_new_tool_has_no_preset()
+    {
+        var tool = ToolWithTolerance();
+
+        Assert.Equal("", tool.PresetSize);
+        Assert.False(tool.HasPreset);
+        Assert.Equal("Manual", tool.ScrewChoices[0].Label);
+        Assert.Equal(["", "M2", "M2.5", "M3", "M4", "M5", "M6", "M8"], tool.ScrewChoices.Select(c => c.Key).ToArray());
+    }
+
+    [Fact]
+    public void Choosing_a_screw_fills_in_a_medium_clearance_hole()
+    {
+        var tool = ToolWithTolerance();
+
+        tool.PresetSize = "M3";
+
+        Assert.True(tool.HasPreset);
+        Assert.Equal(HoleType.Cylindrical, tool.Type);
+        Assert.True(tool.Through);
+        Assert.Equal("3+2*Tolerance", tool.Diameter.Text);
+        Assert.Null(tool.Diameter.Error);
+        Assert.True(tool.Diameter.IsLinked); // the tolerance is in it
+    }
+
+    [Fact]
+    public void Choosing_the_kind_changes_type_and_fields_at_once()
+    {
+        var tool = ToolWithTolerance();
+        tool.PresetSize = "M3";
+
+        tool.PresetKind = HolePresetKind.CountersunkHead;
+
+        Assert.Equal(HoleType.Countersink, tool.Type);
+        Assert.True(tool.Through);
+        Assert.Equal("3+2*Tolerance", tool.Diameter.Text);
+        Assert.Equal("5.5+Tolerance", tool.HeadDiameter.Text);
+        Assert.Equal("90", tool.HeadAngle.Text);
+        Assert.True(tool.ShowHead);
+        Assert.True(tool.ShowHeadAngle);
+
+        var parameters = tool.BuildParameters(20);
+        Assert.Equal("2", parameters["type"]);
+        Assert.Equal("5.5+Tolerance", parameters["sinkDiameter"]);
+        Assert.Equal("1", parameters["through"]);
+    }
+
+    [Fact]
+    public void A_core_hole_is_blind_and_shows_its_depth()
+    {
+        var tool = ToolWithTolerance();
+        tool.PresetSize = "M3";
+
+        tool.PresetKind = HolePresetKind.CoreHole;
+
+        Assert.False(tool.Through);
+        Assert.True(tool.ShowDepth);
+        Assert.Equal("2.5", tool.Diameter.Text);
+        Assert.Equal("9", tool.Depth.Text);
+        Assert.Equal("0", tool.BuildParameters(50)["through"]);
+        Assert.Equal("9", tool.BuildParameters(50)["depth"]);
+    }
+
+    [Fact]
+    public void The_cap_head_preset_makes_a_counterbore()
+    {
+        var tool = ToolWithTolerance();
+        tool.PresetSize = "M4";
+
+        tool.PresetKind = HolePresetKind.CapHead;
+
+        Assert.Equal(HoleType.Counterbore, tool.Type);
+        Assert.Equal("7+2*Tolerance", tool.HeadDiameter.Text);
+        Assert.Equal("4+Tolerance", tool.HeadDepth.Text);
+        Assert.True(tool.ShowHeadDepth);
+    }
+
+    [Fact]
+    public void The_picture_follows_the_preset()
+    {
+        var tool = ToolWithTolerance();
+        tool.PresetSize = "M3";
+        var plain = tool.Section.Hole;
+        var changes = new List<string?>();
+        tool.PropertyChanged += (_, e) => changes.Add(e.PropertyName);
+
+        tool.PresetKind = HolePresetKind.CountersunkHead;
+
+        Assert.Contains(nameof(HoleToolViewModel.Section), changes);
+        Assert.NotEqual(plain, tool.Section.Hole);
+    }
+
+    [Fact]
+    public void Fields_can_still_be_changed_after_a_preset()
+    {
+        var tool = ToolWithTolerance();
+        tool.PresetSize = "M3";
+
+        tool.Diameter.Text = "3.6";
+
+        Assert.Equal("3.6", tool.BuildParameters(10)["diameter"]);
+        Assert.Equal("M3", tool.PresetSize);
+    }
+
+    [Fact]
+    public void Going_back_to_manual_leaves_the_fields_as_they_are()
+    {
+        var tool = ToolWithTolerance();
+        tool.PresetSize = "M3";
+        tool.PresetKind = HolePresetKind.CapHead;
+
+        tool.PresetSize = "";
+
+        Assert.False(tool.HasPreset);
+        Assert.Equal(HoleType.Counterbore, tool.Type);
+        Assert.Equal("3+2*Tolerance", tool.Diameter.Text);
+    }
+
+    [Fact]
+    public void Every_screw_and_kind_fills_in_without_an_error()
+    {
+        foreach (var size in HolePresets.Sizes)
+        {
+            foreach (var kind in Enum.GetValues<HolePresetKind>())
+            {
+                var tool = ToolWithTolerance();
+                tool.PresetSize = size.Name;
+                tool.PresetKind = kind;
+
+                Assert.Null(tool.Diameter.Error);
+                Assert.Null(tool.HeadDiameter.Error);
+                var values = tool.BuildParameters(12).ToDictionary(
+                    p => p.Key,
+                    p => Formwerk.Core.Expressions.ExpressionParser.Evaluate(p.Value, new Dictionary<string, double> { ["Tolerance"] = 0.2 }).Value,
+                    StringComparer.OrdinalIgnoreCase);
+                Assert.True(ShapeLibrary.Hole.Generate(values).IsWatertight(), $"{size.Name} {kind}");
+            }
+        }
+    }
+
+    [Fact]
+    public void The_preset_kinds_have_texts()
+    {
+        Assert.Equal(Enum.GetValues<HolePresetKind>().Length, HolePresetKindItem.All().Count);
+        Assert.All(HolePresetKindItem.All(), item => Assert.False(string.IsNullOrWhiteSpace(item.Label)));
+    }
 }

@@ -310,4 +310,41 @@ public class HolePlacementTests
         Assert.Equal(hole.Parameters["diameter"], copy.Parameters["diameter"]);
         Assert.Equal(hole.Transform, copy.Transform);
     }
+
+    [UiFact]
+    public async Task A_hole_from_a_screw_preset_follows_the_print_tolerance_of_the_project()
+    {
+        var (vm, box) = await BoxScene();
+        vm.HoleTool.PresetSize = "M3";
+        vm.HoleTool.PresetKind = HolePresetKind.CountersunkHead;
+
+        var hole = (PrimitiveNode)await Drill(vm, TopOf(box, 6, 0));
+
+        Assert.Equal("3+2*Tolerance", hole.Parameters["diameter"]);
+        Assert.Equal("5.5+Tolerance", hole.Parameters["sinkDiameter"]);
+        Assert.Equal("1", hole.Parameters["through"]);
+        var cut = 8000 - SolidVolume(vm);
+        Assert.True(cut > Math.PI * 1.7 * 1.7 * 20 * 0.99); // at least the 3.4 mm shaft all the way, plus the countersink
+
+        vm.Document.Settings.Tolerance = 0.6; // the setting of the project changes: every hole with a preset follows
+        vm.Document.NotifyChanged();
+        await vm.WaitForEvaluationAsync();
+
+        Assert.True(8000 - SolidVolume(vm) > cut * 1.1);
+    }
+
+    [UiFact]
+    public async Task The_fields_of_a_preset_hole_are_marked_as_linked_to_the_tolerance()
+    {
+        var (vm, box) = await BoxScene();
+        vm.HoleTool.PresetSize = "M4";
+        vm.HoleTool.PresetKind = HolePresetKind.CapHead;
+        var hole = await Drill(vm, TopOf(box));
+
+        vm.SelectOnly([hole.Id]);
+        var index = ShapeLibrary.Hole.Parameters.ToList().FindIndex(p => p.Name == "diameter");
+
+        Assert.True(vm.Properties!.Parameters[index].IsLinked);
+        Assert.Contains("Tolerance", vm.Properties.Parameters[index].LinkTip);
+    }
 }

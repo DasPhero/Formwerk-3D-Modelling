@@ -454,6 +454,23 @@
                         AutomationProperties.AutomationId="HolePanel">
                     <StackPanel DataContext="{Binding HoleTool}">
                         <TextBlock Text="{res:Loc Hole.Title}" Style="{StaticResource PanelHeader}" Margin="0,0,0,6" />
+                        <!-- Screw presets (F-HOL-03): a size and what the hole is for fill in the rest -->
+                        <Grid Margin="0,0,0,6" ToolTip="{res:Loc Hole.Preset.Tip}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="{res:Loc Hole.Preset.Screw}" VerticalAlignment="Center" Margin="0,0,10,4" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding ScrewChoices}" DisplayMemberPath="Label" SelectedValuePath="Key"
+                                      SelectedValue="{Binding PresetSize}" Margin="0,0,0,4" AutomationProperties.AutomationId="HoleScrew" />
+                            <TextBlock Grid.Row="1" Text="{res:Loc Hole.Preset.For}" VerticalAlignment="Center" Margin="0,0,10,0" />
+                            <ComboBox Grid.Row="1" Grid.Column="1" ItemsSource="{Binding PresetKinds}" DisplayMemberPath="Label" SelectedValuePath="Kind"
+                                      SelectedValue="{Binding PresetKind}" IsEnabled="{Binding HasPreset}" AutomationProperties.AutomationId="HoleKind" />
+                        </Grid>
                         <ComboBox ItemsSource="{Binding Types}" DisplayMemberPath="Label" SelectedValuePath="Type" SelectedValue="{Binding Type}"
                                   Margin="0,0,0,6" AutomationProperties.AutomationId="HoleType" />
                         <ContentControl Content="{Binding Section}" Margin="0,0,0,6" />

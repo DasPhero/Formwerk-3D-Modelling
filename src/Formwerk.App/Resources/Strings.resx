@@ -247,6 +247,17 @@ Try a different location or file name.</value></data>
   <data name="Hole.Through" xml:space="preserve"><value>Through all</value></data>
   <data name="Hole.Through.Tip" xml:space="preserve"><value>The hole goes all the way through the body and stays through when the body is resized or moved. Switch off to type a depth.</value></data>
   <data name="Hole.Err.Range" xml:space="preserve"><value>{0} must be between {1} and {2}.</value></data>
+  <data name="Hole.Preset.Screw" xml:space="preserve"><value>Screw</value></data>
+  <data name="Hole.Preset.Manual" xml:space="preserve"><value>Manual</value></data>
+  <data name="Hole.Preset.For" xml:space="preserve"><value>For</value></data>
+  <data name="Hole.Preset.Tip" xml:space="preserve"><value>Choose a screw size to fill in the hole. The print tolerance (File &gt; Settings) is added where the screw must pass or fit in; core hole and insert sizes are typical values for the screw or insert. You can change every field afterwards.</value></data>
+  <data name="Hole.Kind.ClearanceFine" xml:space="preserve"><value>Clearance, fine</value></data>
+  <data name="Hole.Kind.ClearanceMedium" xml:space="preserve"><value>Clearance, medium</value></data>
+  <data name="Hole.Kind.ClearanceCoarse" xml:space="preserve"><value>Clearance, coarse</value></data>
+  <data name="Hole.Kind.CountersunkHead" xml:space="preserve"><value>Countersunk head</value></data>
+  <data name="Hole.Kind.CapHead" xml:space="preserve"><value>Cap head (socket)</value></data>
+  <data name="Hole.Kind.CoreHole" xml:space="preserve"><value>Core hole, self-tapping</value></data>
+  <data name="Hole.Kind.HeatSetInsert" xml:space="preserve"><value>Heat-set insert</value></data>
   <data name="Var.Title" xml:space="preserve"><value>Variables</value></data>
   <data name="Var.Hint" xml:space="preserve"><value>Give a number or a formula a name, for example Wall = 2. Then type the name into any size field, for example Wall*2 or Wall+0.4. Changing the variable changes everything that uses it.</value></data>
   <data name="Var.Add" xml:space="preserve"><value>Add variable</value></data>

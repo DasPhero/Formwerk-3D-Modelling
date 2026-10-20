@@ -19,6 +19,24 @@ public sealed record HoleTypeItem(HoleType Type, string Label)
     ];
 }
 
+/// <summary>One entry of the screw choice of the hole tool: a size such as "M3", or "" for no preset.</summary>
+public sealed record ScrewChoice(string Key, string Label);
+
+/// <summary>One entry of the "for" choice of the hole tool: what the hole is for.</summary>
+public sealed record HolePresetKindItem(HolePresetKind Kind, string Label)
+{
+    public static IReadOnlyList<HolePresetKindItem> All() =>
+    [
+        new(HolePresetKind.ClearanceFine, Texts.Get("Hole.Kind.ClearanceFine")),
+        new(HolePresetKind.ClearanceMedium, Texts.Get("Hole.Kind.ClearanceMedium")),
+        new(HolePresetKind.ClearanceCoarse, Texts.Get("Hole.Kind.ClearanceCoarse")),
+        new(HolePresetKind.CountersunkHead, Texts.Get("Hole.Kind.CountersunkHead")),
+        new(HolePresetKind.CapHead, Texts.Get("Hole.Kind.CapHead")),
+        new(HolePresetKind.CoreHole, Texts.Get("Hole.Kind.CoreHole")),
+        new(HolePresetKind.HeatSetInsert, Texts.Get("Hole.Kind.HeatSetInsert")),
+    ];
+}
+
 /// <summary>
 /// What the next hole looks like (F-HOL-01, F-HOL-02): the type and the sizes, as expressions like in the properties panel, so a
 /// project variable can be used. A new hole copies these values; changing the tool never changes holes that already exist.
@@ -46,6 +64,42 @@ public sealed partial class HoleToolViewModel : ObservableObject
     }
 
     public IReadOnlyList<HoleTypeItem> Types { get; } = HoleTypeItem.All();
+
+    /// <summary>"Manual" and the screw sizes M2 to M8 (F-HOL-03).</summary>
+    public IReadOnlyList<ScrewChoice> ScrewChoices { get; } =
+        [new("", Texts.Get("Hole.Preset.Manual")), .. HolePresets.Sizes.Select(s => new ScrewChoice(s.Name, s.Name))];
+
+    public IReadOnlyList<HolePresetKindItem> PresetKinds { get; } = HolePresetKindItem.All();
+
+    /// <summary>The screw size of the preset, or "" for none. Choosing one fills in the tool; the fields can be changed afterwards.</summary>
+    [ObservableProperty]
+    public partial string PresetSize { get; set; } = "";
+
+    /// <summary>What the hole is for (clearance, countersunk head, ...); only used together with a screw size.</summary>
+    [ObservableProperty]
+    public partial HolePresetKind PresetKind { get; set; } = HolePresetKind.ClearanceMedium;
+
+    public bool HasPreset => PresetSize.Length > 0;
+
+    partial void OnPresetSizeChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasPreset));
+        ApplyPreset();
+    }
+
+    partial void OnPresetKindChanged(HolePresetKind value) => ApplyPreset();
+
+    /// <summary>
+    /// Fills the type, through or blind and the sizes of the tool from the preset. The sizes are formulas with <c>Tolerance</c> in
+    /// them where the print tolerance matters (F-HOL-04), so a hole made from them follows the project setting.
+    /// </summary>
+    private void ApplyPreset()
+    {
+        if (HolePresets.Create(PresetSize, PresetKind) is not { } preset) return;
+        Type = preset.Type;
+        Through = preset.Through;
+        foreach (var (name, expression) in preset.Parameters) _fields[name].Text = expression;
+    }
 
     [ObservableProperty]
     public partial HoleType Type { get; set; }
