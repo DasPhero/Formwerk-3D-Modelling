@@ -18,8 +18,22 @@
 
 ## Active step
 
-**Status:** none
-(Last finished: hole caveats, see "Done". Next candidates: variable table F-PAR-03, hole presets and tolerance F-HOL-03/04, patterns F-PAT.)
+**Status:** in progress
+**Step name:** Phase 2 block 2: variable table (F-PAR-03), then templates carry their variables
+**Goal:** the user can create project variables (`Wandstaerke = 2`, `Schraube = 3.4`) in a table, use them in every parameter field, see which fields are linked, and change one variable to update all linked objects in one evaluation; templates keep working with them.
+**Requirement IDs:** F-PAR-03 (commit 1); template follow-up of F-TPL-01/02 (commit 2).
+**Design (decided):**
+- Core: `ExpressionParser.UsedNames(text)` (variables an expression refers to); `FormwerkDocument.ResolveVariables` becomes order independent (repeat until no progress; unknown name / circular reference are reported per variable), so the order of the table does not matter. Static `VariableNames.Check` (identifier rules: letter or `_` first, then letters/digits/`_`; not `min`, `max`, `round`; unique ignoring case). `SetVariablesCommand` (whole ordered list swapped, undo restores) is the one command for add, edit, delete, rename; a rename in the app is a composite with `SetParameterCommand`s that rewrite whole-word references in other variables and in parameters.
+- App: `VariablesViewModel` with `VariableRowViewModel` (name field, expression field, value text, delete); an Expander "Variables" (collapsed by default: optional, shown when needed) at the top of the right panel; "Add variable" button. A field of the properties panel whose expression uses a variable is marked (accent border, tooltip names the variables): `FieldViewModel.IsLinked`/`LinkTip`. Position and rotation fields store numbers, not expressions, so they are not linked (unchanged).
+- Existing test `Unresolvable_variable_is_reported_not_thrown` documents the old order dependence and changes with the new behavior.
+- Not in this step: the global tolerance as a built-in variable (F-HOL-04), presets (F-HOL-03).
+**Checklist:**
+- [x] 1. Core: `UsedNames`, `VariableNames`, order independent `ResolveVariables`, `SetVariablesCommand` (40 new tests; the old order-dependent test changed on purpose)
+- [x] 2. App: `VariablesViewModel` + rows (20 tests), Variables expander in the right panel, linked marks (`FieldViewModel.IsLinked`), strings
+- [x] 3. Build green (1608 tests), real exe: variable Wand = 2 created in the table, Wand*10 typed into the width, Wand = 3 gives 30 mm, broken expression refused; docs; commit + push (F-PAR-03) next
+- [ ] 4. Commit 2: templates save only the variables they use (transitively) and insert adds missing ones in the same undo step; tests, build, docs, commit + push
+**Files touched so far:** none
+**Notes / decisions / problems:** none yet
 
 <!-- Template for a new active step:
 
@@ -64,7 +78,7 @@ Done (fully): F-LIB-01 (all 12 shapes), F-GRP-02, F-GRP-04, F-CPY-01, F-ROT-04, 
 
 ## Current state of the project (snapshot)
 
-- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1548 tests green at last run, about 30 s, test projects run one at a time). Executable: `binary\Formwerk.exe`.
+- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1608 tests green at last run, about 30 s, test projects run one at a time). Executable: `binary\Formwerk.exe`.
 - Working application: add box/cylinder/sphere, typed editing of position/rotation/dimensions (numbers, expressions, `+10`, `150%`, variables), selection (viewport and list), hole/group/merge/boolean, duplicate/delete, undo history panel, STL export, **STL/OBJ import (File > Import, Ctrl+I, drag and drop onto the window, unit question for tiny/huge models, lands on the plate, saved in the project)**, 3D view with build plate and orbit camera, new/open/save/save as of `.fwp` projects, modified marker, unsaved-changes questions, autosave every 2 minutes, crash recovery, **move gizmo (arrows + plane handles), rotate gizmo (rings), scale gizmo (box with 6 face and 8 corner handles, Proportional switch, Ctrl = from center, shapes change their dimensions), tools Select/Move/Rotate/Scale (Q/W/E/R), grid and angle snapping and **snapping to other objects (edges and centers flush/centered, floor, bed center, pink guide frames, tolerance 10 px at any zoom, "Objects" switch)**, Alt/Shift suppress snapping, live readout at the cursor, Esc cancels, one undo step per drag, drop to floor (B)**.
 - Also working now (after the lines above were written): settings dialog (File > Settings, Ctrl+,), 3MF export and import, Open in Slicer, mesh check banner with one-click repair. Not done: repair of self-intersections and non-manifold edges, OBJ export, scaling several objects at once, snap point markers / circle centers / face-to-face gap / align tool, edge lines, DirectX renderer, more shapes, holes tool, patterns, templates, "Open in Slicer", `thumbnail.png` in the project file. (Settings dialog and persistent snap settings are done.)
 - Verified in the real exe with real input (UI automation + real mouse events): start, add shapes, title and `*` marker, menus, unsaved-changes dialog on close, crash recovery after a killed process, **mouse drag of the X arrow (0 to 22 mm, readout and highlight, one "Move Box" entry), mouse drag of the Z ring (30 degrees, readout, one "Rotate Box" entry), Esc during a drag (nothing changes, no history entry), mouse drag of the scale corner handle (41 x 41 x 41 mm, proportional) and of the +X face handle (20 to 22 mm, only the width changes, one "Scale Box" entry), mouse drag of a box towards another box (pink guide frame at the flush plane, ends exactly flush at X = -20, one "Move Box 2" entry)**. The user confirmed picking and the camera controls work.

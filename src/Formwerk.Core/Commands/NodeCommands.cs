@@ -162,6 +162,44 @@ public sealed class SetParameterCommand(FormwerkDocument document, PrimitiveNode
     }
 }
 
+/// <summary>
+/// Replaces the whole variable table (name to expression, in this order) as one undo step. It is the one command for adding,
+/// changing, renaming and deleting a variable (F-PAR-03); undo brings the old table back in its old order.
+/// </summary>
+public sealed class SetVariablesCommand : IDocumentCommand
+{
+    private readonly FormwerkDocument _document;
+    private readonly List<KeyValuePair<string, string>> _new;
+    private List<KeyValuePair<string, string>> _old = [];
+
+    public SetVariablesCommand(FormwerkDocument document, IEnumerable<KeyValuePair<string, string>> table, string name)
+    {
+        _document = document;
+        _new = [.. table];
+        Name = name;
+    }
+
+    public string Name { get; }
+
+    /// <summary>False when the table would stay exactly as it is (the caller can skip the command).</summary>
+    public bool HasEffect => !_document.Variables.SequenceEqual(_new);
+
+    public void Do()
+    {
+        _old = [.. _document.Variables];
+        Replace(_new);
+    }
+
+    public void Undo() => Replace(_old);
+
+    private void Replace(List<KeyValuePair<string, string>> table)
+    {
+        _document.Variables.Clear(); // a cleared dictionary lists its items in the order they are added again
+        foreach (var (name, expression) in table) _document.Variables[name] = expression;
+        _document.NotifyChanged();
+    }
+}
+
 public sealed class SetRoleCommand(FormwerkDocument document, Node node, NodeRole role) : IDocumentCommand
 {
     private NodeRole _old;

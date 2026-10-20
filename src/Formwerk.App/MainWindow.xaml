@@ -59,10 +59,15 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="{Binding Label}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
                 <TextBox Grid.Column="1" Text="{Binding Text, UpdateSourceTrigger=LostFocus}"
-                         views:TextBoxBehavior.CommitOnEnter="True" ToolTip="{Binding Error}">
+                         views:TextBoxBehavior.CommitOnEnter="True" ToolTip="{Binding Tip}">
                     <TextBox.Style>
                         <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
                             <Style.Triggers>
+                                <!-- linked to a project variable (F-PAR-03): accent border; an error comes after it and wins -->
+                                <DataTrigger Binding="{Binding IsLinked}" Value="True">
+                                    <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                    <Setter Property="BorderThickness" Value="1.5" />
+                                </DataTrigger>
                                 <DataTrigger Binding="{Binding HasError}" Value="True">
                                     <Setter Property="BorderBrush" Value="{DynamicResource ErrorBrush}" />
                                     <Setter Property="BorderThickness" Value="1.5" />
@@ -73,6 +78,54 @@
                 </TextBox>
                 <TextBlock Grid.Column="2" Text="{Binding Unit}" Margin="6,0,0,0" VerticalAlignment="Center"
                            Foreground="{DynamicResource MutedTextBrush}" />
+            </Grid>
+        </DataTemplate>
+
+        <!-- Text box of the variable table: red border on an error -->
+        <Style x:Key="VariableBox" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+            <Setter Property="ToolTip" Value="{Binding Tip}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding HasError}" Value="True">
+                    <Setter Property="BorderBrush" Value="{DynamicResource ErrorBrush}" />
+                    <Setter Property="BorderThickness" Value="1.5" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- One variable: name = expression, delete, and below it the value (or the error) -->
+        <DataTemplate DataType="{x:Type vm:VariableRowViewModel}">
+            <Grid Margin="0,3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="60" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="1.4*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBox DataContext="{Binding Name}" Text="{Binding Text, UpdateSourceTrigger=LostFocus}" Style="{StaticResource VariableBox}"
+                         views:TextBoxBehavior.CommitOnEnter="True" AutomationProperties.AutomationId="VariableName" />
+                <TextBlock Grid.Column="1" Text="=" Margin="6,0" VerticalAlignment="Center" Foreground="{DynamicResource MutedTextBrush}" />
+                <TextBox Grid.Column="2" DataContext="{Binding Expression}" Text="{Binding Text, UpdateSourceTrigger=LostFocus}"
+                         Style="{StaticResource VariableBox}" views:TextBoxBehavior.CommitOnEnter="True"
+                         AutomationProperties.AutomationId="VariableExpression" />
+                <Button Grid.Column="3" Content="✕" ToolTip="{res:Loc Var.Delete.Tip}" Command="{Binding DeleteCommand}" Margin="6,0,0,0" MinWidth="0"
+                        Padding="8,2" VerticalAlignment="Center" AutomationProperties.AutomationId="VariableDelete" />
+                <TextBlock Grid.Row="1" Grid.ColumnSpan="4" Text="{Binding ValueText, StringFormat='= {0}'}" FontSize="11" Margin="2,2,0,0"
+                           TextWrapping="Wrap" AutomationProperties.AutomationId="VariableValue">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasValueError}" Value="True">
+                                    <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
             </Grid>
         </DataTemplate>
 
@@ -424,6 +477,16 @@
                     <TextBlock DockPanel.Dock="Top" Text="{res:Loc Panel.Properties}" Style="{StaticResource PanelHeader}" />
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel>
+                            <!-- Project variables (F-PAR-03): optional, so folded away until they are needed -->
+                            <Expander Header="{res:Loc Var.Title}" Margin="0,0,0,10" AutomationProperties.AutomationId="VariablesExpander">
+                                <StackPanel Margin="0,6,0,0">
+                                    <TextBlock Text="{res:Loc Var.Hint}" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,6"
+                                               Foreground="{DynamicResource MutedTextBrush}" />
+                                    <ItemsControl ItemsSource="{Binding Variables.Rows}" />
+                                    <Button Content="{res:Loc Var.Add}" ToolTip="{res:Loc Var.Add.Tip}" Command="{Binding Variables.AddCommand}"
+                                            HorizontalAlignment="Left" Margin="0,6,0,0" AutomationProperties.AutomationId="AddVariable" />
+                                </StackPanel>
+                            </Expander>
                             <TextBlock Text="{Binding PropertiesMessage}" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" />
                             <ContentControl Content="{Binding Properties}" />
                         </StackPanel>

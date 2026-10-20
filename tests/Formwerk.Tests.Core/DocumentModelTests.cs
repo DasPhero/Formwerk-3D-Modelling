@@ -254,7 +254,7 @@ public class DocumentModelTests
     public void Unresolvable_variable_is_reported_not_thrown()
     {
         var doc = new FormwerkDocument();
-        doc.Variables["A"] = "B+1";
+        doc.Variables["A"] = "Fehlt+1";
         doc.Variables["B"] = "2";
 
         var vars = doc.ResolveVariables(out var errors);

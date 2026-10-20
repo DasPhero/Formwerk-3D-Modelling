@@ -156,9 +156,9 @@ public sealed partial class PropertiesViewModel : ObservableObject
             for (var i = 0; i < Parameters.Count && generator is not null; i++)
             {
                 var definition = generator.Parameters[i];
-                Parameters[i].SetFromModel(primitive.Parameters.TryGetValue(definition.Name, out var text)
-                    ? text
-                    : Format(definition.Default));
+                var stored = primitive.Parameters.TryGetValue(definition.Name, out var text) ? text : Format(definition.Default);
+                Parameters[i].SetFromModel(stored);
+                Parameters[i].ShowLinks(ExpressionParser.UsedNames(stored)); // marked when it uses project variables (F-PAR-03)
             }
 
             if (IsHoleShape)

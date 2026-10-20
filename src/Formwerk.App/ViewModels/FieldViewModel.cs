@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using Formwerk.App.Resources;
 
 namespace Formwerk.App.ViewModels;
 
@@ -32,6 +33,21 @@ public sealed partial class FieldViewModel : ObservableObject
     [ObservableProperty]
     public partial bool IsVisible { get; set; } = true;
 
+    /// <summary>True when the value of the field is linked to project variables (F-PAR-03): the field is marked.</summary>
+    [ObservableProperty]
+    public partial bool IsLinked { get; set; }
+
+    /// <summary>Names the variables of a linked field.</summary>
+    [ObservableProperty]
+    public partial string? LinkTip { get; set; }
+
+    /// <summary>Marks the field as linked to the given variables, or removes the mark when there are none.</summary>
+    public void ShowLinks(IReadOnlyList<string> names)
+    {
+        IsLinked = names.Count > 0;
+        LinkTip = names.Count > 0 ? Texts.Format("Props.LinkedTo", string.Join(", ", names)) : null;
+    }
+
     public string Text
     {
         get => _text;
@@ -49,7 +65,16 @@ public sealed partial class FieldViewModel : ObservableObject
         }
     }
 
-    partial void OnErrorChanged(string? value) => OnPropertyChanged(nameof(HasError));
+    /// <summary>What the tool tip says: the error, or which variables the field is linked to.</summary>
+    public string? Tip => HasError ? Error : LinkTip;
+
+    partial void OnErrorChanged(string? value)
+    {
+        OnPropertyChanged(nameof(HasError));
+        OnPropertyChanged(nameof(Tip));
+    }
+
+    partial void OnLinkTipChanged(string? value) => OnPropertyChanged(nameof(Tip));
 
     /// <summary>Shows the model value; clears a previous error.</summary>
     public void SetFromModel(string text)

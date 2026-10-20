@@ -53,16 +53,69 @@ public sealed class FormwerkDocument
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Evaluates the variable table in insertion order. Unresolvable variables are reported in <paramref name="errors"/>.</summary>
+    /// <summary>
+    /// Evaluates the variable table. The order of the table does not matter: a variable may use one that stands below it. Variables
+    /// that cannot be resolved are reported in <paramref name="errors"/> (their own error, "depends on a variable with an error", or a
+    /// circular reference) and are missing from the result.
+    /// </summary>
     public Dictionary<string, double> ResolveVariables(out Dictionary<string, string> errors)
     {
         var values = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         errors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var (name, expression) in Variables)
+
+        // Evaluate again and again until nothing new resolves: a variable that waits for a later one is picked up in the next round.
+        var pending = Variables.ToList();
+        var lastError = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        bool progress;
+        do
         {
-            var result = ExpressionParser.Evaluate(expression, values);
-            if (result.IsSuccess) values[name] = result.Value;
-            else errors[name] = result.Error!;
+            progress = false;
+            for (var i = 0; i < pending.Count;)
+            {
+                var (name, expression) = pending[i];
+                var result = ExpressionParser.Evaluate(expression, values);
+                if (result.IsSuccess)
+                {
+                    values[name] = result.Value;
+                    pending.RemoveAt(i);
+                    progress = true;
+                }
+                else
+                {
+                    lastError[name] = result.Error!;
+                    i++;
+                }
+            }
+        }
+        while (progress && pending.Count > 0);
+
+        if (pending.Count == 0) return values;
+
+        // What is left has its own error (a typo, an unknown name), depends on one that has, or is part of a circle.
+        var waiting = new HashSet<string>(pending.Select(p => p.Key), StringComparer.OrdinalIgnoreCase);
+        foreach (var (name, expression) in pending)
+        {
+            if (!ExpressionParser.UsedNames(expression).Any(waiting.Contains)) errors[name] = lastError[name];
+        }
+
+        bool changed;
+        do
+        {
+            changed = false;
+            foreach (var (name, expression) in pending)
+            {
+                if (errors.ContainsKey(name)) continue;
+                var broken = ExpressionParser.UsedNames(expression).FirstOrDefault(errors.ContainsKey);
+                if (broken is null) continue;
+                errors[name] = $"Depends on '{broken}', which has an error.";
+                changed = true;
+            }
+        }
+        while (changed);
+
+        foreach (var (name, _) in pending)
+        {
+            if (!errors.ContainsKey(name)) errors[name] = "Circular reference between variables.";
         }
 
         return values;

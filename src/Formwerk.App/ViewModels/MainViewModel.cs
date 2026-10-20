@@ -79,6 +79,11 @@ public sealed partial class MainViewModel : ObservableObject
 
     public FormwerkDocument Document => _document;
 
+    private VariablesViewModel? _variables;
+
+    /// <summary>The table of project variables (F-PAR-03).</summary>
+    public VariablesViewModel Variables => _variables ??= new VariablesViewModel(_document, _history);
+
     /// <summary>The meshes of imported objects (saved with the project).</summary>
     public MeshStore Meshes { get; }
 

@@ -28,6 +28,43 @@ public static class ExpressionParser
         }
     }
 
+    /// <summary>
+    /// The variables an expression refers to, each once (ignoring case), in the order of their first use. Names that are called like a
+    /// function (<c>min(</c>) are not variables. Works on a broken expression too, so a field can still show what it is linked to.
+    /// </summary>
+    public static IReadOnlyList<string> UsedNames(string? text)
+    {
+        if (string.IsNullOrEmpty(text)) return [];
+
+        var names = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var i = 0;
+        while (i < text.Length)
+        {
+            var c = text[i];
+            if (char.IsAsciiDigit(c) || c == '.')
+            {
+                // a number, and letters stuck to it ("3abc") are not a name
+                while (i < text.Length && (char.IsLetterOrDigit(text[i]) || text[i] == '_' || text[i] == '.')) i++;
+            }
+            else if (char.IsLetter(c) || c == '_')
+            {
+                var start = i;
+                while (i < text.Length && (char.IsLetterOrDigit(text[i]) || text[i] == '_')) i++;
+                var after = i;
+                while (after < text.Length && char.IsWhiteSpace(text[after])) after++;
+                var isCall = after < text.Length && text[after] == '(';
+                if (!isCall && seen.Add(text[start..i])) names.Add(text[start..i]);
+            }
+            else
+            {
+                i++;
+            }
+        }
+
+        return names;
+    }
+
     private sealed class ExpressionException(string message) : Exception(message);
 
     private sealed class Parser(string text, IReadOnlyDictionary<string, double>? variables)

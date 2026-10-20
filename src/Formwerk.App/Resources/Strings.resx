@@ -247,6 +247,19 @@ Try a different location or file name.</value></data>
   <data name="Hole.Through" xml:space="preserve"><value>Through all</value></data>
   <data name="Hole.Through.Tip" xml:space="preserve"><value>The hole goes all the way through the body and stays through when the body is resized or moved. Switch off to type a depth.</value></data>
   <data name="Hole.Err.Range" xml:space="preserve"><value>{0} must be between {1} and {2}.</value></data>
+  <data name="Var.Title" xml:space="preserve"><value>Variables</value></data>
+  <data name="Var.Hint" xml:space="preserve"><value>Give a number or a formula a name, for example Wall = 2. Then type the name into any size field, for example Wall*2 or Wall+0.4. Changing the variable changes everything that uses it.</value></data>
+  <data name="Var.Add" xml:space="preserve"><value>Add variable</value></data>
+  <data name="Var.Add.Tip" xml:space="preserve"><value>Add a variable to the project</value></data>
+  <data name="Var.Delete.Tip" xml:space="preserve"><value>Delete this variable (fields that use it show an error until you undo or change them)</value></data>
+  <data name="Var.Name.Tip" xml:space="preserve"><value>Name: letters, digits and underscores, not starting with a digit. Renaming also renames it where it is used.</value></data>
+  <data name="Var.Value.Tip" xml:space="preserve"><value>Number or formula; it may use other variables</value></data>
+  <data name="Var.NewName" xml:space="preserve"><value>Variable</value></data>
+  <data name="Name.AddVariable" xml:space="preserve"><value>Add variable {0}</value></data>
+  <data name="Name.SetVariable" xml:space="preserve"><value>Set variable {0}</value></data>
+  <data name="Name.DeleteVariable" xml:space="preserve"><value>Delete variable {0}</value></data>
+  <data name="Name.RenameVariable" xml:space="preserve"><value>Rename variable {0} to {1}</value></data>
+  <data name="Props.LinkedTo" xml:space="preserve"><value>Linked to: {0}</value></data>
   <data name="Msg.FaceAlready" xml:space="preserve"><value>That face already lies on the floor.</value></data>
   <data name="Msg.FaceLocked" xml:space="preserve"><value>{0} is locked and cannot be turned.</value></data>
   <data name="Hint.SelectTool" xml:space="preserve"><value>Drag a rectangle: to the right takes what lies completely inside, to the left everything it touches. Ctrl/Shift adds. Esc cancels. Right-drag orbits, middle-drag pans.</value></data>

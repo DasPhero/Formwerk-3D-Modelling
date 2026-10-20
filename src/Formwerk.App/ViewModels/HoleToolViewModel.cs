@@ -145,6 +145,7 @@ public sealed partial class HoleToolViewModel : ObservableObject
         _texts[definition.Name] = trimmed.StartsWith('+') || trimmed.EndsWith('%')
             ? Math.Round(result.Value, 3).ToString("0.###", CultureInfo.InvariantCulture)
             : trimmed;
+        _fields[definition.Name].ShowLinks(ExpressionParser.UsedNames(_texts[definition.Name]));
         PictureChanged();
         return null;
     }
