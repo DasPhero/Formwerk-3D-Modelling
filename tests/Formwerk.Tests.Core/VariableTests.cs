@@ -179,6 +179,74 @@ public class VariableTests
         Assert.Equal("Wand(3) + Dicke", VariableNames.ReplaceName("Wand(3) + Wand", "Wand", "Dicke"));
     }
 
+
+    // ---- the built-in variable Tolerance (F-HOL-04) ----
+
+    [Fact]
+    public void Tolerance_is_a_variable_in_every_expression_with_the_value_of_the_settings()
+    {
+        var doc = new FormwerkDocument();
+        doc.Settings.Tolerance = 0.3;
+        doc.Variables["Loch"] = "3 + 2*Tolerance";
+
+        var values = doc.ResolveVariables(out var errors);
+
+        Assert.Empty(errors);
+        Assert.Equal(0.3, values["Tolerance"]);
+        Assert.Equal(3.6, values["Loch"], 9);
+    }
+
+    [Fact]
+    public void Tolerance_is_found_ignoring_case()
+    {
+        var doc = new FormwerkDocument();
+        doc.Variables["A"] = "TOLERANCE * 10";
+
+        var values = doc.ResolveVariables(out var errors);
+
+        Assert.Empty(errors);
+        Assert.Equal(2, values["A"], 9); // the default tolerance is 0.2
+    }
+
+    [Fact]
+    public void Changing_the_tolerance_changes_the_hash_of_the_nodes_that_use_it_and_of_no_other()
+    {
+        var doc = new FormwerkDocument();
+        var linked = new PrimitiveNode("cylinder", "Linked") { Parameters = { ["diameter"] = "3+Tolerance", ["height"] = "10" } };
+        var plain = new PrimitiveNode("cylinder", "Plain") { Parameters = { ["diameter"] = "3", ["height"] = "10" } };
+        var before = (linked.ComputeHash(doc.ResolveVariables(out _)), plain.ComputeHash(doc.ResolveVariables(out _)));
+
+        doc.Settings.Tolerance = 0.4;
+        var values = doc.ResolveVariables(out _);
+
+        Assert.NotEqual(before.Item1, linked.ComputeHash(values));
+        Assert.Equal(before.Item2, plain.ComputeHash(values));
+    }
+
+    [Fact]
+    public void A_variable_may_not_have_the_name_of_a_built_in_one()
+    {
+        Assert.NotNull(VariableNames.Check("Tolerance", []));
+        Assert.NotNull(VariableNames.Check("tolerance", []));
+        Assert.Contains("built in", VariableNames.Check("Tolerance", [])!);
+        Assert.Null(VariableNames.Check("Tolerance2", []));
+    }
+
+    [Fact]
+    public void A_file_with_a_variable_called_Tolerance_gets_an_error_for_it_and_the_setting_still_wins()
+    {
+        var doc = new FormwerkDocument();
+        doc.Variables["Tolerance"] = "5";
+        doc.Variables["A"] = "Tolerance * 10";
+
+        var values = doc.ResolveVariables(out var errors);
+
+        Assert.Contains("built in", errors["Tolerance"]);
+        Assert.False(errors.ContainsKey("A"));
+        Assert.Equal(0.2, values["Tolerance"]);
+        Assert.Equal(2, values["A"], 9);
+    }
+
     // ---- the command ----
 
     private static List<KeyValuePair<string, string>> Table(params (string, string)[] items) =>

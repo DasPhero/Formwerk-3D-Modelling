@@ -18,8 +18,20 @@
 
 ## Active step
 
-**Status:** none
-(Last finished: variable table and templates with variables, see "Done". Next candidates: hole presets and tolerance F-HOL-03/04, patterns F-PAT, align tool F-SNP-04.)
+**Status:** in progress
+**Step name:** Phase 2 block 3: print tolerance as a variable, screw presets for holes (three commits)
+**Goal:** the user picks "M3, countersunk head" in the hole tool and gets the through hole plus countersink without further input; the global print tolerance (project setting, default 0.2 mm) drives these holes, so changing it updates them all.
+**Requirement IDs:** F-HOL-04 (commit 1), F-HOL-03 (commits 2 and 3).
+**Design (decided):**
+- F-HOL-04: `Tolerance` is a built-in variable (value = `Settings.Tolerance`), available in every expression, in the variable table (shown as a read-only note) and marking linked fields; a user variable of that name is refused (`VariableNames` reserved, `ResolveVariables` reports a file that has one). The setting itself already exists (Settings dialog, saved with the project). Nothing is rebuilt: presets just use `Tolerance` in their expressions, so the normal evaluation updates the holes.
+- F-HOL-03: `HolePresets` (Features, pure data): sizes M2, M2.5, M3, M4, M5, M6, M8 and kinds: clearance fine/medium/coarse (d + 1/2/3 x Tolerance), countersunk head (ISO 7046 head diameter + Tolerance, 90 degrees, medium clearance shaft), cap head (ISO 4762 head diameter + 2 x Tolerance, depth head height + Tolerance), core hole for self-tapping screws (tap drill size, blind), heat-set insert (typical hole size and depth, blind), hex nut trap (nut width across flats + Tolerance, thickness + Tolerance; commit 3). A preset fills the tool: type, field texts as expressions, through or depth. The fields stay editable. A placed hole stores plain expressions (`3+2*Tolerance`), no hidden preset link. Core hole and insert sizes are for the screw or insert, not clearance: the print tolerance is not added there (question Q-04 for the user).
+- Hex nut trap (commit 3): `HoleType.NutTrap`: round shaft plus a hexagonal pocket, one watertight solid (the floor between hexagon and circle is triangulated by angle); labels of the head fields change per type (`FieldViewModel.Label` observable).
+**Checklist:**
+- [x] 1. `Tolerance` built-in variable (Core, table note, 11 new tests, build 1628 green, docs); commit + push done
+- [ ] 2. Presets: tests first (`HolePresetsTests`: table values, expressions follow the tolerance), `HolePresets`, tool panel (size and kind choice), strings, build, real-exe check, docs, commit + push (F-HOL-03)
+- [ ] 3. Nut trap: tests first (generator: watertight, volume, orientation), `HoleType.NutTrap`, labels per type, preset kind, build, docs, commit + push
+**Files touched so far:** none
+**Notes / decisions / problems:** the user asked whether variables can depend on each other (a = 2*b): yes, since the variable table commit (order independent, circles reported); covered by `VariableTests` (reverse order, chains, circle).
 
 <!-- Template for a new active step:
 
@@ -64,7 +76,7 @@ Done (fully): F-LIB-01 (all 12 shapes), F-GRP-02, F-GRP-04, F-CPY-01, F-ROT-04, 
 
 ## Current state of the project (snapshot)
 
-- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1617 tests green at last run, about 30 s, test projects run one at a time). Executable: `binary\Formwerk.exe`.
+- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1628 tests green at last run, about 30 s, test projects run one at a time). Executable: `binary\Formwerk.exe`.
 - Working application: add box/cylinder/sphere, typed editing of position/rotation/dimensions (numbers, expressions, `+10`, `150%`, variables), selection (viewport and list), hole/group/merge/boolean, duplicate/delete, undo history panel, STL export, **STL/OBJ import (File > Import, Ctrl+I, drag and drop onto the window, unit question for tiny/huge models, lands on the plate, saved in the project)**, 3D view with build plate and orbit camera, new/open/save/save as of `.fwp` projects, modified marker, unsaved-changes questions, autosave every 2 minutes, crash recovery, **move gizmo (arrows + plane handles), rotate gizmo (rings), scale gizmo (box with 6 face and 8 corner handles, Proportional switch, Ctrl = from center, shapes change their dimensions), tools Select/Move/Rotate/Scale (Q/W/E/R), grid and angle snapping and **snapping to other objects (edges and centers flush/centered, floor, bed center, pink guide frames, tolerance 10 px at any zoom, "Objects" switch)**, Alt/Shift suppress snapping, live readout at the cursor, Esc cancels, one undo step per drag, drop to floor (B)**.
 - Also working now (after the lines above were written): settings dialog (File > Settings, Ctrl+,), 3MF export and import, Open in Slicer, mesh check banner with one-click repair. Not done: repair of self-intersections and non-manifold edges, OBJ export, scaling several objects at once, snap point markers / circle centers / face-to-face gap / align tool, edge lines, DirectX renderer, more shapes, holes tool, patterns, templates, "Open in Slicer", `thumbnail.png` in the project file. (Settings dialog and persistent snap settings are done.)
 - Verified in the real exe with real input (UI automation + real mouse events): start, add shapes, title and `*` marker, menus, unsaved-changes dialog on close, crash recovery after a killed process, **mouse drag of the X arrow (0 to 22 mm, readout and highlight, one "Move Box" entry), mouse drag of the Z ring (30 degrees, readout, one "Rotate Box" entry), Esc during a drag (nothing changes, no history entry), mouse drag of the scale corner handle (41 x 41 x 41 mm, proportional) and of the +X face handle (20 to 22 mm, only the width changes, one "Scale Box" entry), mouse drag of a box towards another box (pink guide frame at the flush plane, ends exactly flush at X = -20, one "Move Box 2" entry)**. The user confirmed picking and the camera controls work.

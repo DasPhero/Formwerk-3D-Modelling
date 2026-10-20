@@ -9,6 +9,12 @@ public static class VariableNames
 
     private static readonly string[] Functions = ["min", "max", "round"];
 
+    /// <summary>The name of the built-in variable that holds the print tolerance of the project settings (F-HOL-04).</summary>
+    public const string Tolerance = "Tolerance";
+
+    /// <summary>Names that exist without being in the table: they cannot be used for a variable of the user.</summary>
+    public static IReadOnlyList<string> BuiltIn { get; } = [Tolerance];
+
     /// <summary>
     /// Null when <paramref name="name"/> can be used as a variable name, otherwise what is wrong. A name starts with a letter or an
     /// underscore, then letters, digits and underscores; it is not a function (<c>min</c>, <c>max</c>, <c>round</c>) and not one of
@@ -20,6 +26,7 @@ public static class VariableNames
         if (name.Length > MaxLength) return $"A name can have at most {MaxLength} characters.";
         if (!(char.IsLetter(name[0]) || name[0] == '_')) return "A name starts with a letter or an underscore.";
         if (name.Any(c => !(char.IsLetterOrDigit(c) || c == '_'))) return "A name can only contain letters, digits and underscores.";
+        if (BuiltIn.Contains(name, StringComparer.OrdinalIgnoreCase)) return $"'{name}' is built in (the print tolerance of the project settings) and cannot be a variable name.";
         if (Functions.Contains(name, StringComparer.OrdinalIgnoreCase)) return $"'{name}' is a function and cannot be a variable name.";
         if (existing.Any(e => string.Equals(e, name, StringComparison.OrdinalIgnoreCase) && !string.Equals(e, except, StringComparison.OrdinalIgnoreCase)))
             return $"The name '{name}' is already used.";

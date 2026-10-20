@@ -40,7 +40,7 @@ public sealed partial class VariableRowViewModel : ObservableObject
 /// The table of project variables (F-PAR-03): name and expression per line, edited like any field, every change one undo step.
 /// The order does not matter for the result: a variable may use one that is further down.
 /// </summary>
-public sealed class VariablesViewModel
+public sealed partial class VariablesViewModel : ObservableObject
 {
     private readonly FormwerkDocument _document;
     private readonly UndoHistory _history;
@@ -55,6 +55,10 @@ public sealed class VariablesViewModel
     }
 
     public ObservableCollection<VariableRowViewModel> Rows { get; } = [];
+
+    /// <summary>A note about the variable that is always there: the print tolerance of the project settings (F-HOL-04).</summary>
+    [ObservableProperty]
+    public partial string BuiltInText { get; set; } = "";
 
     public IRelayCommand AddCommand { get; }
 
@@ -123,6 +127,7 @@ public sealed class VariablesViewModel
     /// </summary>
     private void Refresh()
     {
+        BuiltInText = Texts.Format("Var.BuiltIn", Math.Round(_document.Settings.Tolerance, 4).ToString("0.####", CultureInfo.InvariantCulture));
         var variables = _document.Variables.ToList();
         var values = _document.ResolveVariables(out var errors);
 

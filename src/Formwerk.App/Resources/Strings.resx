@@ -255,6 +255,7 @@ Try a different location or file name.</value></data>
   <data name="Var.Name.Tip" xml:space="preserve"><value>Name: letters, digits and underscores, not starting with a digit. Renaming also renames it where it is used.</value></data>
   <data name="Var.Value.Tip" xml:space="preserve"><value>Number or formula; it may use other variables</value></data>
   <data name="Var.NewName" xml:space="preserve"><value>Variable</value></data>
+  <data name="Var.BuiltIn" xml:space="preserve"><value>Built in: Tolerance = {0} mm, the print tolerance of the project (File > Settings). Use it in any formula, for example 3+2*Tolerance.</value></data>
   <data name="Name.AddVariable" xml:space="preserve"><value>Add variable {0}</value></data>
   <data name="Name.SetVariable" xml:space="preserve"><value>Set variable {0}</value></data>
   <data name="Name.DeleteVariable" xml:space="preserve"><value>Delete variable {0}</value></data>

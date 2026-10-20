@@ -482,6 +482,8 @@
                                 <StackPanel Margin="0,6,0,0">
                                     <TextBlock Text="{res:Loc Var.Hint}" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,6"
                                                Foreground="{DynamicResource MutedTextBrush}" />
+                                    <TextBlock Text="{Binding Variables.BuiltInText}" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,6"
+                                               Foreground="{DynamicResource MutedTextBrush}" AutomationProperties.AutomationId="BuiltInNote" />
                                     <ItemsControl ItemsSource="{Binding Variables.Rows}" />
                                     <Button Content="{res:Loc Var.Add}" ToolTip="{res:Loc Var.Add.Tip}" Command="{Binding Variables.AddCommand}"
                                             HorizontalAlignment="Left" Margin="0,6,0,0" AutomationProperties.AutomationId="AddVariable" />

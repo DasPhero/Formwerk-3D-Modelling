@@ -312,6 +312,57 @@ public class VariablesViewModelTests
         Assert.False(vm.Properties!.Parameters[parameters.FindIndex(p => p.Name == "width")].IsLinked);
     }
 
+
+    // ---- the built-in variable Tolerance (F-HOL-04) ----
+
+    [UiFact]
+    public void The_table_tells_about_the_built_in_tolerance_and_follows_the_setting()
+    {
+        var vm = NewViewModel();
+        Assert.Contains("Tolerance", vm.Variables.BuiltInText);
+        Assert.Contains("0.2", vm.Variables.BuiltInText);
+
+        vm.Document.Settings.Tolerance = 0.45;
+        vm.Document.NotifyChanged();
+
+        Assert.Contains("0.45", vm.Variables.BuiltInText);
+    }
+
+    [UiFact]
+    public void A_variable_cannot_be_called_Tolerance()
+    {
+        var vm = NewViewModel();
+        var row = Add(vm, "Wand", "2");
+
+        row.Name.Text = "tolerance";
+
+        Assert.Contains("built in", row.Name.Error);
+        Assert.Equal(["Wand"], vm.Document.Variables.Keys.ToArray());
+    }
+
+    [UiFact]
+    public void A_variable_may_use_the_tolerance()
+    {
+        var vm = NewViewModel();
+        var row = Add(vm, "Loch", "3 + 2*Tolerance");
+
+        Assert.Null(row.Expression.Error);
+        Assert.Equal("3.4", vm.Variables.Rows[0].ValueText);
+    }
+
+    [UiFact]
+    public async Task A_field_that_uses_the_tolerance_is_marked_as_linked()
+    {
+        var vm = NewViewModel();
+        await BoxWithWidth(vm, "20 + Tolerance");
+
+        var index = ShapeLibrary.Find("box")!.Parameters.ToList().FindIndex(p => p.Name == "width");
+        var field = vm.Properties!.Parameters[index];
+
+        Assert.True(field.IsLinked);
+        Assert.Contains("Tolerance", field.LinkTip);
+    }
+
     [UiFact]
     public async Task The_variables_are_saved_with_the_project()
     {

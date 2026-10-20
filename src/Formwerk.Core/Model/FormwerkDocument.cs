@@ -63,8 +63,17 @@ public sealed class FormwerkDocument
         var values = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
         errors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
+        // Built in: the print tolerance of the settings (F-HOL-04). A variable with that name (from a hand-edited file) does not count.
+        values[VariableNames.Tolerance] = Settings.Tolerance;
+        var pending = new List<KeyValuePair<string, string>>();
+        foreach (var variable in Variables)
+        {
+            if (VariableNames.BuiltIn.Contains(variable.Key, StringComparer.OrdinalIgnoreCase))
+                errors[variable.Key] = $"'{variable.Key}' is built in (the print tolerance of the project settings); the variable is ignored.";
+            else pending.Add(variable);
+        }
+
         // Evaluate again and again until nothing new resolves: a variable that waits for a later one is picked up in the next round.
-        var pending = Variables.ToList();
         var lastError = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         bool progress;
         do
