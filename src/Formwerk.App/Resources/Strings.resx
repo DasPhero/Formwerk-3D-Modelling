@@ -298,6 +298,7 @@ Try a different location or file name.</value></data>
   <data name="Tpl.Err.Tags" xml:space="preserve"><value>Use at most {0} tags of at most {1} characters each.</value></data>
   <data name="Name.InsertTemplate" xml:space="preserve"><value>Insert template {0}</value></data>
   <data name="Msg.TemplateSaved" xml:space="preserve"><value>Saved template {0}.</value></data>
+  <data name="Msg.TemplateVariableKept" xml:space="preserve"><value>Your project already has the variable(s) {0} with another value: your value is used.</value></data>
   <data name="Msg.TemplateTaken" xml:space="preserve"><value>A template named "{0}" already exists in this category. Try "{1}".</value></data>
   <data name="Msg.TemplateSaveFailed" xml:space="preserve"><value>The template could not be saved: {0}</value></data>
   <data name="Msg.TemplateLoadFailed" xml:space="preserve"><value>The template could not be inserted: {0}</value></data>

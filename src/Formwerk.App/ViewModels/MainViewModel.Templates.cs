@@ -4,6 +4,7 @@ using System.Numerics;
 using CommunityToolkit.Mvvm.Input;
 using Formwerk.App.Resources;
 using Formwerk.Core.Commands;
+using Formwerk.Core.Expressions;
 using Formwerk.Core.Model;
 using Formwerk.Geometry;
 using Formwerk.IO;
@@ -64,6 +65,35 @@ public sealed partial class MainViewModel
     private bool CanSaveTemplate() => _templateStore is not null && HasSelection();
 
     /// <summary>
+    /// The project variables that the nodes use in their parameters, and those that these need in turn (a template takes along what it
+    /// needs, not the whole table), in the order of the project table.
+    /// </summary>
+    private List<KeyValuePair<string, string>> UsedVariables(IEnumerable<Node> nodes)
+    {
+        var needed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var queue = new Queue<string>();
+
+        void Use(string expression)
+        {
+            foreach (var name in ExpressionParser.UsedNames(expression))
+            {
+                if (_document.Variables.ContainsKey(name) && needed.Add(name)) queue.Enqueue(name);
+            }
+        }
+
+        foreach (var node in nodes)
+        {
+            foreach (var primitive in node.Descendants().Prepend(node).OfType<PrimitiveNode>())
+            {
+                foreach (var expression in primitive.Parameters.Values) Use(expression);
+            }
+        }
+
+        while (queue.Count > 0) Use(_document.Variables[queue.Dequeue()]);
+        return [.. _document.Variables.Where(v => needed.Contains(v.Key))];
+    }
+
+    /// <summary>
     /// Saves the selected objects under a name (the dialog asks). They are saved with their whole structure, normalised to the center of
     /// the plate and the floor (X and Y of the middle of the selection at 0, lowest point at Z = 0), with the size and a picture.
     /// </summary>
@@ -98,7 +128,7 @@ public sealed partial class MainViewModel
         var shift = Matrix4x4.CreateTranslation(-(box.Min.X + box.Max.X) / 2, -(box.Min.Y + box.Max.Y) / 2, -box.Min.Z);
 
         var template = new FormwerkDocument();
-        foreach (var (name, expression) in _document.Variables) template.Variables[name] = expression;
+        foreach (var (name, expression) in UsedVariables(nodes)) template.Variables[name] = expression;
         var meshes = new MeshStore();
         foreach (var node in nodes)
         {
@@ -165,8 +195,19 @@ public sealed partial class MainViewModel
             if (!Meshes.Contains(mesh.MeshId) && meshes.Get(mesh.MeshId) is { } data) Meshes.Add(mesh.MeshId, data);
         }
 
+        // the variables of the template that the project does not have yet come along (appended to the table); one that it has keeps
+        // the value of the project, and the user is told when the template meant another one
+        var added = new List<KeyValuePair<string, string>>();
+        var differing = new List<string>();
+        foreach (var (name, expression) in template.Variables)
+        {
+            if (!_document.Variables.TryGetValue(name, out var existing)) added.Add(new(name, expression));
+            else if (existing.Trim() != expression.Trim()) differing.Add(name);
+        }
+
         var spot = FreeSpot(item.Size);
         var commands = new List<IDocumentCommand>();
+        if (added.Count > 0) commands.Add(new SetVariablesCommand(_document, [.. _document.Variables, .. added], "Add variables"));
         Guid inserted;
         if (roots.Count == 1)
         {
@@ -187,5 +228,6 @@ public sealed partial class MainViewModel
 
         _history.Execute(new CompositeCommand(Texts.Format("Name.InsertTemplate", item.Name), commands));
         SelectOnly([inserted]);
+        if (differing.Count > 0) SetNotice(Texts.Format("Msg.TemplateVariableKept", string.Join(", ", differing)));
     }
 }
