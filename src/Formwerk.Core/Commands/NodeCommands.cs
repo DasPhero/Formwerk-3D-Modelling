@@ -141,7 +141,7 @@ public sealed class SetMeshCommand(FormwerkDocument document, MeshNode node, Gui
     }
 }
 
-public sealed class SetParameterCommand(FormwerkDocument document, PrimitiveNode node, string parameter, string expression) : IDocumentCommand
+public sealed class SetParameterCommand(FormwerkDocument document, ParametricNode node, string parameter, string expression) : IDocumentCommand
 {
     private string? _old;
 
@@ -196,6 +196,43 @@ public sealed class SetVariablesCommand : IDocumentCommand
     {
         _document.Variables.Clear(); // a cleared dictionary lists its items in the order they are added again
         foreach (var (name, expression) in table) _document.Variables[name] = expression;
+        _document.NotifyChanged();
+    }
+}
+
+/// <summary>Sets which instances of a pattern are left out as one undo step (F-PAT-03).</summary>
+public sealed class SetSkippedCommand : IDocumentCommand
+{
+    private readonly FormwerkDocument _document;
+    private readonly PatternNode _node;
+    private readonly int[] _new;
+    private int[] _old = [];
+
+    public SetSkippedCommand(FormwerkDocument document, PatternNode node, IEnumerable<int> skipped, string? name = null)
+    {
+        _document = document;
+        _node = node;
+        _new = [.. skipped.Distinct().Order()];
+        Name = name ?? $"Skip instances of {node.Name}";
+    }
+
+    public string Name { get; }
+
+    /// <summary>False when the same instances are skipped already (the caller can skip the command).</summary>
+    public bool HasEffect => !_node.Skipped.SequenceEqual(_new);
+
+    public void Do()
+    {
+        _old = [.. _node.Skipped];
+        Replace(_new);
+    }
+
+    public void Undo() => Replace(_old);
+
+    private void Replace(int[] numbers)
+    {
+        _node.Skipped.Clear();
+        foreach (var number in numbers) _node.Skipped.Add(number);
         _document.NotifyChanged();
     }
 }

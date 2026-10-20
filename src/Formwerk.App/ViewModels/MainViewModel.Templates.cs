@@ -83,7 +83,7 @@ public sealed partial class MainViewModel
 
         foreach (var node in nodes)
         {
-            foreach (var primitive in node.Descendants().Prepend(node).OfType<PrimitiveNode>())
+            foreach (var primitive in node.Descendants().Prepend(node).OfType<ParametricNode>())
             {
                 foreach (var expression in primitive.Parameters.Values) Use(expression);
             }

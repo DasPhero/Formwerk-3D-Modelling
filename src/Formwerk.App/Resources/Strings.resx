@@ -274,6 +274,19 @@ Try a different location or file name.</value></data>
   <data name="Name.DeleteVariable" xml:space="preserve"><value>Delete variable {0}</value></data>
   <data name="Name.RenameVariable" xml:space="preserve"><value>Rename variable {0} to {1}</value></data>
   <data name="Props.LinkedTo" xml:space="preserve"><value>Linked to: {0}</value></data>
+  <data name="Menu.Edit.Pattern" xml:space="preserve"><value>_Pattern</value></data>
+  <data name="Menu.Edit.Pattern.Linear" xml:space="preserve"><value>_Linear pattern</value></data>
+  <data name="Name.Pattern" xml:space="preserve"><value>Pattern</value></data>
+  <data name="Pattern.Skip" xml:space="preserve"><value>Skip</value></data>
+  <data name="Pattern.Skip.Tip" xml:space="preserve"><value>Instances to leave out, by number: 2, 5 or 3-5 (counted row by row in a grid)</value></data>
+  <data name="Pattern.Instances" xml:space="preserve"><value>{0} instances</value></data>
+  <data name="Pattern.Direction" xml:space="preserve"><value>Direction</value></data>
+  <data name="Pattern.DirectionY" xml:space="preserve"><value>Second direction</value></data>
+  <data name="Pattern.TotalLength" xml:space="preserve"><value>Spacing is the total length</value></data>
+  <data name="Pattern.TotalLengthY" xml:space="preserve"><value>Second spacing is the total length</value></data>
+  <data name="Pattern.Axis.X" xml:space="preserve"><value>X</value></data>
+  <data name="Pattern.Axis.Y" xml:space="preserve"><value>Y</value></data>
+  <data name="Pattern.Axis.Z" xml:space="preserve"><value>Z</value></data>
   <data name="Msg.FaceAlready" xml:space="preserve"><value>That face already lies on the floor.</value></data>
   <data name="Msg.FaceLocked" xml:space="preserve"><value>{0} is locked and cannot be turned.</value></data>
   <data name="Hint.SelectTool" xml:space="preserve"><value>Drag a rectangle: to the right takes what lies completely inside, to the left everything it touches. Ctrl/Shift adds. Esc cancels. Right-drag orbits, middle-drag pans.</value></data>

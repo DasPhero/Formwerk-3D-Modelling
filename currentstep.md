@@ -18,8 +18,22 @@
 
 ## Active step
 
-**Status:** none
-(Last finished: tolerance variable and screw presets, see "Done". Next candidates: patterns F-PAT-01..04, align tool F-SNP-04, face to face F-SNP-03, template management F-TPL-04..07.)
+**Status:** in progress
+**Step name:** Phase 2 block 4: patterns and mirror (three commits)
+**Goal:** the user turns a selection into a linear pattern (1D or 2D grid), a circular pattern or a mirror that stay features: count, spacing, angle and skipped instances stay editable; a hole in a pattern cuts the body at every instance.
+**Requirement IDs:** F-PAT-02 and F-PAT-03 (commit A, linear), F-PAT-01 (commit B, circular), F-PAT-04 (commit C, mirror).
+**Design (decided):**
+- `ParametricNode` (abstract, Core) holds `Parameters` (expressions) and `EvaluateParameters`; `PrimitiveNode` and the new `PatternNode` derive from it, `SetParameterCommand` takes a `ParametricNode`. Parameters of a pattern are expressions too, so variables work (`count = Anzahl`).
+- `PatternNode`: container; ALL its children are the source (usually one). `Kind` Linear or Circular; parameters: linear `count`, `spacing`, `axis` (0 X, 1 Y, 2 Z), `countY`, `spacingY`, `axisY` (countY = 1 is a 1D row), `spacingMode` (0 distance, 1 total length) for both directions; circular `count`, `angle` (total, 360 = full circle), `axis`. `Skipped`: 1-based instance numbers (row by row for 2D). The pattern's own transform is the origin and orientation (center of a circular pattern); instance 1 is the source where it is, the others are the source moved or turned in pattern space.
+- Evaluation (`SceneEvaluator.EvalPattern`): children evaluated once, parts transformed per instance, `Finish` applies the pattern transform; holes stay holes, so a pattern of holes in a group cuts at every instance (`CutSolid` already keys holes by node and occurrence). At most 1000 instances.
+- IO: node type "pattern" with kind, parameters, skipped. UI: Edit > Pattern > Linear/Circular/Mirror wraps the selection; properties show the parameters and a "Skip" field; the object list shows a glyph; a click on an instance selects the pattern.
+- Circular (commit B): center default = center of the biggest solid next to the source (snap on a cylinder axis), radius = the distance of the source from the center; helper fields "Radius" and "Edge distance" (to hole center or hole edge) move the source. Mirror (commit C): `MirrorNode` linked (original and mirrored copy, stays editable) and an independent mirrored copy (mirrored scale), plane X/Y/Z through the origin of the node.
+**Checklist:**
+- [x] A. linear pattern (F-PAT-02/03): Core (`ParametricNode`, `PatternNode`, `SetSkippedCommand`), Features (`PatternMath`, `EvalPattern`, `ScenePart.Frame`), IO, App (command, properties, skip, selection, glyph), 125 new tests, real exe (box to a row of three, all fields), docs; commit + push done
+- [ ] B. circular pattern with the radius and edge distance helpers (F-PAT-01): tests first, build, real-exe check, docs, commit + push
+- [ ] C. mirror, linked and independent (F-PAT-04): tests first, build, real-exe check, docs, commit + push
+**Files touched so far:** none
+**Notes / decisions / problems:** the laptop runs on battery (11%): timing tests can fail under load, rerun before suspecting the code. MeshData.Transformed already flips the winding for a mirroring matrix.
 
 <!-- Template for a new active step:
 
@@ -64,7 +78,7 @@ Done (fully): F-LIB-01 (all 12 shapes), F-GRP-02, F-GRP-04, F-CPY-01, F-ROT-04, 
 
 ## Current state of the project (snapshot)
 
-- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1681 tests green at last run, about 30 s, test projects run one at a time). Executable: `binary\Formwerk.exe`.
+- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1783 tests green at last run, about 30 s, test projects run one at a time). Executable: `binary\Formwerk.exe`.
 - Working application: add box/cylinder/sphere, typed editing of position/rotation/dimensions (numbers, expressions, `+10`, `150%`, variables), selection (viewport and list), hole/group/merge/boolean, duplicate/delete, undo history panel, STL export, **STL/OBJ import (File > Import, Ctrl+I, drag and drop onto the window, unit question for tiny/huge models, lands on the plate, saved in the project)**, 3D view with build plate and orbit camera, new/open/save/save as of `.fwp` projects, modified marker, unsaved-changes questions, autosave every 2 minutes, crash recovery, **move gizmo (arrows + plane handles), rotate gizmo (rings), scale gizmo (box with 6 face and 8 corner handles, Proportional switch, Ctrl = from center, shapes change their dimensions), tools Select/Move/Rotate/Scale (Q/W/E/R), grid and angle snapping and **snapping to other objects (edges and centers flush/centered, floor, bed center, pink guide frames, tolerance 10 px at any zoom, "Objects" switch)**, Alt/Shift suppress snapping, live readout at the cursor, Esc cancels, one undo step per drag, drop to floor (B)**.
 - Also working now (after the lines above were written): settings dialog (File > Settings, Ctrl+,), 3MF export and import, Open in Slicer, mesh check banner with one-click repair. Not done: repair of self-intersections and non-manifold edges, OBJ export, scaling several objects at once, snap point markers / circle centers / face-to-face gap / align tool, edge lines, DirectX renderer, more shapes, holes tool, patterns, templates, "Open in Slicer", `thumbnail.png` in the project file. (Settings dialog and persistent snap settings are done.)
 - Verified in the real exe with real input (UI automation + real mouse events): start, add shapes, title and `*` marker, menus, unsaved-changes dialog on close, crash recovery after a killed process, **mouse drag of the X arrow (0 to 22 mm, readout and highlight, one "Move Box" entry), mouse drag of the Z ring (30 degrees, readout, one "Rotate Box" entry), Esc during a drag (nothing changes, no history entry), mouse drag of the scale corner handle (41 x 41 x 41 mm, proportional) and of the +X face handle (20 to 22 mm, only the width changes, one "Scale Box" entry), mouse drag of a box towards another box (pink guide frame at the flush plane, ends exactly flush at X = -20, one "Move Box 2" entry)**. The user confirmed picking and the camera controls work.

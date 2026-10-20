@@ -158,4 +158,24 @@ public class HoleThroughTests
         Assert.Equal(1, through.Max);
         Assert.Throws<ArgumentException>(() => ShapeLibrary.Hole.Generate(new Dictionary<string, double> { ["through"] = 2 }));
     }
+
+    [Fact]
+    public void Through_holes_in_a_pattern_keep_the_place_of_every_instance()
+    {
+        var group = new GroupNode("Plate");
+        _history.Execute(new AddNodeCommand(_doc, _doc.Root, group));
+        _history.Execute(new AddNodeCommand(_doc, group, new PrimitiveNode("box", "Box") { Parameters = { ["width"] = "100", ["depth"] = "30", ["height"] = "10" } }));
+        var pattern = new PatternNode("Row", PatternKind.Linear) { Parameters = { ["count"] = "3", ["spacing"] = "20" } };
+        _history.Execute(new AddNodeCommand(_doc, group, pattern));
+        var hole = HoleFromBelow(through: true, depth: "1");
+        hole.Transform = new Transform(new Vector3(-20, 0, 0), hole.Transform.Rotation, Vector3.One);
+        _history.Execute(new AddNodeCommand(_doc, pattern, hole));
+
+        var parts = _evaluator.Evaluate(_doc).Parts;
+        var volume = parts.Where(p => p.Kind == PartKind.Solid).Sum(p => (double)p.Mesh.ComputeVolume());
+
+        Assert.Equal(30000 - 3 * Bore(10), volume, 0); // three holes, each through the 10 mm plate
+        var ghosts = parts.Where(p => p.Kind == PartKind.Ghost).Select(p => MathF.Round(p.Mesh.ComputeBounds().Center.X)).Order().ToArray();
+        Assert.Equal([-20f, 0f, 20f], ghosts); // at the three places, not three times at the first
+    }
 }

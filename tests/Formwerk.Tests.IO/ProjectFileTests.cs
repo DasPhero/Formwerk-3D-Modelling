@@ -515,4 +515,124 @@ public class ProjectFileTests
             File.Delete(path);
         }
     }
+
+    // ---- patterns (F-PAT-02, F-PAT-03) ----
+
+    private static FormwerkDocument DocumentWithPattern(PatternKind kind)
+    {
+        var doc = new FormwerkDocument();
+        var history = new UndoHistory();
+        var pattern = new PatternNode("Row", kind) { Transform = Transform.FromPosition(new Vector3(5, 6, 7)) };
+        pattern.Parameters["count"] = "Anzahl";
+        pattern.Parameters["spacing"] = "12.5";
+        pattern.Skipped.Add(2);
+        pattern.Skipped.Add(5);
+        doc.Variables["Anzahl"] = "6";
+        history.Execute(new AddNodeCommand(doc, doc.Root, pattern));
+        history.Execute(new AddNodeCommand(doc, pattern, new PrimitiveNode("cylinder", "Hole") { Role = NodeRole.Hole, Parameters = { ["diameter"] = "3.4" } }));
+        return doc;
+    }
+
+    [Theory]
+    [InlineData(PatternKind.Linear)]
+    [InlineData(PatternKind.Circular)]
+    public void A_pattern_roundtrips_with_kind_parameters_skipped_instances_and_children(PatternKind kind)
+    {
+        var original = DocumentWithPattern(kind);
+
+        var loaded = Open(Save(original));
+
+        var pattern = Assert.IsType<PatternNode>(Assert.Single(loaded.Root.Children));
+        AssertSameNode(original.Root.Children[0], pattern);
+        Assert.Equal(kind, pattern.Kind);
+        Assert.Equal("Anzahl", pattern.Parameters["count"]);
+        Assert.Equal("12.5", pattern.Parameters["spacing"]);
+        Assert.Equal([2, 5], pattern.Skipped.ToArray());
+        var hole = Assert.IsType<PrimitiveNode>(Assert.Single(pattern.Children));
+        Assert.Equal(NodeRole.Hole, hole.Role);
+        Assert.Equal("3.4", hole.Parameters["diameter"]);
+    }
+
+    [Fact]
+    public void A_loaded_pattern_has_the_same_hash()
+    {
+        var original = DocumentWithPattern(PatternKind.Linear);
+        var loaded = Open(Save(original));
+
+        Assert.Equal(
+            original.Root.Children[0].ComputeHash(original.ResolveVariables(out _)),
+            loaded.Root.Children[0].ComputeHash(loaded.ResolveVariables(out _)));
+    }
+
+    [Fact]
+    public void The_pattern_is_written_with_its_kind_and_the_skipped_numbers()
+    {
+        var bytes = Save(DocumentWithPattern(PatternKind.Circular));
+        using var zip = new ZipArchive(new MemoryStream(bytes));
+        using var reader = new StreamReader(zip.Entries[0].Open(), Encoding.UTF8);
+        var text = reader.ReadToEnd();
+
+        Assert.Contains("\"type\": \"pattern\"", text);
+        Assert.Contains("\"kind\": \"Circular\"", text);
+        Assert.Contains("\"skipped\"", text);
+    }
+
+    private static string PatternJson(string kind = "\"Linear\"", string skipped = "[2, 3]") => $$"""
+        {
+          "schemaVersion": 1, "application": "Formwerk",
+          "nodes": [
+            { "type": "pattern", "id": "bbbbbbbb-0000-0000-0000-000000000001", "name": "P", "kind": {{kind}},
+              "parameters": { "count": "4" }, "skipped": {{skipped}}, "children": [] }
+          ]
+        }
+        """;
+
+    [Fact]
+    public void A_pattern_without_a_skipped_list_skips_nothing()
+    {
+        var doc = Open(ZipJson(PatternJson().Replace(", \"skipped\": [2, 3]", "")));
+
+        Assert.Empty(((PatternNode)doc.Root.Children[0]).Skipped);
+    }
+
+    [Fact]
+    public void A_pattern_file_in_the_pinned_shape_loads()
+    {
+        var pattern = (PatternNode)Open(ZipJson(PatternJson())).Root.Children[0];
+
+        Assert.Equal(PatternKind.Linear, pattern.Kind);
+        Assert.Equal([2, 3], pattern.Skipped.ToArray());
+        Assert.Equal("4", pattern.Parameters["count"]);
+    }
+
+    [Theory]
+    [InlineData("\"Spiral\"", "[]")]
+    [InlineData("\"linear\"", "[]")]
+    [InlineData("\"Linear\"", "[0]")]
+    [InlineData("\"Linear\"", "[-4]")]
+    [InlineData("\"Linear\"", "[1001]")]
+    [InlineData("\"Linear\"", "[\"a\"]")]
+    [InlineData("\"Linear\"", "[1.5]")]
+    public void A_pattern_with_a_wrong_kind_or_wrong_skipped_numbers_is_refused(string kind, string skipped)
+    {
+        var error = Fails(ZipJson(PatternJson(kind, skipped)));
+
+        Assert.Contains("damaged", error.Message);
+    }
+
+    [Fact]
+    public void A_pattern_that_skips_too_many_instances_is_refused()
+    {
+        var many = "[" + string.Join(",", Enumerable.Range(1, 1001).Select(_ => 1)) + "]";
+
+        Fails(ZipJson(PatternJson(skipped: many)));
+    }
+
+    [Fact]
+    public void A_pattern_without_a_kind_is_refused()
+    {
+        var json = PatternJson().Replace("\"kind\": \"Linear\",", "");
+
+        Fails(ZipJson(json));
+    }
 }

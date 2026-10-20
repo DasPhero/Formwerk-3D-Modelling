@@ -105,7 +105,7 @@ public sealed partial class VariablesViewModel : ObservableObject
             : new KeyValuePair<string, string>(v.Key, VariableNames.ReplaceName(v.Value, row.Key, name))).ToList();
 
         var commands = new List<IDocumentCommand> { new SetVariablesCommand(_document, table, "Rename") };
-        foreach (var node in _document.Root.Descendants().OfType<PrimitiveNode>())
+        foreach (var node in _document.Root.Descendants().OfType<ParametricNode>())
         {
             foreach (var (parameter, expression) in node.Parameters.ToList())
             {

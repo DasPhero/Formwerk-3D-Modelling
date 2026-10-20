@@ -141,25 +141,14 @@ public abstract class Node
     protected static string F(double value) => value.ToString("R", CultureInfo.InvariantCulture);
 }
 
-/// <summary>Parametric primitive created by a generator (e.g. <c>cylinder</c>). Parameter values are expressions.</summary>
-public sealed class PrimitiveNode : Node
+/// <summary>
+/// A node whose values are parameters, each an expression (<c>"20"</c>, <c>"Wandstaerke*2"</c>): a primitive made by a generator, or a
+/// pattern. Edited through <c>SetParameterCommand</c>.
+/// </summary>
+public abstract class ParametricNode(string name) : Node(name)
 {
-    public PrimitiveNode(string generatorId, string name) : base(name)
-    {
-        GeneratorId = generatorId;
-    }
-
-    public string GeneratorId { get; }
-
     /// <summary>Parameter name to expression text, e.g. <c>"Wandstaerke*2"</c>.</summary>
     public Dictionary<string, string> Parameters { get; } = new(StringComparer.OrdinalIgnoreCase);
-
-    protected override Node CreateCopy(Guid id)
-    {
-        var copy = new PrimitiveNode(GeneratorId, Name) { Id = id };
-        foreach (var (key, value) in Parameters) copy.Parameters[key] = value;
-        return copy;
-    }
 
     /// <summary>Evaluates all parameters. Failed expressions are reported in <paramref name="errors"/>.</summary>
     public Dictionary<string, double> EvaluateParameters(
@@ -177,15 +166,141 @@ public sealed class PrimitiveNode : Node
         return values;
     }
 
-    protected override void AppendHashInput(StringBuilder sb, IReadOnlyDictionary<string, double>? variables)
+    protected void CopyParametersTo(ParametricNode copy)
     {
-        base.AppendHashInput(sb, variables);
-        sb.Append('#').Append(GeneratorId);
+        foreach (var (key, value) in Parameters) copy.Parameters[key] = value;
+    }
+
+    protected void AppendParameters(StringBuilder sb, IReadOnlyDictionary<string, double>? variables)
+    {
         foreach (var (key, expression) in Parameters.OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase))
         {
             var result = ExpressionParser.Evaluate(expression, variables);
             sb.Append('|').Append(key.ToLowerInvariant()).Append('=').Append(result.IsSuccess ? F(result.Value) : "!" + expression);
         }
+    }
+}
+
+/// <summary>Parametric primitive created by a generator (e.g. <c>cylinder</c>). Parameter values are expressions.</summary>
+public sealed class PrimitiveNode : ParametricNode
+{
+    public PrimitiveNode(string generatorId, string name) : base(name)
+    {
+        GeneratorId = generatorId;
+    }
+
+    public string GeneratorId { get; }
+
+    protected override Node CreateCopy(Guid id)
+    {
+        var copy = new PrimitiveNode(GeneratorId, Name) { Id = id };
+        CopyParametersTo(copy);
+        return copy;
+    }
+
+    protected override void AppendHashInput(StringBuilder sb, IReadOnlyDictionary<string, double>? variables)
+    {
+        base.AppendHashInput(sb, variables);
+        sb.Append('#').Append(GeneratorId);
+        AppendParameters(sb, variables);
+    }
+}
+
+/// <summary>How a pattern repeats its source (F-PAT-01, F-PAT-02).</summary>
+public enum PatternKind
+{
+    /// <summary>In a row, or in a grid with two directions.</summary>
+    Linear,
+
+    /// <summary>Turned about an axis through the origin of the pattern.</summary>
+    Circular,
+}
+
+/// <summary>
+/// Repeats its children (the source, usually one object) as instances (F-PAT-02, F-PAT-03). A pattern stays a feature: its parameters
+/// (count, spacing, angle, ...) are expressions that can be changed at any time, and single instances can be skipped. The origin and
+/// the orientation of the pattern node are the origin and orientation of the pattern space (the center of a circular pattern); the
+/// first instance is the source where it is. A hole in a pattern cuts at every instance.
+/// </summary>
+public sealed class PatternNode(string name, PatternKind kind) : ParametricNode(name)
+{
+    /// <summary>The largest instance number that can be skipped (and the largest number of instances).</summary>
+    public const int MaxInstances = 1000;
+
+    public PatternKind Kind { get; } = kind;
+
+    /// <summary>The instances that are left out, as 1-based numbers (row by row in a grid).</summary>
+    public SortedSet<int> Skipped { get; } = [];
+
+    public override bool CanHaveChildren => true;
+
+    protected override Node CreateCopy(Guid id)
+    {
+        var copy = new PatternNode(Name, Kind) { Id = id };
+        CopyParametersTo(copy);
+        foreach (var number in Skipped) copy.Skipped.Add(number);
+        return copy;
+    }
+
+    protected override void AppendHashInput(StringBuilder sb, IReadOnlyDictionary<string, double>? variables)
+    {
+        base.AppendHashInput(sb, variables);
+        sb.Append("#pattern:").Append(Kind);
+        AppendParameters(sb, variables);
+        sb.Append("|skip=").AppendJoin(',', Skipped);
+    }
+
+    /// <summary>
+    /// Reads a list of instance numbers like <c>2, 5, 7-9</c> (numbers and ranges, separated by commas or spaces). An empty text is an
+    /// empty list. <paramref name="error"/> says what is wrong; the result is then empty.
+    /// </summary>
+    public static SortedSet<int> ParseSkipped(string? text, out string? error)
+    {
+        error = null;
+        var result = new SortedSet<int>();
+        var separators = new[] { ',', ';', ' ' };
+        foreach (var token in (text ?? "").Split(separators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            var parts = token.Split('-');
+            var first = 0;
+            var ok = parts.Length <= 2 && TryNumber(parts[0], out first);
+            var last = first;
+            if (ok && parts.Length == 2) ok = TryNumber(parts[1], out last);
+            if (!ok)
+            {
+                error = $"'{token}' is not an instance number or a range like 3-5.";
+                return [];
+            }
+
+            if (last < first)
+            {
+                error = $"The range '{token}' runs backwards.";
+                return [];
+            }
+
+            for (var number = first; number <= last; number++) result.Add(number);
+        }
+
+        return result;
+    }
+
+    private static bool TryNumber(string part, out int number) =>
+        int.TryParse(part, NumberStyles.None, CultureInfo.InvariantCulture, out number) && number is >= 1 and <= MaxInstances;
+
+    /// <summary>The list as short text: <c>2-4, 7</c>. The reverse of <see cref="ParseSkipped"/>.</summary>
+    public static string FormatSkipped(IEnumerable<int> numbers)
+    {
+        var sorted = numbers.Distinct().Order().ToList();
+        var parts = new List<string>();
+        for (var i = 0; i < sorted.Count;)
+        {
+            var j = i;
+            while (j + 1 < sorted.Count && sorted[j + 1] == sorted[j] + 1) j++;
+            parts.Add(j > i ? $"{sorted[i]}-{sorted[j]}" : sorted[i].ToString(CultureInfo.InvariantCulture));
+            i = j + 1;
+        }
+
+        return string.Join(", ", parts);
     }
 }
 

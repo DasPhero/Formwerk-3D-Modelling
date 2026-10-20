@@ -180,6 +180,32 @@
                                   AutomationProperties.AutomationId="PropertiesHoleThrough" />
                     </StackPanel>
                     <ItemsControl ItemsSource="{Binding Parameters}" />
+                    <!-- Pattern (F-PAT-01..03): directions, total length, skipped instances -->
+                    <StackPanel Visibility="{Binding IsPattern, Converter={StaticResource BoolToVisibility}}" Margin="0,6,0,0">
+                        <Grid Margin="0,2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="86" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{res:Loc Pattern.Direction}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding PatternAxes}" DisplayMemberPath="Label" SelectedValuePath="Index"
+                                      SelectedValue="{Binding PatternAxis}" AutomationProperties.AutomationId="PatternAxis" />
+                        </Grid>
+                        <CheckBox Content="{res:Loc Pattern.TotalLength}" IsChecked="{Binding PatternTotalLength}" Margin="0,4,0,4" />
+                        <Grid Margin="0,2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="86" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{res:Loc Pattern.DirectionY}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding PatternAxes}" DisplayMemberPath="Label" SelectedValuePath="Index"
+                                      SelectedValue="{Binding PatternAxisY}" AutomationProperties.AutomationId="PatternAxisY" />
+                        </Grid>
+                        <CheckBox Content="{res:Loc Pattern.TotalLengthY}" IsChecked="{Binding PatternTotalLengthY}" Margin="0,4,0,4" />
+                        <ContentControl Content="{Binding SkipField}" ToolTip="{res:Loc Pattern.Skip.Tip}" AutomationProperties.AutomationId="PatternSkip" />
+                        <TextBlock Text="{Binding InstanceText}" Margin="0,6,0,0" Foreground="{DynamicResource MutedTextBrush}"
+                                   AutomationProperties.AutomationId="PatternInstances" />
+                    </StackPanel>
                 </StackPanel>
 
                 <TextBlock Text="{res:Loc Props.Size}" Style="{StaticResource PanelHeader}" Margin="0,14,0,2" />
@@ -225,6 +251,9 @@
                 <MenuItem Header="{res:Loc Menu.Edit.DropToFloor}" Command="{Binding DropToFloorCommand}" InputGestureText="B" />
                 <MenuItem Header="{res:Loc Menu.Edit.FaceOnFloor}" Command="{Binding FaceOnFloorCommand}" />
                 <MenuItem Header="{res:Loc Menu.Edit.Drill}" Command="{Binding DrillCommand}" />
+                <MenuItem Header="{res:Loc Menu.Edit.Pattern}">
+                    <MenuItem Header="{res:Loc Menu.Edit.Pattern.Linear}" Command="{Binding LinearPatternCommand}" />
+                </MenuItem>
                 <MenuItem Header="{res:Loc Menu.Edit.Rotate90}">
                     <MenuItem Header="{res:Loc Rot.XPlus}" Command="{Binding Rotate90Command}" CommandParameter="X" />
                     <MenuItem Header="{res:Loc Rot.XMinus}" Command="{Binding Rotate90Command}" CommandParameter="-X" />

@@ -5,6 +5,7 @@ using Formwerk.App.Resources;
 using Formwerk.Core.Commands;
 using Formwerk.Core.Expressions;
 using Formwerk.Core.Model;
+using Formwerk.Features.Evaluation;
 using Formwerk.Features.Shapes;
 
 namespace Formwerk.App.ViewModels;
@@ -39,8 +40,91 @@ public sealed partial class PropertiesViewModel : ObservableObject
             Parameters = [.. generator.Parameters.Select(definition =>
                 new FieldViewModel(definition.Label, definition.Unit ?? (definition.IsInteger ? "" : "mm"), text => ApplyParameter(primitive, definition, text)))];
         }
+        else if (node is PatternNode pattern)
+        {
+            Parameters = [.. PatternParameters.For(pattern.Kind).Select(definition =>
+                new FieldViewModel(definition.Label, definition.Unit ?? (definition.IsInteger ? "" : "mm"), text => ApplyParameter(pattern, definition, text)))];
+            SkipField = new FieldViewModel(Texts.Get("Pattern.Skip"), "", text => ApplySkipped(pattern, text));
+        }
 
         Refresh();
+    }
+
+    // ---- patterns (F-PAT-01..03) ---------------------------------------------------------------
+
+    /// <summary>The node is a pattern: the choices (direction, total length) and the skipped instances show.</summary>
+    public bool IsPattern => _node is PatternNode;
+
+    /// <summary>The instances to leave out, as typed (<c>2, 5</c> or <c>3-5</c>); null for other nodes.</summary>
+    public FieldViewModel? SkipField { get; }
+
+    public IReadOnlyList<AxisChoice> PatternAxes { get; } =
+        [new(0, Texts.Get("Pattern.Axis.X")), new(1, Texts.Get("Pattern.Axis.Y")), new(2, Texts.Get("Pattern.Axis.Z"))];
+
+    /// <summary>The direction of a linear pattern (0 X, 1 Y, 2 Z) or the axis of a circular one.</summary>
+    public int PatternAxis
+    {
+        get => IntParameter("axis");
+        set => SetChoice("axis", value);
+    }
+
+    /// <summary>The second direction of a grid.</summary>
+    public int PatternAxisY
+    {
+        get => IntParameter("axisY");
+        set => SetChoice("axisY", value);
+    }
+
+    /// <summary>The spacing is the whole length from the first to the last instance, not the distance between two.</summary>
+    public bool PatternTotalLength
+    {
+        get => IntParameter("totalLength") == 1;
+        set => SetChoice("totalLength", value ? 1 : 0);
+    }
+
+    public bool PatternTotalLengthY
+    {
+        get => IntParameter("totalLengthY") == 1;
+        set => SetChoice("totalLengthY", value ? 1 : 0);
+    }
+
+    /// <summary>How many instances the pattern has (after skipping), or nothing when its values cannot be used.</summary>
+    public string InstanceText
+    {
+        get
+        {
+            if (_node is not PatternNode pattern) return "";
+            var values = pattern.EvaluateParameters(_document.ResolveVariables(out _), out var errors);
+            if (errors.Count > 0) return "";
+            var instances = PatternMath.Instances(pattern, values, out var problem);
+            return problem is null ? Texts.Format("Pattern.Instances", instances.Count) : "";
+        }
+    }
+
+    private int IntParameter(string name)
+    {
+        if (_node is not PatternNode pattern) return 0;
+        var definition = PatternParameters.For(pattern.Kind).FirstOrDefault(d => d.Name == name);
+        if (definition is null) return 0;
+        if (!pattern.Parameters.TryGetValue(name, out var text)) return (int)definition.Default;
+        return ExpressionParser.Evaluate(text, _document.ResolveVariables(out _)) is { IsSuccess: true } result ? (int)Math.Round(result.Value) : (int)definition.Default;
+    }
+
+    private void SetChoice(string name, int value)
+    {
+        if (_node is PatternNode pattern && IntParameter(name) != value)
+            _history.Execute(new SetParameterCommand(_document, pattern, name, value.ToString(CultureInfo.InvariantCulture)));
+    }
+
+    private string? ApplySkipped(PatternNode pattern, string text)
+    {
+        var numbers = PatternNode.ParseSkipped(text, out var error);
+        if (error is not null) return error;
+
+        var command = new SetSkippedCommand(_document, pattern, numbers);
+        if (command.HasEffect) _history.Execute(command);
+        SkipField!.SetFromModel(PatternNode.FormatSkipped(pattern.Skipped)); // shown in the short form
+        return null;
     }
 
     public Guid NodeId => _node.Id;
@@ -173,8 +257,25 @@ public sealed partial class PropertiesViewModel : ObservableObject
             }
         }
 
+        if (_node is PatternNode pattern)
+        {
+            var definitions = PatternParameters.For(pattern.Kind);
+            for (var i = 0; i < Parameters.Count; i++)
+            {
+                var definition = definitions[i];
+                var stored = pattern.Parameters.TryGetValue(definition.Name, out var text) ? text : Format(definition.Default);
+                Parameters[i].SetFromModel(stored);
+                Parameters[i].ShowLinks(ExpressionParser.UsedNames(stored));
+                Parameters[i].IsVisible = !IsPatternChoice(definition.Name); // the choices have their own controls
+            }
+
+            SkipField?.SetFromModel(PatternNode.FormatSkipped(pattern.Skipped));
+        }
+
         OnPropertyChanged(string.Empty);
     }
+
+    private static bool IsPatternChoice(string parameter) => parameter is "axis" or "axisY" or "totalLength" or "totalLengthY";
 
     private static string Format(double value) => Math.Round(value, 3).ToString("0.###", CultureInfo.InvariantCulture);
 
@@ -232,7 +333,7 @@ public sealed partial class PropertiesViewModel : ObservableObject
     /// Plain numbers and expressions ("Wandstaerke*2") are stored as typed so that links to variables survive (F-PAR-03);
     /// relative ("+10") and percent ("150%") input is resolved to a number first.
     /// </summary>
-    private string? ApplyParameter(PrimitiveNode node, ParameterDefinition definition, string text)
+    private string? ApplyParameter(ParametricNode node, ParameterDefinition definition, string text)
     {
         var trimmed = text.Trim();
         var variables = _document.ResolveVariables(out _);

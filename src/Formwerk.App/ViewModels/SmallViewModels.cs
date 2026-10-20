@@ -91,6 +91,8 @@ public sealed partial class NodeItemViewModel : ObservableObject
             GroupNode => "▤",
             BooleanNode => "⊖",
             MergeNode => "⊎",
+            PatternNode { Kind: PatternKind.Circular } => "◔",
+            PatternNode => "▦",
             MeshNode => "△",
             _ => "▣",
         };
@@ -105,3 +107,6 @@ public sealed partial class NodeItemViewModel : ObservableObject
         OnPropertyChanged(nameof(IsSelected));
     }
 }
+
+/// <summary>One entry of an axis choice (X, Y, Z) of a pattern.</summary>
+public sealed record AxisChoice(int Index, string Label);

@@ -159,10 +159,14 @@ public static class ProjectFile
         {
             case PrimitiveNode primitive:
                 json.WriteString("generator", primitive.GeneratorId);
-                json.WriteStartObject("parameters");
-                foreach (var (key, value) in primitive.Parameters.OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase))
-                    json.WriteString(key, value);
-                json.WriteEndObject();
+                WriteParameters(json, primitive);
+                break;
+            case PatternNode pattern:
+                json.WriteString("kind", pattern.Kind.ToString());
+                WriteParameters(json, pattern);
+                json.WriteStartArray("skipped");
+                foreach (var number in pattern.Skipped) json.WriteNumberValue(number);
+                json.WriteEndArray();
                 break;
             case MeshNode mesh:
                 json.WriteString("meshId", mesh.MeshId);
@@ -182,6 +186,13 @@ public static class ProjectFile
         json.WriteEndObject();
     }
 
+    private static void WriteParameters(Utf8JsonWriter json, ParametricNode node)
+    {
+        json.WriteStartObject("parameters");
+        foreach (var (key, value) in node.Parameters.OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase)) json.WriteString(key, value);
+        json.WriteEndObject();
+    }
+
     private static void WriteVector(Utf8JsonWriter json, string name, Vector3 v)
     {
         json.WriteStartArray(name);
@@ -198,6 +209,7 @@ public static class ProjectFile
         GroupNode => "group",
         BooleanNode => "boolean",
         MergeNode => "merge",
+        PatternNode => "pattern",
         _ => throw new NotSupportedException($"Node type {node.GetType().Name} cannot be saved."),
     };
 
@@ -397,6 +409,7 @@ public static class ProjectFile
             "group" => new GroupNode(name) { Id = id },
             "boolean" => new BooleanNode(name, ReadOperation(o)) { Id = id },
             "merge" => new MergeNode(name) { Id = id },
+            "pattern" => new PatternNode(name, ReadPatternKind(o)) { Id = id },
             _ => throw new ProjectFormatException($"The project contains an object type ('{type}') that this version of Formwerk does not know."),
         };
 
@@ -424,7 +437,7 @@ public static class ProjectFile
 
         node.Transform = new Transform(position, rotation, scale);
 
-        if (node is PrimitiveNode primitive && o["parameters"] is JsonObject parameters)
+        if (node is ParametricNode parametric && o["parameters"] is JsonObject parameters)
         {
             if (parameters.Count > Limits.MaxParametersPerNode) throw new ProjectFormatException("The file is damaged: an object has too many parameters.");
             foreach (var (key, value) in parameters)
@@ -432,7 +445,18 @@ public static class ProjectFile
                 if (key.Length is 0 or > 100) throw new ProjectFormatException("The file is damaged: a parameter name is invalid.");
                 var text = value?.GetValue<string>() ?? throw new ProjectFormatException("The file is damaged: a parameter value is missing.");
                 if (text.Length > Limits.MaxTextLength) throw new ProjectFormatException("The file is damaged: a parameter value is too long.");
-                primitive.Parameters[key] = text;
+                parametric.Parameters[key] = text;
+            }
+        }
+
+        if (node is PatternNode pattern && o["skipped"] is JsonArray skipped)
+        {
+            if (skipped.Count > PatternNode.MaxInstances) throw new ProjectFormatException("The file is damaged: a pattern skips too many instances.");
+            foreach (var item in skipped)
+            {
+                var number = item is JsonValue value && value.TryGetValue<int>(out var parsed) ? parsed : 0;
+                if (number is < 1 or > PatternNode.MaxInstances) throw new ProjectFormatException("The file is damaged: a skipped instance number is invalid.");
+                pattern.Skipped.Add(number);
             }
         }
 
@@ -444,6 +468,14 @@ public static class ProjectFile
         }
 
         return node;
+    }
+
+    private static PatternKind ReadPatternKind(JsonObject o)
+    {
+        var text = ReadText(o, "kind", required: true);
+        return Enum.TryParse<PatternKind>(text, ignoreCase: false, out var kind) && Enum.IsDefined(kind)
+            ? kind
+            : throw new ProjectFormatException($"The file is damaged: unknown pattern kind '{text}'.");
     }
 
     private static BooleanOperation ReadOperation(JsonObject o)

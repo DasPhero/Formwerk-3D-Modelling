@@ -20,7 +20,15 @@ public enum PartKind
 }
 
 /// <summary>A mesh in world space produced from the node tree. <see cref="Source"/> is the node that owns it.</summary>
-public sealed record ScenePart(Node Source, MeshData Mesh, PartKind Kind);
+public sealed record ScenePart(Node Source, MeshData Mesh, PartKind Kind)
+{
+    /// <summary>
+    /// Where the generator mesh of the part was put: the matrix from the shape's own space to the space the mesh is in now (its own
+    /// transform, then those of the groups and patterns around it, and the placement of a pattern instance). A through hole needs it
+    /// to be made again at the right place and depth.
+    /// </summary>
+    public System.Numerics.Matrix4x4 Frame { get; init; } = System.Numerics.Matrix4x4.Identity;
+}
 
 /// <summary>A problem with one node; the node keeps its last valid geometry (F-BOO-05).</summary>
 public sealed record EvaluationError(Node Node, string Message);
@@ -83,6 +91,7 @@ public sealed class SceneEvaluator(IGeometryKernel kernel, MeshStore? meshes = n
             GroupNode g => EvalGroup(g, c),
             BooleanNode b => EvalBoolean(b, c),
             MergeNode m => EvalMerge(m, c),
+            PatternNode pattern => EvalPattern(pattern, c),
             MeshNode mesh => EvalMesh(mesh, c),
             _ => Unsupported(node, c),
         };
@@ -134,7 +143,8 @@ public sealed class SceneEvaluator(IGeometryKernel kernel, MeshStore? meshes = n
         }
 
         _lastValid[node.Id] = local;
-        return [new ScenePart(node, local.Transformed(node.Transform.ToMatrix()), KindOf(node))];
+        var placement = node.Transform.ToMatrix();
+        return [new ScenePart(node, local.Transformed(placement), KindOf(node)) { Frame = placement }];
     }
 
     private List<ScenePart> EvalMesh(MeshNode node, Context c)
@@ -239,9 +249,9 @@ public sealed class SceneEvaluator(IGeometryKernel kernel, MeshStore? meshes = n
         var values = hole.EvaluateParameters(c.Variables, out var errors);
         if (errors.Count > 0 || values.GetValueOrDefault("through") < 0.5) return null;
 
-        // hole space to the space of the container (the container's own transform is applied later, to all parts together)
-        var matrix = Matrix4x4.Identity;
-        for (Node? node = hole; node is not null && node != container; node = node.Parent) matrix *= node.Transform.ToMatrix();
+        // hole space to the space of the container (the container's own transform is applied later, to all parts together); the frame
+        // of the part knows the groups around the hole and the placement of the instance of a pattern
+        var matrix = part.Frame;
 
         var origin = Vector3.Transform(Vector3.Zero, matrix);
         var axisVector = Vector3.TransformNormal(Vector3.UnitZ, matrix);
@@ -432,6 +442,40 @@ public sealed class SceneEvaluator(IGeometryKernel kernel, MeshStore? meshes = n
         return Single(node, mesh);
     }
 
+    /// <summary>
+    /// A pattern (F-PAT-01..03): its children are evaluated once and every instance that is not skipped gets a copy of their parts,
+    /// moved or turned as the pattern says. Holes stay holes, so the group around the pattern cuts at every instance. The instances
+    /// belong to the source nodes, so a click on one selects the pattern. A wrong parameter is reported and the source is shown alone.
+    /// </summary>
+    private List<ScenePart> EvalPattern(PatternNode node, Context c)
+    {
+        var source = new List<ScenePart>();
+        foreach (var child in node.Children) source.AddRange(Eval(child, c));
+
+        var values = node.EvaluateParameters(c.Variables, out var parameterErrors);
+        List<Matrix4x4> instances;
+        if (parameterErrors.Count > 0)
+        {
+            var (name, message) = parameterErrors.First();
+            c.Errors.Add(new EvaluationError(node, $"{name}: {message}"));
+            instances = [Matrix4x4.Identity];
+        }
+        else
+        {
+            instances = PatternMath.Instances(node, values, out var problem);
+            if (problem is not null) c.Errors.Add(new EvaluationError(node, problem));
+        }
+
+        var parts = new List<ScenePart>(source.Count * instances.Count);
+        foreach (var matrix in instances)
+        {
+            c.Token.ThrowIfCancellationRequested();
+            foreach (var part in source) parts.Add(matrix.IsIdentity ? part : part with { Mesh = part.Mesh.Transformed(matrix), Frame = part.Frame * matrix });
+        }
+
+        return Finish(node, parts);
+    }
+
     private List<ScenePart> EvalMerge(MergeNode node, Context c)
     {
         var parts = new List<ScenePart>();
@@ -451,7 +495,7 @@ public sealed class SceneEvaluator(IGeometryKernel kernel, MeshStore? meshes = n
 
         var result = Single(node, mesh);
         result.AddRange(parts.Where(p => p.Kind == PartKind.Hole)
-            .Select(p => p with { Mesh = p.Mesh.Transformed(node.Transform.ToMatrix()), Kind = PartKind.Ghost }));
+            .Select(p => p with { Mesh = p.Mesh.Transformed(node.Transform.ToMatrix()), Kind = PartKind.Ghost, Frame = p.Frame * node.Transform.ToMatrix() }));
         return result;
     }
 
@@ -464,7 +508,7 @@ public sealed class SceneEvaluator(IGeometryKernel kernel, MeshStore? meshes = n
         foreach (var part in localParts)
         {
             var kind = holeGroup && part.Kind == PartKind.Solid ? PartKind.Hole : part.Kind;
-            result.Add(part with { Mesh = part.Mesh.Transformed(matrix), Kind = kind });
+            result.Add(part with { Mesh = part.Mesh.Transformed(matrix), Kind = kind, Frame = part.Frame * matrix });
         }
 
         return result;
