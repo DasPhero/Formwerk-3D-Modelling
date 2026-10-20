@@ -1,3 +1,4 @@
+using System.Numerics;
 using Formwerk.Features.Shapes;
 
 namespace Formwerk.Tests.Features;
@@ -32,6 +33,7 @@ public class HoleGeneratorTests
     [InlineData(1)]
     [InlineData(2)]
     [InlineData(3)]
+    [InlineData(4)]
     public void Every_type_is_a_closed_solid_with_outward_normals(int type)
     {
         var mesh = Generator.Generate(P(("type", type)));
@@ -134,7 +136,7 @@ public class HoleGeneratorTests
     [Fact]
     public void The_profile_starts_and_ends_on_the_axis_and_lies_in_front_of_it()
     {
-        foreach (var type in new[] { 0, 1, 2, 3 })
+        foreach (var type in new[] { 0, 1, 2, 3, 4 })
         {
             var profile = Generator.Profile(P(("type", type)));
             Assert.Equal(0, profile[0].R);
@@ -145,10 +147,112 @@ public class HoleGeneratorTests
     }
 
     [Theory]
-    [InlineData("type", 4)]
+    [InlineData("type", 5)]
     [InlineData("diameter", 0)]
     [InlineData("depth", 0)]
     [InlineData("sinkAngle", 5)]
     public void Values_outside_the_range_are_rejected(string name, double value) =>
         Assert.Throws<ArgumentException>(() => Generator.Generate(P((name, value))));
+
+    // ---- the hexagonal nut trap (F-HOL-03) ----
+
+    /// <summary>Area of a regular hexagon with the width s across the flats.</summary>
+    private static double HexArea(double acrossFlats) => Math.Sqrt(3) / 2 * acrossFlats * acrossFlats;
+
+    [Fact]
+    public void A_nut_trap_is_a_hexagonal_pocket_above_a_round_shaft()
+    {
+        var mesh = Generator.Generate(P(("type", 4), ("diameter", 3.4), ("sinkDiameter", 5.5), ("sinkDepth", 2.4), ("depth", 10), ("segments", 64)));
+
+        // 2.4 deep and the 1 mm above the surface for the hexagon, then 7.6 mm of the round shaft
+        var expected = HexArea(5.5) * (2.4 + 1) + PolygonArea(1.7, 64) * (10 - 2.4);
+        Assert.Equal(expected, mesh.ComputeVolume(), 2);
+        Assert.True(mesh.IsWatertight());
+    }
+
+    [Fact]
+    public void The_hexagon_is_the_given_width_across_the_flats_and_a_corner_points_along_X()
+    {
+        var mesh = Generator.Generate(P(("type", 4), ("diameter", 3.4), ("sinkDiameter", 5.5), ("sinkDepth", 2.4), ("depth", 10)));
+
+        var size = mesh.ComputeBounds().Size;
+        Assert.Equal(5.5 / Math.Cos(Math.PI / 6), size.X, 3); // corner to corner
+        Assert.Equal(5.5, size.Y, 3); // flat to flat
+        Assert.Equal(-10, mesh.ComputeBounds().Min.Z, 4);
+        Assert.Equal(1, mesh.ComputeBounds().Max.Z, 4);
+    }
+
+    [Fact]
+    public void A_pocket_as_deep_as_the_hole_is_a_plain_hexagonal_prism()
+    {
+        var mesh = Generator.Generate(P(("type", 4), ("diameter", 3.4), ("sinkDiameter", 5.5), ("sinkDepth", 30), ("depth", 4)));
+
+        Assert.True(mesh.IsWatertight());
+        Assert.Equal(HexArea(5.5) * (4 + 1), mesh.ComputeVolume(), 2);
+        Assert.Equal(-4, mesh.ComputeBounds().Min.Z, 4);
+    }
+
+    [Fact]
+    public void A_nut_trap_that_is_not_wider_than_the_shaft_is_a_plain_cylinder()
+    {
+        var plain = Generator.Generate(P(("type", 0), ("diameter", 6), ("depth", 10)));
+        var trap = Generator.Generate(P(("type", 4), ("diameter", 6), ("sinkDiameter", 5), ("depth", 10)));
+
+        Assert.Equal(plain.ComputeVolume(), trap.ComputeVolume(), 3);
+    }
+
+    [Theory]
+    [InlineData(3, 3.4, 5.5, 2.4, 10, 12)]
+    [InlineData(3, 3.4, 5.5, 2.4, 10, 48)]
+    [InlineData(3, 3.4, 5.5, 2.4, 10, 3)]
+    [InlineData(3, 3.4, 5.5, 2.4, 10, 256)]
+    [InlineData(2, 5.0, 5.2, 1.0, 5, 6)] // the circle almost touches the flats
+    [InlineData(2, 8.4, 13.2, 6.7, 40, 100)]
+    public void A_nut_trap_is_a_closed_solid_for_any_number_of_segments(int _, double diameter, double acrossFlats, double pocket, double depth, int segments)
+    {
+        var mesh = Generator.Generate(P(("type", 4), ("diameter", diameter), ("sinkDiameter", acrossFlats), ("sinkDepth", pocket), ("depth", depth), ("segments", segments)));
+
+        Assert.True(mesh.IsWatertight());
+        Assert.True(mesh.ComputeVolume() > 0);
+    }
+
+    [Fact]
+    public void The_floor_of_the_pocket_between_hexagon_and_circle_has_no_gaps_and_faces_down()
+    {
+        var mesh = Generator.Generate(P(("type", 4), ("diameter", 3.4), ("sinkDiameter", 5.5), ("sinkDepth", 2.4), ("depth", 10), ("segments", 48)));
+
+        // triangles at the height of the pocket floor that look downward: together they are the ring between the hexagon and the circle
+        double area = 0;
+        var v = mesh.Vertices;
+        var idx = mesh.Indices;
+        for (var t = 0; t < mesh.TriangleCount; t++)
+        {
+            var (a, b, c) = (v[idx[3 * t]], v[idx[3 * t + 1]], v[idx[3 * t + 2]]);
+            if (Math.Abs(a.Z + 2.4) > 1e-4 || Math.Abs(b.Z + 2.4) > 1e-4 || Math.Abs(c.Z + 2.4) > 1e-4) continue;
+            var n = Vector3.Cross(b - a, c - a);
+            Assert.True(n.Z < 0, "the floor looks up"); // the cutter is solid above the floor, so the floor faces down
+            area += n.Length() / 2;
+        }
+
+        Assert.Equal(HexArea(5.5) - PolygonArea(1.7, 48), area, 2);
+    }
+
+    [Fact]
+    public void The_outline_of_a_nut_trap_for_the_picture_is_that_of_a_counterbore_across_the_flats()
+    {
+        var profile = Generator.Profile(P(("type", 4), ("diameter", 3.4), ("sinkDiameter", 5.5), ("sinkDepth", 2.4), ("depth", 10)));
+
+        Assert.Contains(profile, p => Math.Abs(p.R - 2.75) < 1e-4 && Math.Abs(p.Z + 2.4) < 1e-4);
+        Assert.Contains(profile, p => Math.Abs(p.R - 1.7) < 1e-4 && Math.Abs(p.Z + 10) < 1e-4);
+    }
+
+    [Fact]
+    public void The_head_fields_are_called_nut_width_and_nut_thickness_for_a_nut_trap()
+    {
+        Assert.Equal("Nut width", HoleGenerator.LabelFor("sinkDiameter", HoleType.NutTrap));
+        Assert.Equal("Nut thickness", HoleGenerator.LabelFor("sinkDepth", HoleType.NutTrap));
+        Assert.Equal("Head diameter", HoleGenerator.LabelFor("sinkDiameter", HoleType.Counterbore));
+        Assert.Equal("Head depth", HoleGenerator.LabelFor("sinkDepth", HoleType.Counterbore));
+        Assert.Equal("Diameter", HoleGenerator.LabelFor("diameter", HoleType.NutTrap));
+    }
 }

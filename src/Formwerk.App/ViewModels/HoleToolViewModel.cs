@@ -16,6 +16,7 @@ public sealed record HoleTypeItem(HoleType Type, string Label)
         new(HoleType.Conical, Texts.Get("Hole.Type.Conical")),
         new(HoleType.Countersink, Texts.Get("Hole.Type.Countersink")),
         new(HoleType.Counterbore, Texts.Get("Hole.Type.Counterbore")),
+        new(HoleType.NutTrap, Texts.Get("Hole.Type.NutTrap")),
     ];
 }
 
@@ -34,6 +35,7 @@ public sealed record HolePresetKindItem(HolePresetKind Kind, string Label)
         new(HolePresetKind.CapHead, Texts.Get("Hole.Kind.CapHead")),
         new(HolePresetKind.CoreHole, Texts.Get("Hole.Kind.CoreHole")),
         new(HolePresetKind.HeatSetInsert, Texts.Get("Hole.Kind.HeatSetInsert")),
+        new(HolePresetKind.HexNutTrap, Texts.Get("Hole.Kind.HexNutTrap")),
     ];
 }
 
@@ -124,11 +126,11 @@ public sealed partial class HoleToolViewModel : ObservableObject
 
     public bool ShowEndDiameter => Type == HoleType.Conical;
 
-    public bool ShowHead => Type is HoleType.Countersink or HoleType.Counterbore;
+    public bool ShowHead => Type is HoleType.Countersink or HoleType.Counterbore or HoleType.NutTrap;
 
     public bool ShowHeadAngle => Type == HoleType.Countersink;
 
-    public bool ShowHeadDepth => Type == HoleType.Counterbore;
+    public bool ShowHeadDepth => Type is HoleType.Counterbore or HoleType.NutTrap;
 
     partial void OnTypeChanged(HoleType value)
     {
@@ -136,6 +138,8 @@ public sealed partial class HoleToolViewModel : ObservableObject
         OnPropertyChanged(nameof(ShowHead));
         OnPropertyChanged(nameof(ShowHeadAngle));
         OnPropertyChanged(nameof(ShowHeadDepth));
+        HeadDiameter.Label = HoleGenerator.LabelFor("sinkDiameter", value); // "Nut width" and "Nut thickness" for a nut trap
+        HeadDepth.Label = HoleGenerator.LabelFor("sinkDepth", value);
         PictureChanged();
     }
 

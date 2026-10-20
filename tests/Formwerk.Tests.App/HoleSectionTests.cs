@@ -20,6 +20,7 @@ public class HoleSectionTests
     [InlineData(1)]
     [InlineData(2)]
     [InlineData(3)]
+    [InlineData(4)]
     public void The_hole_is_symmetric_about_the_axis_and_inside_the_picture(int type)
     {
         var section = Section(("type", type), ("depth", 12));

@@ -25,15 +25,19 @@ public enum HolePresetKind
 
     /// <summary>Blind hole for a heat-set threaded insert (typical sizes).</summary>
     HeatSetInsert,
+
+    /// <summary>Through hole with a hexagonal pocket for a standard nut (ISO 4032): width across the flats and thickness.</summary>
+    HexNutTrap,
 }
 
 /// <summary>
 /// One metric screw size with the measures the presets need, all in mm: the thread diameter, the tap drill size, the head of a
-/// countersunk screw (ISO 7046) and of a socket head cap screw (ISO 4762), and typical sizes of a heat-set insert.
+/// countersunk screw (ISO 7046) and of a socket head cap screw (ISO 4762), typical sizes of a heat-set insert and the hexagon nut
+/// (ISO 4032: width across the flats and thickness).
 /// </summary>
 public sealed record ScrewSize(
     string Name, double Diameter, double TapDrill, double CountersunkHeadDiameter, double CapHeadDiameter, double CapHeadHeight,
-    double InsertDiameter, double InsertLength);
+    double InsertDiameter, double InsertLength, double NutWidth, double NutThickness);
 
 /// <summary>
 /// The result of a preset: the type of the hole, whether it goes through, and the parameters as expressions (text), so that the print
@@ -46,14 +50,14 @@ public static class HolePresets
 {
     public static IReadOnlyList<ScrewSize> Sizes { get; } =
     [
-        //        name    d     tap   csk    cap    k    insert  length
-        new("M2",   2.0, 1.60, 3.8, 3.8, 2.0, 3.2, 3.0),
-        new("M2.5", 2.5, 2.05, 4.7, 4.5, 2.5, 3.6, 4.0),
-        new("M3",   3.0, 2.50, 5.5, 5.5, 3.0, 4.0, 5.0),
-        new("M4",   4.0, 3.30, 8.4, 7.0, 4.0, 5.6, 6.0),
-        new("M5",   5.0, 4.20, 9.3, 8.5, 5.0, 6.4, 8.0),
-        new("M6",   6.0, 5.00, 11.3, 10.0, 6.0, 8.0, 9.0),
-        new("M8",   8.0, 6.80, 15.8, 13.0, 8.0, 9.6, 12.0),
+        //        name    d     tap   csk    cap    k    insert  length  nut AF  nut m
+        new("M2",   2.0, 1.60, 3.8, 3.8, 2.0, 3.2, 3.0, 4.0, 1.6),
+        new("M2.5", 2.5, 2.05, 4.7, 4.5, 2.5, 3.6, 4.0, 5.0, 2.0),
+        new("M3",   3.0, 2.50, 5.5, 5.5, 3.0, 4.0, 5.0, 5.5, 2.4),
+        new("M4",   4.0, 3.30, 8.4, 7.0, 4.0, 5.6, 6.0, 7.0, 3.2),
+        new("M5",   5.0, 4.20, 9.3, 8.5, 5.0, 6.4, 8.0, 8.0, 4.0),
+        new("M6",   6.0, 5.00, 11.3, 10.0, 6.0, 8.0, 9.0, 10.0, 5.0),
+        new("M8",   8.0, 6.80, 15.8, 13.0, 8.0, 9.6, 12.0, 13.0, 6.5),
     ];
 
     public static ScrewSize? Find(string name) =>
@@ -79,6 +83,8 @@ public static class HolePresets
                 ("sinkDepth", $"{N(s.CapHeadHeight)}+Tolerance")),
             HolePresetKind.CoreHole => Blind(HoleType.Cylindrical, ("diameter", N(s.TapDrill)), ("depth", N(3 * s.Diameter))),
             HolePresetKind.HeatSetInsert => Blind(HoleType.Cylindrical, ("diameter", N(s.InsertDiameter)), ("depth", N(s.InsertLength + 1))),
+            HolePresetKind.HexNutTrap => Through(
+                HoleType.NutTrap, ("diameter", $"{d}+2*Tolerance"), ("sinkDiameter", $"{N(s.NutWidth)}+Tolerance"), ("sinkDepth", $"{N(s.NutThickness)}+Tolerance")),
             _ => null,
         };
     }

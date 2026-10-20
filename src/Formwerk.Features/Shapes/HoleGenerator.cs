@@ -3,7 +3,7 @@ using Formwerk.Geometry;
 
 namespace Formwerk.Features.Shapes;
 
-/// <summary>The four kinds of hole (F-HOL-02). The numbers are what the parameter <c>type</c> holds in the document.</summary>
+/// <summary>The kinds of hole (F-HOL-02, F-HOL-03). The numbers are what the parameter <c>type</c> holds in the document.</summary>
 public enum HoleType
 {
     /// <summary>Straight, one diameter.</summary>
@@ -17,6 +17,9 @@ public enum HoleType
 
     /// <summary>A wider cylinder at the surface (for a cylinder head) above a straight hole.</summary>
     Counterbore = 3,
+
+    /// <summary>A hexagonal pocket (for a nut) above a straight hole; the width across the flats is the head diameter.</summary>
+    NutTrap = 4,
 }
 
 /// <summary>
@@ -37,7 +40,7 @@ public sealed class HoleGenerator : ShapeGenerator
     // the bottom), so they are all details: they are changed in the properties and in the tool, not by dragging.
     public override IReadOnlyList<ParameterDefinition> Parameters { get; } =
     [
-        new("type", "Type", 0, 0, 3, IsInteger: true),
+        new("type", "Type", 0, 0, 4, IsInteger: true),
         new("diameter", "Diameter", 3.4, 0.01, 1000, IsDetail: true),
         new("endDiameter", "End diameter", 1.7, 0, 1000, IsDetail: true),
         new("depth", "Depth", 10, 0.01, 10000, IsDetail: true),
@@ -56,7 +59,106 @@ public sealed class HoleGenerator : ShapeGenerator
     /// </summary>
     public IReadOnlyList<(float R, float Z)> Profile(IReadOnlyDictionary<string, double> values) => ProfileOf(Resolve(values));
 
-    protected override MeshData Build(IReadOnlyDictionary<string, double> p) => Revolve(ProfileOf(p), (int)p["segments"]);
+    protected override MeshData Build(IReadOnlyDictionary<string, double> p) =>
+        (HoleType)(int)p["type"] == HoleType.NutTrap && p["sinkDiameter"] > p["diameter"]
+            ? NutTrapMesh(p)
+            : Revolve(ProfileOf(p), (int)p["segments"]);
+
+    /// <summary>The name of a field of the hole for a type: the head of a counterbore is a nut for a nut trap.</summary>
+    public static string LabelFor(string parameter, HoleType type) => (parameter, type) switch
+    {
+        ("sinkDiameter", HoleType.NutTrap) => "Nut width",
+        ("sinkDepth", HoleType.NutTrap) => "Nut thickness",
+        _ => ShapeLibrary.Hole.Parameters.First(d => d.Name == parameter).Label,
+    };
+
+
+    /// <summary>
+    /// A hexagonal pocket (the width across the flats is <c>sinkDiameter</c>, a corner points along +X) of the depth <c>sinkDepth</c>
+    /// above the round shaft, as one closed solid. The floor of the pocket between the hexagon and the circle is made by walking
+    /// around both rings by angle, so no vertex is left out and the solid has no gaps. Without a pocket that is deeper than 0 and
+    /// shallower than the hole it is a plain hexagonal prism.
+    /// </summary>
+    private static MeshData NutTrapMesh(IReadOnlyDictionary<string, double> p)
+    {
+        const float e = Overshoot;
+        var depth = (float)p["depth"];
+        var pocket = Math.Min((float)p["sinkDepth"], depth);
+        var radius = (float)p["diameter"] / 2;
+        var corner = (float)p["sinkDiameter"] / MathF.Sqrt(3); // distance from the axis to a corner of the hexagon
+        var n = (int)p["segments"];
+
+        var vertices = new List<Vector3>();
+        int Ring(float r, float z, int count)
+        {
+            var first = vertices.Count;
+            for (var k = 0; k < count; k++)
+            {
+                var (s, c) = MathF.SinCos(2 * MathF.PI * k / count);
+                vertices.Add(new Vector3(r * c, r * s, z));
+            }
+
+            return first;
+        }
+
+        var indices = new List<int>();
+
+        // walls between two rings of the same size (outward); upper ring first
+        void Wall(int upper, int lower, int count)
+        {
+            for (var k = 0; k < count; k++)
+            {
+                var next = (k + 1) % count;
+                indices.AddRange([upper + k, lower + k, upper + next, upper + next, lower + k, lower + next]);
+            }
+        }
+
+        var hexTop = Ring(corner, e, 6);
+        var top = vertices.Count;
+        vertices.Add(new Vector3(0, 0, e));
+        for (var k = 0; k < 6; k++) indices.AddRange([top, hexTop + k, hexTop + (k + 1) % 6]); // top cap, looks up
+
+        if (pocket >= depth)
+        {
+            // only the hexagonal prism: walls down to the bottom and a flat bottom
+            var hexBottom = Ring(corner, -depth, 6);
+            var bottomCenter = vertices.Count;
+            vertices.Add(new Vector3(0, 0, -depth));
+            Wall(hexTop, hexBottom, 6);
+            for (var k = 0; k < 6; k++) indices.AddRange([hexBottom + k, bottomCenter, hexBottom + (k + 1) % 6]);
+            return new MeshData([.. vertices], [.. indices]);
+        }
+
+        var hexFloor = Ring(corner, -pocket, 6);
+        Wall(hexTop, hexFloor, 6);
+
+        // the floor of the pocket: the ring between the hexagon (outside) and the circle of the shaft (inside), looking down
+        var shaftTop = Ring(radius, -pocket, n);
+        int h = 0, s2 = 0;
+        while (h < 6 || s2 < n)
+        {
+            var nextHex = h < 6 ? 2 * MathF.PI * (h + 1) / 6 : float.MaxValue;
+            var nextShaft = s2 < n ? 2 * MathF.PI * (s2 + 1) / n : float.MaxValue;
+            if (nextHex <= nextShaft + 1e-6f)
+            {
+                indices.AddRange([hexFloor + h % 6, shaftTop + s2 % n, hexFloor + (h + 1) % 6]);
+                h++;
+            }
+            else
+            {
+                indices.AddRange([shaftTop + s2 % n, shaftTop + (s2 + 1) % n, hexFloor + h % 6]);
+                s2++;
+            }
+        }
+
+        var shaftBottom = Ring(radius, -depth, n);
+        var center = vertices.Count;
+        vertices.Add(new Vector3(0, 0, -depth));
+        Wall(shaftTop, shaftBottom, n);
+        for (var k = 0; k < n; k++) indices.AddRange([shaftBottom + k, center, shaftBottom + (k + 1) % n]); // bottom, looks down
+
+        return new MeshData([.. vertices], [.. indices]);
+    }
 
     private static List<(float R, float Z)> ProfileOf(IReadOnlyDictionary<string, double> p)
     {
@@ -86,7 +188,7 @@ public sealed class HoleGenerator : ShapeGenerator
                 break;
             }
 
-            case HoleType.Counterbore when sinkRadius > radius:
+            case HoleType.Counterbore or HoleType.NutTrap when sinkRadius > radius:
             {
                 var boreDepth = Math.Min((float)p["sinkDepth"], depth);
                 points = boreDepth >= depth

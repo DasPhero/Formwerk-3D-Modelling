@@ -20,7 +20,9 @@ public sealed partial class FieldViewModel : ObservableObject
         _commit = commit;
     }
 
-    public string Label { get; }
+    /// <summary>The name of the field; it can change with the type of a hole (the head of a counterbore is a nut for a nut trap).</summary>
+    [ObservableProperty]
+    public partial string Label { get; set; }
 
     public string Unit { get; }
 

@@ -64,7 +64,7 @@ public sealed partial class PropertiesViewModel : ObservableObject
     {
         get => _node is PrimitiveNode primitive && primitive.Parameters.TryGetValue("type", out var text)
             && ExpressionParser.Evaluate(text, _document.ResolveVariables(out _)) is { IsSuccess: true } result
-            ? (HoleType)(int)Math.Clamp(Math.Round(result.Value), 0, 3)
+            ? (HoleType)(int)Math.Clamp(Math.Round(result.Value), 0, 4)
             : HoleType.Cylindrical;
         set
         {
@@ -107,9 +107,9 @@ public sealed partial class PropertiesViewModel : ObservableObject
         "type" or "through" => false, // both are a choice or a checkbox
         "depth" => !through,
         "endDiameter" => type == HoleType.Conical,
-        "sinkDiameter" => type is HoleType.Countersink or HoleType.Counterbore,
+        "sinkDiameter" => type is HoleType.Countersink or HoleType.Counterbore or HoleType.NutTrap,
         "sinkAngle" => type == HoleType.Countersink,
-        "sinkDepth" => type == HoleType.Counterbore,
+        "sinkDepth" => type is HoleType.Counterbore or HoleType.NutTrap,
         _ => true,
     };
 
@@ -166,7 +166,10 @@ public sealed partial class PropertiesViewModel : ObservableObject
                 var type = HoleType;
                 var through = HoleThrough;
                 for (var i = 0; i < Parameters.Count && generator is not null; i++)
+                {
                     Parameters[i].IsVisible = IsFieldOfType(generator.Parameters[i].Name, type, through);
+                    Parameters[i].Label = HoleGenerator.LabelFor(generator.Parameters[i].Name, type);
+                }
             }
         }
 

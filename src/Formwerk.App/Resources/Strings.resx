@@ -244,6 +244,7 @@ Try a different location or file name.</value></data>
   <data name="Hole.Type.Conical" xml:space="preserve"><value>Conical</value></data>
   <data name="Hole.Type.Countersink" xml:space="preserve"><value>Countersink</value></data>
   <data name="Hole.Type.Counterbore" xml:space="preserve"><value>Counterbore</value></data>
+  <data name="Hole.Type.NutTrap" xml:space="preserve"><value>Hex nut trap</value></data>
   <data name="Hole.Through" xml:space="preserve"><value>Through all</value></data>
   <data name="Hole.Through.Tip" xml:space="preserve"><value>The hole goes all the way through the body and stays through when the body is resized or moved. Switch off to type a depth.</value></data>
   <data name="Hole.Err.Range" xml:space="preserve"><value>{0} must be between {1} and {2}.</value></data>
@@ -258,6 +259,7 @@ Try a different location or file name.</value></data>
   <data name="Hole.Kind.CapHead" xml:space="preserve"><value>Cap head (socket)</value></data>
   <data name="Hole.Kind.CoreHole" xml:space="preserve"><value>Core hole, self-tapping</value></data>
   <data name="Hole.Kind.HeatSetInsert" xml:space="preserve"><value>Heat-set insert</value></data>
+  <data name="Hole.Kind.HexNutTrap" xml:space="preserve"><value>Hex nut trap</value></data>
   <data name="Var.Title" xml:space="preserve"><value>Variables</value></data>
   <data name="Var.Hint" xml:space="preserve"><value>Give a number or a formula a name, for example Wall = 2. Then type the name into any size field, for example Wall*2 or Wall+0.4. Changing the variable changes everything that uses it.</value></data>
   <data name="Var.Add" xml:space="preserve"><value>Add variable</value></data>

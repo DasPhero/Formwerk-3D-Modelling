@@ -33,7 +33,7 @@ public class HolePropertiesTests
         vm.SelectOnly([hole.Id]);
         Assert.True(vm.Properties!.IsHoleShape);
         Assert.Equal(HoleType.Cylindrical, vm.Properties.HoleType);
-        Assert.Equal(4, vm.Properties.HoleTypes.Count);
+        Assert.Equal(5, vm.Properties.HoleTypes.Count); // cylindrical, conical, countersink, counterbore, nut trap
 
         vm.SelectOnly([vm.Document.Root.Descendants().First(n => n is PrimitiveNode { GeneratorId: "box" }).Id]);
         Assert.False(vm.Properties!.IsHoleShape);
@@ -196,5 +196,42 @@ public class HolePropertiesTests
         Assert.True(tool.Profile.Min(p => p.Z) <= -2 * 6.4);
         tool.Through = false;
         Assert.Equal(-1, tool.Profile.Min(p => p.Z), 3);
+    }
+
+    [UiFact]
+    public async Task A_nut_trap_shows_the_nut_fields_and_names_them_in_the_properties()
+    {
+        var (vm, hole) = await Scene();
+        vm.SelectOnly([hole.Id]);
+
+        vm.Properties!.HoleType = HoleType.NutTrap;
+        await vm.WaitForEvaluationAsync();
+
+        var props = vm.Properties!;
+        Assert.True(Field(props, "sinkDiameter").IsVisible);
+        Assert.True(Field(props, "sinkDepth").IsVisible);
+        Assert.False(Field(props, "sinkAngle").IsVisible);
+        Assert.False(Field(props, "endDiameter").IsVisible);
+        Assert.Equal("Nut width", Field(props, "sinkDiameter").Label);
+        Assert.Equal("Nut thickness", Field(props, "sinkDepth").Label);
+        Assert.Equal(HoleType.NutTrap, props.HoleType);
+        Assert.Equal("4", hole.Parameters["type"]);
+
+        props.HoleType = HoleType.Cylindrical;
+        Assert.Equal("Head diameter", Field(vm.Properties!, "sinkDiameter").Label);
+    }
+
+    [UiFact]
+    public async Task A_nut_trap_cuts_a_wider_pocket_than_a_plain_hole()
+    {
+        var (vm, hole) = await Scene();
+        double Removed() => 8000 - vm.ViewportItems.Where(i => i.Kind == ViewportItemKind.Solid).Sum(i => (double)i.Mesh.ComputeVolume());
+        vm.SelectOnly([hole.Id]);
+        var plain = Removed();
+
+        vm.Properties!.HoleType = HoleType.NutTrap;
+        await vm.WaitForEvaluationAsync();
+
+        Assert.True(Removed() > plain * 1.2, $"{Removed()} vs {plain}");
     }
 }

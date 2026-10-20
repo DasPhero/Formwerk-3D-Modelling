@@ -201,4 +201,39 @@ public class HolePresetsTests
         Assert.Equal("2.05", preset.Parameters["diameter"]);
         Assert.DoesNotContain(',', preset.Parameters["depth"]);
     }
+
+    [Fact]
+    public void M3_hex_nut_trap_is_a_through_hole_with_a_hexagonal_pocket_for_the_nut()
+    {
+        var preset = HolePresets.Create("M3", HolePresetKind.HexNutTrap)!;
+        var values = Values(preset);
+
+        Assert.Equal(HoleType.NutTrap, preset.Type);
+        Assert.True(preset.Through);
+        Assert.Equal(3.4, values["diameter"], 6);
+        Assert.Equal(5.7, values["sinkDiameter"], 6); // nut width 5.5 + 0.2
+        Assert.Equal(2.6, values["sinkDepth"], 6); // nut thickness 2.4 + 0.2
+    }
+
+    [Fact]
+    public void The_pocket_of_a_nut_trap_is_wider_than_the_shaft_and_follows_the_tolerance()
+    {
+        foreach (var size in HolePresets.Sizes)
+        {
+            var preset = HolePresets.Create(size.Name, HolePresetKind.HexNutTrap)!;
+            var values = Values(preset);
+
+            Assert.True(values["sinkDiameter"] > values["diameter"], size.Name);
+            Assert.True(Values(preset, 0.5)["sinkDiameter"] > values["sinkDiameter"], size.Name);
+            Assert.True(Values(preset, 0.5)["sinkDepth"] > values["sinkDepth"], size.Name);
+            Assert.True(values["sinkDepth"] > size.NutThickness, size.Name);
+        }
+    }
+
+    [Fact]
+    public void The_nut_sizes_are_those_of_a_standard_hexagon_nut()
+    {
+        Assert.Equal([4.0, 5.0, 5.5, 7.0, 8.0, 10.0, 13.0], HolePresets.Sizes.Select(s => s.NutWidth).ToArray());
+        Assert.Equal([1.6, 2.0, 2.4, 3.2, 4.0, 5.0, 6.5], HolePresets.Sizes.Select(s => s.NutThickness).ToArray());
+    }
 }

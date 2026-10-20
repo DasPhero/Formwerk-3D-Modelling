@@ -285,4 +285,49 @@ public class HoleToolTests
         Assert.Equal(Enum.GetValues<HolePresetKind>().Length, HolePresetKindItem.All().Count);
         Assert.All(HolePresetKindItem.All(), item => Assert.False(string.IsNullOrWhiteSpace(item.Label)));
     }
+
+    // ---- hex nut trap (F-HOL-03) ----
+
+    [Fact]
+    public void A_nut_trap_shows_the_nut_fields_with_their_own_names()
+    {
+        var tool = ToolWithTolerance();
+
+        tool.Type = HoleType.NutTrap;
+
+        Assert.True(tool.ShowHead);
+        Assert.True(tool.ShowHeadDepth);
+        Assert.False(tool.ShowHeadAngle);
+        Assert.False(tool.ShowEndDiameter);
+        Assert.Equal("Nut width", tool.HeadDiameter.Label);
+        Assert.Equal("Nut thickness", tool.HeadDepth.Label);
+
+        tool.Type = HoleType.Counterbore;
+        Assert.Equal("Head diameter", tool.HeadDiameter.Label);
+        Assert.Equal("Head depth", tool.HeadDepth.Label);
+    }
+
+    [Fact]
+    public void The_nut_trap_preset_fills_in_the_nut_of_the_screw()
+    {
+        var tool = ToolWithTolerance();
+        tool.PresetSize = "M3";
+
+        tool.PresetKind = HolePresetKind.HexNutTrap;
+
+        Assert.Equal(HoleType.NutTrap, tool.Type);
+        Assert.True(tool.Through);
+        Assert.Equal("3+2*Tolerance", tool.Diameter.Text);
+        Assert.Equal("5.5+Tolerance", tool.HeadDiameter.Text);
+        Assert.Equal("2.4+Tolerance", tool.HeadDepth.Text);
+        Assert.Equal("4", tool.BuildParameters(20)["type"]);
+        Assert.Equal("Nut width", tool.HeadDiameter.Label);
+    }
+
+    [Fact]
+    public void The_type_list_has_the_nut_trap_last()
+    {
+        Assert.Equal(HoleType.NutTrap, HoleTypeItem.All()[^1].Type);
+        Assert.Equal(Enum.GetValues<HoleType>().Length, HoleTypeItem.All().Count);
+    }
 }
