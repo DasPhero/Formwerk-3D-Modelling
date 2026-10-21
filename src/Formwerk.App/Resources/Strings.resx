@@ -395,6 +395,16 @@ Try a different location or file name.</value></data>
   <data name="Menu.Edit.UpdateTemplate" xml:space="preserve"><value>_Update Template...</value></data>
   <data name="Msg.TemplateUpdated" xml:space="preserve"><value>Updated template {0} to version {1}.</value></data>
   <data name="Msg.TemplateUpdateNone" xml:space="preserve"><value>There is no template to update yet. Use Save as Template first.</value></data>
+  <data name="Dlg.TemplateParametersTitle" xml:space="preserve"><value>Insert {0}</value></data>
+  <data name="Dlg.TemplateParametersHint" xml:space="preserve"><value>This template asks for these values. Everything else stays as saved.</value></data>
+  <data name="Dlg.TemplateParametersButton" xml:space="preserve"><value>Insert</value></data>
+  <data name="Msg.TemplateParametersInvalid" xml:space="preserve"><value>A value of the template does not work, so nothing was inserted.</value></data>
+  <data name="Tpl.Shared" xml:space="preserve"><value>Ask when inserting (optional)</value></data>
+  <data name="Tpl.SharedHint" xml:space="preserve"><value>Tick the parameters that should be asked every time the template is inserted, and name them.</value></data>
+  <data name="Tpl.Err.SharedLabel" xml:space="preserve"><value>{0} is asked when inserting, so it needs a label.</value></data>
+  <data name="Tpl.Err.SharedLong" xml:space="preserve"><value>A label can have at most {0} characters.</value></data>
+  <data name="Tpl.Err.SharedDuplicate" xml:space="preserve"><value>Two asked parameters have the label "{0}".</value></data>
+  <data name="Tpl.Err.SharedCount" xml:space="preserve"><value>At most {0} parameters can be asked.</value></data>
   <data name="Dlg.TemplatePropertiesTitle" xml:space="preserve"><value>Template Properties</value></data>
   <data name="Dlg.TemplateFilter" xml:space="preserve"><value>Formwerk template (*.fwt)|*.fwt</value></data>
   <data name="Dlg.TemplateExportTitle" xml:space="preserve"><value>Export Template</value></data>

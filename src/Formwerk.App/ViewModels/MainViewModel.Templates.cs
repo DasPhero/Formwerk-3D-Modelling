@@ -6,6 +6,7 @@ using Formwerk.App.Resources;
 using Formwerk.Core.Commands;
 using Formwerk.Core.Expressions;
 using Formwerk.Core.Model;
+using Formwerk.Features.Shapes;
 using Formwerk.Geometry;
 using Formwerk.IO;
 using Formwerk.Viewport;
@@ -93,7 +94,8 @@ public sealed partial class MainViewModel
     private void RefreshTemplates() => LoadTemplateList();
 
     private static string Fingerprint(string path, TemplateInfo info) =>
-        string.Join("\u001f", path, info.Name, info.Description, info.Category, string.Join("\u001e", info.Tags), info.CreatedUtc.Ticks, info.Version, info.Size);
+        string.Join("\u001f", path, info.Name, info.Description, info.Category, string.Join("\u001e", info.Tags), info.CreatedUtc.Ticks, info.Version, info.Size,
+            string.Join("\u001e", (info.Shared ?? []).Select(s => string.Join("/", s.Path) + ":" + s.Parameter + ":" + s.Label)));
 
     private bool CanImportTemplate() => _templateStore is not null;
 
@@ -288,7 +290,8 @@ public sealed partial class MainViewModel
     {
         if (_templateStore is null || MeasureTemplateSource() is not { } source) return;
 
-        var dialog = new SaveTemplateViewModel(_templateStore, source.Nodes.Count == 1 ? source.Nodes[0].Name : Texts.Get("Tpl.DefaultName"));
+        var dialog = new SaveTemplateViewModel(
+            _templateStore, source.Nodes.Count == 1 ? source.Nodes[0].Name : Texts.Get("Tpl.DefaultName"), SharedParameterChoice.For(source.Nodes));
         if (!_dialogs.ShowSaveTemplate(dialog)) return;
         if (!dialog.IsValid)
         {
@@ -385,10 +388,6 @@ public sealed partial class MainViewModel
 
         var roots = template.Root.Children.ToList();
         if (roots.Count == 0) return;
-        foreach (var mesh in template.Root.Descendants().OfType<MeshNode>())
-        {
-            if (!Meshes.Contains(mesh.MeshId) && meshes.Get(mesh.MeshId) is { } data) Meshes.Add(mesh.MeshId, data);
-        }
 
         // the variables of the template that the project does not have yet come along (appended to the table); one that it has keeps
         // the value of the project, and the user is told when the template meant another one
@@ -400,13 +399,45 @@ public sealed partial class MainViewModel
             else if (existing.Trim() != expression.Trim()) differing.Add(name);
         }
 
+        // the parameters that the template asks for (F-TPL-06): a small form first, nothing is inserted when it is cancelled
+        var form = BuildTemplateForm(item, template, added, out var shared);
+        if (form is not null)
+        {
+            if (!_dialogs.ShowTemplateParameters(form)) return;
+            if (!form.IsValid)
+            {
+                // the window only confirms valid values; this is a safety net for anything else that confirms
+                SetNotice(Texts.Get("Msg.TemplateParametersInvalid"));
+                return;
+            }
+        }
+
+        foreach (var mesh in template.Root.Descendants().OfType<MeshNode>())
+        {
+            if (!Meshes.Contains(mesh.MeshId) && meshes.Get(mesh.MeshId) is { } data) Meshes.Add(mesh.MeshId, data);
+        }
+
+        var copies = roots.Select(root => root.Clone(newIds: true)).ToList();
+        if (form is not null)
+        {
+            for (var i = 0; i < shared.Count; i++)
+            {
+                var (entry, definition) = shared[i];
+                if (entry.Path[0] < copies.Count && TemplateShared.Find(copies[entry.Path[0]], entry.Path, 1) is ParametricNode target)
+                {
+                    TemplateParametersViewModel.Check(form.Fields[i].Text, definition, entry.Label, SavedValue(roots, entry, definition), TemplateVariables(added), out var expression);
+                    target.Parameters[entry.Parameter] = expression;
+                }
+            }
+        }
+
         var spot = FreeSpot(item.Size);
         var commands = new List<IDocumentCommand>();
         if (added.Count > 0) commands.Add(new SetVariablesCommand(_document, [.. _document.Variables, .. added], "Add variables"));
         Guid inserted;
-        if (roots.Count == 1)
+        if (copies.Count == 1)
         {
-            var copy = roots[0].Clone(newIds: true);
+            var copy = copies[0];
             copy.Name = UniqueName(item.Name);
             var t = copy.Transform;
             copy.Transform = new Transform(t.Position + spot, t.Rotation, t.Scale);
@@ -417,12 +448,60 @@ public sealed partial class MainViewModel
         {
             var group = new GroupNode(UniqueName(item.Name)) { Transform = Transform.FromPosition(spot) };
             commands.Add(new AddNodeCommand(_document, _document.Root, group));
-            foreach (var root in roots) commands.Add(new AddNodeCommand(_document, group, root.Clone(newIds: true)));
+            foreach (var copy in copies) commands.Add(new AddNodeCommand(_document, group, copy));
             inserted = group.Id;
         }
 
         _history.Execute(new CompositeCommand(Texts.Format("Name.InsertTemplate", item.Name), commands));
         SelectOnly([inserted]);
         if (differing.Count > 0) SetNotice(Texts.Format("Msg.TemplateVariableKept", string.Join(", ", differing)));
+    }
+
+    /// <summary>The project variables, plus the ones that a template brings along (a formula in the form may use both), evaluated.</summary>
+    private Dictionary<string, double> TemplateVariables(IReadOnlyList<KeyValuePair<string, string>> added)
+    {
+        var merged = new FormwerkDocument();
+        merged.Settings.CopyFrom(_document.Settings);
+        foreach (var (name, expression) in _document.Variables) merged.Variables[name] = expression;
+        foreach (var (name, expression) in added) merged.Variables[name] = expression;
+        return merged.ResolveVariables(out _);
+    }
+
+    /// <summary>The value that is stored in the template for a shared parameter (the default of the shape when it was never changed).</summary>
+    private static string SavedValue(IReadOnlyList<Node> roots, SharedParameter entry, ParameterDefinition definition) =>
+        entry.Path[0] < roots.Count && TemplateShared.Find(roots[entry.Path[0]], entry.Path, 1) is ParametricNode node && node.Parameters.TryGetValue(entry.Parameter, out var stored)
+            ? stored
+            : definition.Default.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// The form for the shared parameters of a template, or null when it has none that fit its objects (a path or a parameter that does
+    /// not exist, for example in a file that was edited by hand, is skipped). <paramref name="shared"/> lists, in the order of the form
+    /// fields, the entry and the definition of its parameter.
+    /// </summary>
+    private TemplateParametersViewModel? BuildTemplateForm(
+        TemplateItemViewModel item, FormwerkDocument template, IReadOnlyList<KeyValuePair<string, string>> added,
+        out List<(SharedParameter Entry, ParameterDefinition Definition)> shared)
+    {
+        shared = [];
+        if (item.Info.Shared is not { Count: > 0 } entries) return null;
+
+        var roots = template.Root.Children.ToList();
+        var variables = TemplateVariables(added);
+        var fields = new List<FieldViewModel>();
+        foreach (var entry in entries)
+        {
+            if (entry.Path[0] >= roots.Count || TemplateShared.Find(roots[entry.Path[0]], entry.Path, 1) is not ParametricNode node) continue;
+            if (SharedParameterChoice.DefinitionsOf(node).FirstOrDefault(d => d.Name == entry.Parameter) is not { } definition) continue;
+
+            var saved = SavedValue(roots, entry, definition);
+            var label = entry.Label;
+            var field = new FieldViewModel(label, definition.Unit ?? (definition.IsInteger ? "" : "mm"),
+                text => TemplateParametersViewModel.Check(text, definition, label, saved, variables, out _));
+            field.SetFromModel(saved);
+            fields.Add(field);
+            shared.Add((entry, definition));
+        }
+
+        return fields.Count == 0 ? null : new TemplateParametersViewModel(item.Name, fields);
     }
 }

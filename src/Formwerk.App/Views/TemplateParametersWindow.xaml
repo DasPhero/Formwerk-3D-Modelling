@@ -1,0 +1,43 @@
+<Window x:Class="Formwerk.App.Views.TemplateParametersWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:res="clr-namespace:Formwerk.App.Resources"
+        xmlns:vm="clr-namespace:Formwerk.App.ViewModels"
+        Title="{Binding Title}" SizeToContent="Height" Width="420"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False"
+        Background="{DynamicResource WindowBrush}" Foreground="{DynamicResource TextBrush}">
+    <StackPanel Margin="20">
+        <TextBlock Text="{res:Loc Dlg.TemplateParametersHint}" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,12" />
+        <ItemsControl ItemsSource="{Binding Fields}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="{x:Type vm:FieldViewModel}">
+                    <StackPanel Margin="0,0,0,10">
+                        <TextBlock Text="{Binding Label}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,4" />
+                        <DockPanel LastChildFill="True">
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding Unit}" VerticalAlignment="Center" Margin="8,0,0,0" Foreground="{DynamicResource MutedTextBrush}" />
+                            <TextBox Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" ToolTip="{Binding Tip}" Loaded="OnFieldLoaded" />
+                        </DockPanel>
+                        <TextBlock Text="{Binding Error}" Foreground="{DynamicResource ErrorBrush}" TextWrapping="Wrap" Margin="0,4,0,0">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding HasError}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="{res:Loc Dlg.TemplateParametersButton}" IsDefault="True" MinWidth="90" Margin="0,0,8,0" Click="OnOk"
+                    IsEnabled="{Binding IsValid}" AutomationProperties.AutomationId="TemplateParametersOk" />
+            <Button Content="{res:Loc Tpl.Cancel}" IsCancel="True" MinWidth="90" AutomationProperties.AutomationId="TemplateParametersCancel" />
+        </StackPanel>
+    </StackPanel>
+</Window>

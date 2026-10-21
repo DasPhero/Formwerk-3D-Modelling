@@ -15,10 +15,12 @@ public sealed partial class SaveTemplateViewModel : ObservableObject
     private readonly TemplateStore _store;
     private readonly string? _exceptPath;
 
-    public SaveTemplateViewModel(TemplateStore store, string suggestedName)
+    public SaveTemplateViewModel(TemplateStore store, string suggestedName, IReadOnlyList<SharedParameterChoice>? sharedChoices = null)
     {
         _store = store;
         Categories = store.Categories();
+        SharedChoices = sharedChoices ?? [];
+        foreach (var choice in SharedChoices) choice.PropertyChanged += (_, _) => Validate();
         Name = suggestedName;
         Validate();
     }
@@ -30,6 +32,7 @@ public sealed partial class SaveTemplateViewModel : ObservableObject
         _exceptPath = path;
         Title = Texts.Get("Dlg.TemplatePropertiesTitle");
         Categories = store.Categories();
+        SharedChoices = []; // what is asked on insert is chosen when saving (the file keeps it)
         Name = existing.Name;
         Description = existing.Description;
         Category = existing.Category;
@@ -41,6 +44,11 @@ public sealed partial class SaveTemplateViewModel : ObservableObject
     public string Title { get; } = Texts.Get("Dlg.SaveTemplateTitle");
 
     public IReadOnlyList<string> Categories { get; }
+
+    /// <summary>The numeric parameters of the saved objects that can be asked when the template is inserted (F-TPL-06); empty when editing.</summary>
+    public IReadOnlyList<SharedParameterChoice> SharedChoices { get; }
+
+    public bool HasSharedChoices => SharedChoices.Count > 0;
 
     [ObservableProperty]
     public partial string Name { get; set; } = "";
@@ -87,6 +95,11 @@ public sealed partial class SaveTemplateViewModel : ObservableObject
         return tags.Count > TemplateLimits.MaxTags || tags.Any(t => t.Length > TemplateLimits.MaxTagLength || t.Any(char.IsControl)) ? null : tags;
     }
 
+    private List<SharedParameter>? SharedParameters() =>
+        SharedChoices.Count == 0
+            ? null
+            : [.. SharedChoices.Where(c => c.IsShared).Select(c => new SharedParameter(c.Path, c.Parameter, TemplateNames.Clean(c.Label)))];
+
     private void Validate()
     {
         Suggestion = null;
@@ -99,7 +112,7 @@ public sealed partial class SaveTemplateViewModel : ObservableObject
             : category.Length > TemplateLimits.MaxCategoryLength || category.Any(char.IsControl) ? Texts.Format("Tpl.Err.Category", TemplateLimits.MaxCategoryLength)
             : (Description ?? "").Length > TemplateLimits.MaxDescriptionLength ? Texts.Format("Tpl.Err.Description", TemplateLimits.MaxDescriptionLength)
             : ParseTags() is null ? Texts.Format("Tpl.Err.Tags", TemplateLimits.MaxTags, TemplateLimits.MaxTagLength)
-            : null;
+            : SharedProblem();
 
         if (Error is null && (_exceptPath is null ? _store.NameTaken(name, category) : _store.NameTaken(name, category, _exceptPath)))
         {
@@ -110,11 +123,28 @@ public sealed partial class SaveTemplateViewModel : ObservableObject
         IsValid = Error is null;
     }
 
+    /// <summary>Why the ticked parameters cannot be saved (no label, a label twice, too long, too many); null when they are fine.</summary>
+    private string? SharedProblem()
+    {
+        var ticked = SharedChoices.Where(c => c.IsShared).ToList();
+        if (ticked.Count > TemplateLimits.MaxShared) return Texts.Format("Tpl.Err.SharedCount", TemplateLimits.MaxShared);
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var choice in ticked)
+        {
+            var label = TemplateNames.Clean(choice.Label);
+            if (label.Length == 0) return Texts.Format("Tpl.Err.SharedLabel", choice.Display);
+            if (label.Length > TemplateLimits.MaxSharedLabelLength || label.Any(char.IsControl)) return Texts.Format("Tpl.Err.SharedLong", TemplateLimits.MaxSharedLabelLength);
+            if (!seen.Add(label)) return Texts.Format("Tpl.Err.SharedDuplicate", label);
+        }
+
+        return null;
+    }
+
     /// <summary>The description to save; <paramref name="size"/> is the size of what is saved.</summary>
     /// <exception cref="InvalidOperationException">The dialog is not valid.</exception>
     public TemplateInfo Build(Vector3 size)
     {
         if (!IsValid) throw new InvalidOperationException("The template description is not valid.");
-        return new TemplateInfo(TemplateNames.Clean(Name), (Description ?? "").Trim(), TemplateNames.Clean(Category), ParseTags() ?? [], size, DateTime.UtcNow);
+        return new TemplateInfo(TemplateNames.Clean(Name), (Description ?? "").Trim(), TemplateNames.Clean(Category), ParseTags() ?? [], size, DateTime.UtcNow, 1, SharedParameters());
     }
 }

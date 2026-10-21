@@ -13,7 +13,14 @@ public sealed class TemplateFormatException(string message, Exception? inner = n
 
 /// <summary>What a template is called and described as (F-TPL-01).</summary>
 /// <param name="Size">Size in mm of what the template contains (saved on the plate), so inserting needs no calculation.</param>
-public sealed record TemplateInfo(string Name, string Description, string Category, IReadOnlyList<string> Tags, Vector3 Size, DateTime CreatedUtc, int Version = 1);
+public sealed record TemplateInfo(string Name, string Description, string Category, IReadOnlyList<string> Tags, Vector3 Size, DateTime CreatedUtc, int Version = 1, IReadOnlyList<SharedParameter>? Shared = null);
+
+/// <summary>
+/// A parameter of a template that is asked when the template is inserted (F-TPL-06). <paramref name="Path"/> leads to the object
+/// from the scene of the template (index of the saved object, then the index of the child, and so on), so it does not depend on ids
+/// and still fits a copy of the objects. <paramref name="Label"/> is what the form calls the field.
+/// </summary>
+public sealed record SharedParameter(IReadOnlyList<int> Path, string Parameter, string Label);
 
 /// <summary>Limits for template files: they come from a folder the user (or other programs) can fill, so they are treated like imports.</summary>
 public static class TemplateLimits
@@ -24,6 +31,10 @@ public static class TemplateLimits
     public const int MaxTags = 20;
     public const int MaxTagLength = 40;
     public const int MaxVersion = 99999;
+    public const int MaxShared = 30;
+    public const int MaxSharedLabelLength = 40;
+    public const int MaxSharedPathDepth = 16;
+    public const int MaxSharedParameterLength = 60;
     public const int MaxEntries = 8;
     public const long MaxInfoBytes = 64 * 1024;
     public const long MaxPreviewBytes = 2 * 1024 * 1024;
@@ -125,6 +136,22 @@ public static class TemplateFile
         json.WriteEndArray();
         json.WriteString("created", info.CreatedUtc.ToUniversalTime().ToString("O", System.Globalization.CultureInfo.InvariantCulture));
         json.WriteNumber("version", Math.Max(1, info.Version));
+        if (info.Shared is { Count: > 0 } shared)
+        {
+            json.WriteStartArray("shared");
+            foreach (var entry in shared)
+            {
+                json.WriteStartObject();
+                json.WriteStartArray("path");
+                foreach (var index in entry.Path) json.WriteNumberValue(index);
+                json.WriteEndArray();
+                json.WriteString("parameter", entry.Parameter);
+                json.WriteString("label", TemplateNames.Clean(entry.Label));
+                json.WriteEndObject();
+            }
+
+            json.WriteEndArray();
+        }
         json.WriteEndObject();
     }
 
@@ -307,7 +334,41 @@ public static class TemplateFile
                 throw new InvalidDataException("the version is not valid");
         }
 
-        return new TemplateInfo(name, description, category, tags, new Vector3(numbers[0], numbers[1], numbers[2]), created, fileVersion);
+        return new TemplateInfo(name, description, category, tags, new Vector3(numbers[0], numbers[1], numbers[2]), created, fileVersion, ParseShared(root));
+    }
+
+    private static List<SharedParameter> ParseShared(JsonObject root)
+    {
+        var result = new List<SharedParameter>();
+        if (root["shared"] is not { } node) return result;
+        if (node is not JsonArray array) throw new InvalidDataException("the shared parameters are not a list");
+        if (array.Count > TemplateLimits.MaxShared) throw new InvalidDataException("too many shared parameters");
+
+        foreach (var item in array)
+        {
+            if (item is not JsonObject entry) throw new InvalidDataException("a shared parameter is not an object");
+            if (entry["path"] is not JsonArray pathNode || pathNode.Count == 0 || pathNode.Count > TemplateLimits.MaxSharedPathDepth)
+                throw new InvalidDataException("the path of a shared parameter is not valid");
+
+            var path = new List<int>();
+            foreach (var step in pathNode)
+            {
+                if (step is not JsonValue v || !v.TryGetValue<int>(out var index) || index < 0) throw new InvalidDataException("the path of a shared parameter is not valid");
+                path.Add(index);
+            }
+
+            var parameter = Text(entry, "parameter", required: true).Trim();
+            if (parameter.Length == 0 || parameter.Length > TemplateLimits.MaxSharedParameterLength || parameter.Any(char.IsControl))
+                throw new InvalidDataException("the parameter of a shared parameter is not valid");
+
+            var label = TemplateNames.Clean(Text(entry, "label", required: true));
+            if (label.Length == 0 || label.Length > TemplateLimits.MaxSharedLabelLength || label.Any(char.IsControl))
+                throw new InvalidDataException("the label of a shared parameter is not valid");
+
+            result.Add(new SharedParameter(path, parameter, label));
+        }
+
+        return result;
     }
 
     private static string Text(JsonObject o, string key, bool required)

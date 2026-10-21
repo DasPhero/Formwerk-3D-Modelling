@@ -45,6 +45,36 @@
         <TextBlock Text="{res:Loc Tpl.Tags}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,12,0,4" />
         <TextBox Text="{Binding TagsText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.AutomationId="TemplateTags" />
 
+        <StackPanel>
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasSharedChoices}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+            <TextBlock Text="{res:Loc Tpl.Shared}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,12,0,2" />
+            <TextBlock Text="{res:Loc Tpl.SharedHint}" TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,6" />
+            <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding SharedChoices}" AutomationProperties.AutomationId="TemplateShared">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="170" />
+                                </Grid.ColumnDefinitions>
+                                <CheckBox Grid.Column="0" Content="{Binding Display}" IsChecked="{Binding IsShared}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                <TextBox Grid.Column="1" Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding IsShared}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </StackPanel>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
             <Button Content="{res:Loc Tpl.Save}" IsDefault="True" MinWidth="90" Margin="0,0,8,0" Click="OnOk" IsEnabled="{Binding IsValid}" AutomationProperties.AutomationId="TemplateSave" />
             <Button Content="{res:Loc Tpl.Cancel}" IsCancel="True" MinWidth="90" AutomationProperties.AutomationId="TemplateCancel" />

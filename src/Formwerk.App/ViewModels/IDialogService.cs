@@ -42,6 +42,9 @@ public interface IDialogService
     /// <summary>Asks which template the selection becomes a new version of; true when the user confirmed a choice.</summary>
     bool ShowUpdateTemplate(UpdateTemplateViewModel viewModel);
 
+    /// <summary>The form with the shared parameters of a template that is inserted (F-TPL-06); true when the user confirmed valid values.</summary>
+    bool ShowTemplateParameters(TemplateParametersViewModel viewModel);
+
     SettingsResult? ShowSettings(Formwerk.Core.Model.DocumentSettings project, Formwerk.IO.UserSettings user);
 }
 

@@ -97,7 +97,8 @@ public sealed class TemplateStore(string folder)
         if (List().Any(e => !string.Equals(System.IO.Path.GetFullPath(e.Path), full, StringComparison.OrdinalIgnoreCase) && Same(e.Info, info.Name, info.Category)))
             throw new InvalidOperationException($"A template named '{TemplateNames.Clean(info.Name)}' already exists in this category. Try '{SuggestName(info.Name, info.Category)}'.");
 
-        TemplateFile.ReplaceInfo(path, info with { Version = TemplateFile.LoadInfo(path).Info.Version }); // renaming is no new version
+        var current = TemplateFile.LoadInfo(path).Info;
+        TemplateFile.ReplaceInfo(path, info with { Version = current.Version, Shared = current.Shared }); // renaming is no new version, and keeps what is asked on insert
     }
 
     /// <summary>
@@ -113,7 +114,12 @@ public sealed class TemplateStore(string folder)
     {
         EnsureInFolder(path);
         var (old, _) = TemplateFile.LoadInfo(path);
-        var info = old with { Size = size, Version = Math.Min(old.Version + 1, TemplateLimits.MaxVersion) };
+        var info = old with
+        {
+            Size = size,
+            Version = Math.Min(old.Version + 1, TemplateLimits.MaxVersion),
+            Shared = old.Shared?.Where(entry => TemplateShared.Find(document, entry) is not null).ToList(), // those that still fit the new objects
+        };
         TemplateFile.SaveAtomic(path, document, meshes, info, preview);
         return info;
     }
