@@ -414,6 +414,21 @@ Try a different location or file name.</value></data>
   <data name="Msg.Edge.TooSharp" xml:space="preserve"><value>The two faces meet at a very sharp angle: this edge cannot be cut.</value></data>
   <data name="Msg.Edge.NotRightAngle" xml:space="preserve"><value>Only round edges at a right angle to the face (cylinders) are supported.</value></data>
   <data name="Msg.Edge.Curved" xml:space="preserve"><value>This edge is a curve: only straight edges and circular rims are supported.</value></data>
+  <data name="Menu.View.Section" xml:space="preserve"><value>_Section View</value></data>
+  <data name="Section.Title" xml:space="preserve"><value>Section View</value></data>
+  <data name="Section.Close" xml:space="preserve"><value>Close the section view</value></data>
+  <data name="Section.Axis" xml:space="preserve"><value>Plane across</value></data>
+  <data name="Section.Axis.X" xml:space="preserve"><value>X</value></data>
+  <data name="Section.Axis.Y" xml:space="preserve"><value>Y</value></data>
+  <data name="Section.Axis.Z" xml:space="preserve"><value>Z</value></data>
+  <data name="Section.Axis.Face" xml:space="preserve"><value>A face</value></data>
+  <data name="Section.Position" xml:space="preserve"><value>Position</value></data>
+  <data name="Section.Err.Position" xml:space="preserve"><value>The position must be a number.</value></data>
+  <data name="Section.Flip" xml:space="preserve"><value>Show the other side</value></data>
+  <data name="Section.PickFace" xml:space="preserve"><value>Pick a face</value></data>
+  <data name="Section.PickFace.Tip" xml:space="preserve"><value>Click a face of an object: the cutting plane is put on that face and can be moved inwards with the slider</value></data>
+  <data name="Hint.SectionFace" xml:space="preserve"><value>Click the face that the cutting plane should lie on; then move it with the slider. Esc cancels.</value></data>
+  <data name="Msg.SectionFailed" xml:space="preserve"><value>The section view could not be made: {0}</value></data>
   <data name="Edge.Type" xml:space="preserve"><value>Edge type</value></data>
   <data name="Edge.Where" xml:space="preserve"><value>Edges</value></data>
   <data name="Edge.Chamfer" xml:space="preserve"><value>Chamfer</value></data>

@@ -361,6 +361,7 @@
                 <Separator />
                 <MenuItem Header="{res:Loc Menu.View.Orthographic}" IsCheckable="True" IsChecked="{Binding IsOrthographic, Mode=TwoWay}" InputGestureText="P" />
                 <MenuItem Header="{res:Loc Menu.View.ShowHoles}" IsCheckable="True" IsChecked="{Binding ShowHoles, Mode=TwoWay}" />
+                <MenuItem Header="{res:Loc Menu.View.Section}" IsCheckable="True" IsChecked="{Binding IsSectionActive, Mode=TwoWay}" />
                 <MenuItem Header="{res:Loc Menu.View.LightTheme}" IsCheckable="True" IsChecked="{Binding LightTheme, Mode=TwoWay}" />
                 <MenuItem Header="{res:Loc Menu.View.Display}" InputGestureText="Z">
                     <MenuItem Header="{res:Loc Display.Shaded}" IsCheckable="True" IsChecked="{Binding IsShadedMode, Mode=TwoWay}" />
@@ -614,6 +615,36 @@
                         <ContentControl Content="{Binding HeadDepth}" Visibility="{Binding ShowHeadDepth, Converter={StaticResource BoolToVisibility}}" />
                         <CheckBox Content="{res:Loc Hole.Through}" ToolTip="{res:Loc Hole.Through.Tip}" IsChecked="{Binding Through}" Margin="0,6,0,2" />
                         <ContentControl Content="{Binding Depth}" Visibility="{Binding ShowDepth, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Section view (E-06): plane, position, side -->
+                <Border HorizontalAlignment="Left" VerticalAlignment="Top" Margin="12" Padding="10" Width="260" CornerRadius="4"
+                        BorderThickness="1" BorderBrush="{DynamicResource PanelBorderBrush}" Background="{DynamicResource PanelBrush}"
+                        Visibility="{Binding IsSectionActive, Converter={StaticResource BoolToVisibility}}"
+                        AutomationProperties.AutomationId="SectionPanel">
+                    <StackPanel>
+                        <DockPanel Margin="0,0,0,6">
+                            <Button DockPanel.Dock="Right" Content="&#x2715;" Padding="6,0" Command="{Binding CloseSectionCommand}" ToolTip="{res:Loc Section.Close}"
+                                    AutomationProperties.AutomationId="SectionClose" />
+                            <TextBlock Text="{res:Loc Section.Title}" Style="{StaticResource PanelHeader}" />
+                        </DockPanel>
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="86" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{res:Loc Section.Axis}" VerticalAlignment="Center" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding SectionAxes}" DisplayMemberPath="Label" SelectedValuePath="Index"
+                                      SelectedValue="{Binding SectionAxis}" AutomationProperties.AutomationId="SectionAxis" />
+                        </Grid>
+                        <Slider Minimum="{Binding SectionMin}" Maximum="{Binding SectionMax}" Value="{Binding SectionPosition, Mode=TwoWay}"
+                                Margin="0,0,0,4" AutomationProperties.AutomationId="SectionSlider" />
+                        <ContentControl Content="{Binding SectionPositionField}" />
+                        <CheckBox Content="{res:Loc Section.Flip}" IsChecked="{Binding SectionFlip}" Margin="0,6,0,0" AutomationProperties.AutomationId="SectionFlip" />
+                        <ToggleButton Content="{res:Loc Section.PickFace}" ToolTip="{res:Loc Section.PickFace.Tip}" Command="{Binding SectionAtFaceCommand}"
+                                      IsChecked="{Binding IsPickingSectionFace, Mode=OneWay}" Margin="0,8,0,0" HorizontalAlignment="Left"
+                                      AutomationProperties.AutomationId="SectionPickFace" />
                     </StackPanel>
                 </Border>
 

@@ -20,6 +20,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly FormwerkDocument _document = new();
     private readonly UndoHistory _history = new();
     private readonly SceneEvaluator _evaluator;
+    private readonly IGeometryKernel _kernel;
     private readonly object _evaluatorLock = new();
     private readonly IDialogService _dialogs;
     private readonly AutosaveStore? _autosave;
@@ -54,6 +55,7 @@ public sealed partial class MainViewModel : ObservableObject
         _templatePreview = templatePreview;
         _slicer = slicerLauncher ?? new NoSlicerLauncher();
         Meshes = meshes ?? new MeshStore();
+        _kernel = kernel;
         _evaluator = new SceneEvaluator(kernel, Meshes);
         _dialogs = dialogs;
         _autosave = autosave;
@@ -376,13 +378,15 @@ public sealed partial class MainViewModel : ObservableObject
     /// <summary>Completes when the most recent evaluation has been applied (for tests and shutdown).</summary>
     public async Task WaitForEvaluationAsync()
     {
-        Task current;
+        Task current, section;
         do
         {
             current = _latestEvaluation;
             await current.ConfigureAwait(true);
+            section = _latestSection; // the section view, when it is on, is built after the evaluation
+            await section.ConfigureAwait(true);
         }
-        while (current != _latestEvaluation);
+        while (current != _latestEvaluation || section != _latestSection);
     }
 
     private Task RequestEvaluation()
@@ -768,6 +772,7 @@ public sealed partial class MainViewModel : ObservableObject
         FaceOnFloorCommand.NotifyCanExecuteChanged();
         DrillCommand.NotifyCanExecuteChanged();
         EdgeCutCommand.NotifyCanExecuteChanged();
+        SectionAtFaceCommand.NotifyCanExecuteChanged();
         LinearPatternCommand.NotifyCanExecuteChanged();
         CircularPatternCommand.NotifyCanExecuteChanged();
         AlignCommand.NotifyCanExecuteChanged();

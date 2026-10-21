@@ -59,6 +59,7 @@ public sealed partial class MainViewModel
         {
             IsPlacingHole = false;
             IsPlacingEdgeCut = false;
+            IsPickingSectionFace = false;
             IsPickingMirrorFace = false;
             EndFaceToFaceMode();
         }
@@ -75,6 +76,7 @@ public sealed partial class MainViewModel
             EndFacePick();
             IsPlacingHole = false; // Esc ends the hole tool, the edge tool, the mirror face mode and face to face as well
             IsPlacingEdgeCut = false;
+            IsPickingSectionFace = false;
             EndFaceToFaceMode();
             IsPickingMirrorFace = false;
             RefreshScaleHint();
@@ -83,6 +85,7 @@ public sealed partial class MainViewModel
 
         if (IsPlacingHole) PlaceHole(pick);
         else if (IsPlacingEdgeCut) PlaceEdgeCut(pick);
+        else if (IsPickingSectionFace) SectionFacePicked(pick);
         else if (IsPickingMirrorFace) MirrorAtFace(pick);
         else if (IsPickingFaceToFace) FaceToFaceClick(pick);
         else LayFaceOnFloor(pick);

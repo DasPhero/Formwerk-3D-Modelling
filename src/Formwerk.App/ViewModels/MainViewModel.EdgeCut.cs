@@ -94,6 +94,7 @@ public sealed partial class MainViewModel
         {
             IsPickingFace = false;
             IsPlacingHole = false;
+            IsPickingSectionFace = false;
             IsPickingMirrorFace = false;
             EndFaceToFaceMode();
         }

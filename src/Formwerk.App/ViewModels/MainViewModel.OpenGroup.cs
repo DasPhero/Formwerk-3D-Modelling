@@ -76,10 +76,20 @@ public sealed partial class MainViewModel
         if (_lastResult is not null) BuildViewportItems(_lastResult);
     }
 
+    /// <summary>The ids of the open group and everything in it (F-BOO-04), or null when no group is open.</summary>
+    private HashSet<Guid>? OpenContainerContents() =>
+        OpenContainer is { } open ? [open.Id, .. open.Descendants().Select(n => n.Id)] : null;
+
     private void BuildViewportItems(EvaluationResult result)
     {
-        HashSet<Guid>? inside = null;
-        if (OpenContainer is { } open) inside = [open.Id, .. open.Descendants().Select(n => n.Id)];
+        if (IsSectionActive)
+        {
+            UpdateSectionRange(recenter: false);
+            RequestSection();
+            return;
+        }
+
+        var inside = OpenContainerContents();
 
         ViewportItems = [.. result.Parts.Where(p => ShowHoles || p.Kind == PartKind.Solid).Select(p => new ViewportItem(
             p.Source.Id, p.Mesh, p.Kind == PartKind.Solid ? ViewportItemKind.Solid : ViewportItemKind.Ghost, p.Source.Color,
