@@ -434,7 +434,13 @@ public sealed partial class ViewportControl : Grid
         {
             UpdateCubeHover(e.GetPosition(this));
             UpdateSnapHover(e.GetPosition(this));
-            if (FacePickMode) return; // the cross cursor stays, no handle is highlighted
+            if (FacePickMode)
+            {
+                UpdateFaceHover(e.GetPosition(this));
+                return; // the cross cursor stays, no handle is highlighted
+            }
+
+            ClearFaceHover();
             UpdateGizmoHover(e.GetPosition(this));
             return;
         }

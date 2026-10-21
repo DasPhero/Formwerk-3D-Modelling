@@ -146,6 +146,7 @@ public sealed partial class ViewportControl
         var group = new Model3DGroup();
         if (plain.Positions.Count > 0) group.Children.Add(MarkerModel(plain, LightTheme ? Color.FromRgb(0x4A, 0x52, 0x60) : HoverMarkerColor));
         if (hot.Positions.Count > 0) group.Children.Add(MarkerModel(hot, LightTheme ? Color.FromRgb(0xE0, 0x8A, 0x00) : SnapMarkerColor));
+        AddEdgeHighlight(group);
         _markerVisual.Content = group.Children.Count > 0 ? group : null;
     }
 

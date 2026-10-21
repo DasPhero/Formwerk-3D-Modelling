@@ -207,5 +207,6 @@ public sealed partial class ViewportControl
         base.OnMouseLeave(e);
         SetCubeHover(null);
         ClearSnapHover();
+        ClearFaceHover();
     }
 }

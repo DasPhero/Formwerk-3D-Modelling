@@ -22,10 +22,65 @@ public sealed partial class MainViewModel
     /// <summary>The settings of the next cutter.</summary>
     public EdgeToolViewModel EdgeTool => _edgeTool ??= new EdgeToolViewModel(() => _document.ResolveVariables(out _));
 
+    /// <summary>Above this many triangles in the clicked part the edge is not looked for at every mouse move (it would make the mouse sticky); a click still finds it.</summary>
+    public const int EdgeHoverTriangleLimit = 60_000;
+
+    /// <summary>The edge under the mouse while the tool is on: yellow when a click would cut it, grey when it cannot be cut; null when there is none.</summary>
+    [ObservableProperty]
+    public partial ViewportEdgeHighlight? EdgeHighlight { get; set; }
+
     partial void OnIsPlacingEdgeCutChanged(bool value)
     {
         OnPropertyChanged(nameof(IsFacePickActive));
         ViewportDimensions = ComputeDimensions();
+        if (!value) EdgeHighlight = null;
+    }
+
+    /// <summary>
+    /// The mouse is over a face in a face mode (about every 40 ms), or over nothing (null). In the edge tool the edge that a click would
+    /// take is shown; one that cannot be cut is shown grey and the hint line says why. Other modes ignore it.
+    /// </summary>
+    [RelayCommand]
+    private void FaceHovered(FacePick? pick)
+    {
+        if (!IsPlacingEdgeCut || pick is null || _document.FindNode(pick.NodeId) is null || pick.Normal.LengthSquared() < 1e-12f)
+        {
+            ClearEdgeHover();
+            return;
+        }
+
+        var found = FindEdge(pick, EdgeHoverTriangleLimit);
+        if (found.Preview is not { } preview)
+        {
+            ClearEdgeHover();
+            return;
+        }
+
+        var valid = found.Problem == EdgeProblem.None;
+        EdgeHighlight = new ViewportEdgeHighlight(preview.Points, preview.Closed, valid);
+        HintText = valid ? Texts.Get("Hint.EdgeCutPlace") : ProblemText(found.Problem);
+    }
+
+    private void ClearEdgeHover()
+    {
+        if (EdgeHighlight is null) return;
+        EdgeHighlight = null;
+        if (IsPlacingEdgeCut) RefreshScaleHint();
+    }
+
+    /// <summary>What <see cref="EdgeFinder"/> makes of the click on the mesh of the clicked part; parts with more triangles than <paramref name="triangleLimit"/> are skipped.</summary>
+    private EdgeFindResult FindEdge(FacePick pick, int triangleLimit = int.MaxValue)
+    {
+        var found = EdgeFindResult.Fail(EdgeProblem.NoFace);
+        foreach (var item in ViewportItems)
+        {
+            if (item.NodeId != pick.NodeId || item.Kind != ViewportItemKind.Solid || item.Mesh.TriangleCount > triangleLimit) continue;
+            var attempt = EdgeFinder.Find(item.Mesh, pick.Point, pick.Normal);
+            if (attempt.Problem == EdgeProblem.None || found.Problem == EdgeProblem.NoFace) found = attempt;
+            if (attempt.Problem == EdgeProblem.None) break;
+        }
+
+        return found;
     }
 
     private bool CanEdgeCut() => _document.Root.Children.Count > 0;
@@ -71,15 +126,7 @@ public sealed partial class MainViewModel
             return;
         }
 
-        var found = EdgeFindResult.Fail(EdgeProblem.NoFace);
-        foreach (var item in ViewportItems)
-        {
-            if (item.NodeId != pick.NodeId || item.Kind != ViewportItemKind.Solid) continue;
-            var attempt = EdgeFinder.Find(item.Mesh, pick.Point, pick.Normal);
-            if (attempt.Problem == EdgeProblem.None || found.Problem == EdgeProblem.NoFace) found = attempt;
-            if (attempt.Problem == EdgeProblem.None) break;
-        }
-
+        var found = FindEdge(pick);
         if (found.Problem != EdgeProblem.None)
         {
             SetNotice(ProblemText(found.Problem));
@@ -142,6 +189,7 @@ public sealed partial class MainViewModel
         commands.Add(new AddNodeCommand(_document, target, cutter));
         _history.Execute(new CompositeCommand(kind == 0 ? Texts.Format("Name.EdgeChamfer", target.Name) : Texts.Format("Name.EdgeFillet", target.Name), commands));
         SelectOnly([cutter.Id]);
+        EdgeHighlight = null; // the edge is cut now
         SetNotice(Texts.Format("Msg.EdgeCut", cutter.Name));
     }
 

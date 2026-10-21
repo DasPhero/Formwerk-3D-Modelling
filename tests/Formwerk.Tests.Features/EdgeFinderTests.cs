@@ -236,7 +236,7 @@ public class EdgeFinderTests
     /// An L-shaped slab, 10 mm high: the outline (0,0) (20,0) (20,10) (10,10) (10,20) (0,20), with one more vertex (0,10) on the long
     /// left side. The corner at (10,10) is a concave vertical edge.
     /// </summary>
-    private static MeshData LSlab()
+    internal static MeshData LSlab()
     {
         Vector2[] outline = [new(0, 0), new(20, 0), new(20, 10), new(10, 10), new(10, 20), new(0, 20), new(0, 10)];
         var n = outline.Length;

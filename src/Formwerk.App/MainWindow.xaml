@@ -541,6 +541,8 @@
                                     PreviewTransforms="{Binding PreviewTransforms}"
                                     FacePickMode="{Binding IsFacePickActive}"
                                     FacePickCommand="{Binding FacePickedCommand}"
+                                    FaceHoverCommand="{Binding FaceHoveredCommand}"
+                                    EdgeHighlight="{Binding EdgeHighlight}"
                                     Orthographic="{Binding IsOrthographic}"
                                     LightTheme="{Binding LightTheme}"
                                     ViewCubeLabels="{Binding ViewCubeLabels}"

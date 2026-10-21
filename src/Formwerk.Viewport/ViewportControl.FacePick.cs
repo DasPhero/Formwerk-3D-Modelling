@@ -49,6 +49,13 @@ public sealed partial class ViewportControl
     /// <summary>Reports the face of the nearest solid under the mouse; a click on nothing does nothing (the mode stays on).</summary>
     private void PickFace(Point position)
     {
+        if (HitFace(position) is not { } pick) return;
+        if (FacePickCommand?.CanExecute(pick) == true) FacePickCommand.Execute(pick);
+    }
+
+    /// <summary>The face of the nearest solid under <paramref name="position"/>, or null when the mouse is over nothing.</summary>
+    private FacePick? HitFace(Point position)
+    {
         RayMeshGeometry3DHitTestResult? best = null;
         ModelInfo? bestInfo = null;
         System.Windows.Media.VisualTreeHelper.HitTest(_viewport, null, result =>
@@ -63,13 +70,12 @@ public sealed partial class ViewportControl
             return System.Windows.Media.HitTestResultBehavior.Continue;
         }, new System.Windows.Media.PointHitTestParameters(position));
 
-        if (best is null || bestInfo is null) return;
+        if (best is null || bestInfo is null) return null;
         var positions = best.MeshHit.Positions;
         Vector3 At(int index) => new((float)positions[index].X, (float)positions[index].Y, (float)positions[index].Z);
         var normal = FaceMath.TriangleNormal(At(best.VertexIndex1), At(best.VertexIndex2), At(best.VertexIndex3));
         var point = new Vector3((float)best.PointHit.X, (float)best.PointHit.Y, (float)best.PointHit.Z);
 
-        var pick = new FacePick(bestInfo.Item.NodeId, point, normal, Keyboard.Modifiers.HasFlag(ModifierKeys.Alt) || Keyboard.Modifiers.HasFlag(ModifierKeys.Shift));
-        if (FacePickCommand?.CanExecute(pick) == true) FacePickCommand.Execute(pick);
+        return new FacePick(bestInfo.Item.NodeId, point, normal, Keyboard.Modifiers.HasFlag(ModifierKeys.Alt) || Keyboard.Modifiers.HasFlag(ModifierKeys.Shift));
     }
 }

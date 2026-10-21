@@ -39,10 +39,13 @@ public sealed record StraightEdge(Vector3 Start, Vector3 End, Vector3 NormalA, V
 /// </summary>
 public sealed record RimEdge(Vector3 Center, Vector3 Axis, float Radius, bool IsHole, int Segments, Vector3 Reference);
 
-/// <summary>What <see cref="EdgeFinder"/> found: a straight edge, a round rim, or the reason why there is none.</summary>
-public sealed record EdgeFindResult(StraightEdge? Straight, RimEdge? Rim, EdgeProblem Problem)
+/// <summary>The outline of the edge that a click would take (a line, or the whole circle of a rim), to be shown before the click, also when the edge cannot be cut.</summary>
+public sealed record EdgePreview(IReadOnlyList<Vector3> Points, bool Closed);
+
+/// <summary>What <see cref="EdgeFinder"/> found: a straight edge, a round rim, or the reason why there is none; <paramref name="Preview"/> is null only when there is no face.</summary>
+public sealed record EdgeFindResult(StraightEdge? Straight, RimEdge? Rim, EdgeProblem Problem, EdgePreview? Preview = null)
 {
-    public static EdgeFindResult Fail(EdgeProblem problem) => new(null, null, problem);
+    public static EdgeFindResult Fail(EdgeProblem problem, EdgePreview? preview = null) => new(null, null, problem, preview);
 }
 
 /// <summary>
@@ -211,22 +214,14 @@ public static class EdgeFinder
         var loop = Walk(first, boundary, starting);
         if (loop is not null && loop.Count >= MinRimSegments)
         {
+            var circle = new EdgePreview([.. loop.Select(i => positions[boundary[i].A])], true);
             var rim = TryRim(loop, boundary, positions, normals, faceNormal, Behind, out var rimProblem);
-            if (rim is not null) return new EdgeFindResult(null, rim, EdgeProblem.None);
-            if (rimProblem != EdgeProblem.None) return EdgeFindResult.Fail(rimProblem);
+            if (rim is not null) return new EdgeFindResult(null, rim, EdgeProblem.None, circle);
+            if (rimProblem != EdgeProblem.None) return EdgeFindResult.Fail(rimProblem, circle);
         }
 
-        // 2. a straight edge between two flat faces
-        var behind = Behind(first);
-        if (behind < -1e-3f) return EdgeFindResult.Fail(EdgeProblem.Concave);
-        if (behind <= 1e-3f) return EdgeFindResult.Fail(EdgeProblem.NoEdge);
-
+        // 2. a straight edge between two flat faces; pieces in a row, in line, with the same plane behind them, are one edge
         var neighbourNormal = normals[boundary[first].TriOut];
-        var inner = 180 - MathF.Acos(Math.Clamp(Vector3.Dot(faceNormal, neighbourNormal), -1f, 1f)) * 180 / MathF.PI;
-        if (inner > MaxInnerAngle) return EdgeFindResult.Fail(EdgeProblem.AlmostFlat);
-        if (inner < MinInnerAngle) return EdgeFindResult.Fail(EdgeProblem.TooSharp);
-
-        // pieces in a row, in line, with the same plane behind them, are one edge
         var direction = Direction(first);
         bool Continues(int candidate) =>
             Vector3.Dot(Direction(candidate), direction) >= Collinear && Vector3.Dot(normals[boundary[candidate].TriOut], neighbourNormal) >= SameDirection;
@@ -247,13 +242,22 @@ public static class EdgeFinder
             firstPiece = previous.Value;
         }
 
+        var line = new EdgePreview([positions[boundary[firstPiece].A], positions[boundary[last].B]], false);
+
+        var behind = Behind(first);
+        if (behind < -1e-3f) return EdgeFindResult.Fail(EdgeProblem.Concave, line);
+        if (behind <= 1e-3f) return EdgeFindResult.Fail(EdgeProblem.NoEdge, line);
+
+        var inner = 180 - MathF.Acos(Math.Clamp(Vector3.Dot(faceNormal, neighbourNormal), -1f, 1f)) * 180 / MathF.PI;
+        if (inner > MaxInnerAngle) return EdgeFindResult.Fail(EdgeProblem.AlmostFlat, line);
+        if (inner < MinInnerAngle) return EdgeFindResult.Fail(EdgeProblem.TooSharp, line);
+
         // a boundary that bends only a little where the pieces end is a curve (an ellipse, a sphere), not a corner
         if (Bends(boundary[last].B, last, starting, boundary, Direction) || Bends(boundary[firstPiece].A, firstPiece, ending, boundary, Direction))
-            return EdgeFindResult.Fail(EdgeProblem.Curved);
+            return EdgeFindResult.Fail(EdgeProblem.Curved, line);
 
-        return new EdgeFindResult(new StraightEdge(positions[boundary[firstPiece].A], positions[boundary[last].B], faceNormal, neighbourNormal, inner), null, EdgeProblem.None);
+        return new EdgeFindResult(new StraightEdge(positions[boundary[firstPiece].A], positions[boundary[last].B], faceNormal, neighbourNormal, inner), null, EdgeProblem.None, line);
     }
-
     /// <summary>True when the boundary continues at <paramref name="vertex"/> with a turn of less than <see cref="SmoothTurn"/> degrees (a smooth curve).</summary>
     private static bool Bends(int vertex, int edge, Dictionary<int, List<int>> index, List<Boundary> boundary, Func<int, Vector3> direction)
     {
