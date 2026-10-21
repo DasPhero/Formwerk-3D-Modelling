@@ -24,7 +24,7 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly IDialogService _dialogs;
     private readonly AutosaveStore? _autosave;
     private readonly Dictionary<Guid, NodeItemViewModel> _items = [];
-    private readonly HashSet<Guid> _selected = [];
+    private readonly OrderedIdSet _selected = new(); // in the order of selection: the first selected object
     private readonly Dictionary<Guid, string> _errors = [];
 
     private CancellationTokenSource? _cts;
@@ -607,6 +607,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         SelectedIds = new HashSet<Guid>(_selected);
+        OnPropertyChanged(nameof(IsAlignVisible));
         UpdatePivot();
 
         if (_selected.Count == 1 && _document.FindNode(_selected.First()) is { } node)
@@ -767,6 +768,8 @@ public sealed partial class MainViewModel : ObservableObject
         DrillCommand.NotifyCanExecuteChanged();
         LinearPatternCommand.NotifyCanExecuteChanged();
         CircularPatternCommand.NotifyCanExecuteChanged();
+        AlignCommand.NotifyCanExecuteChanged();
+        DistributeCommand.NotifyCanExecuteChanged();
         LinkedMirrorCommand.NotifyCanExecuteChanged();
         MirroredCopyCommand.NotifyCanExecuteChanged();
         LinkedMirrorAtFaceCommand.NotifyCanExecuteChanged();

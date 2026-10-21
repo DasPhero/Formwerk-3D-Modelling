@@ -313,6 +313,31 @@ Try a different location or file name.</value></data>
   <data name="Mirror.Axis.Tip" xml:space="preserve"><value>The mirror plane goes through the origin of this node; its normal is the X, Y or Z axis of the node. Move or turn the node to move or turn the plane.</value></data>
   <data name="Mirror.ShowOriginal" xml:space="preserve"><value>Show the original too</value></data>
   <data name="Mirror.ShowOriginal.Tip" xml:space="preserve"><value>Off: only the mirror image is shown (a mirrored copy).</value></data>
+  <data name="Align.Title" xml:space="preserve"><value>Align</value></data>
+  <data name="Align.Min" xml:space="preserve"><value>Min</value></data>
+  <data name="Align.Center" xml:space="preserve"><value>Center</value></data>
+  <data name="Align.Max" xml:space="preserve"><value>Max</value></data>
+  <data name="Align.Tip" xml:space="preserve"><value>Line up the low edge, the middle or the high edge of the selected objects along this axis</value></data>
+  <data name="Align.Distribute" xml:space="preserve"><value>Distribute</value></data>
+  <data name="Align.Distribute.Tip" xml:space="preserve"><value>Equal gaps between three or more objects along this axis; the two outer objects stay where they are</value></data>
+  <data name="Align.ToFirst" xml:space="preserve"><value>Align to the first selected object</value></data>
+  <data name="Align.ToFirst.Tip" xml:space="preserve"><value>On: the object that was selected first stays and the others line up with it. Off: they line up with the box around all of them.</value></data>
+  <data name="Menu.Edit.Align" xml:space="preserve"><value>_Align</value></data>
+  <data name="Menu.Edit.Align.XMin" xml:space="preserve"><value>X: low edges</value></data>
+  <data name="Menu.Edit.Align.XCenter" xml:space="preserve"><value>X: centers</value></data>
+  <data name="Menu.Edit.Align.XMax" xml:space="preserve"><value>X: high edges</value></data>
+  <data name="Menu.Edit.Align.YMin" xml:space="preserve"><value>Y: low edges</value></data>
+  <data name="Menu.Edit.Align.YCenter" xml:space="preserve"><value>Y: centers</value></data>
+  <data name="Menu.Edit.Align.YMax" xml:space="preserve"><value>Y: high edges</value></data>
+  <data name="Menu.Edit.Align.ZMin" xml:space="preserve"><value>Z: bottoms</value></data>
+  <data name="Menu.Edit.Align.ZCenter" xml:space="preserve"><value>Z: centers</value></data>
+  <data name="Menu.Edit.Align.ZMax" xml:space="preserve"><value>Z: tops</value></data>
+  <data name="Menu.Edit.Align.DistributeX" xml:space="preserve"><value>Distribute along X</value></data>
+  <data name="Menu.Edit.Align.DistributeY" xml:space="preserve"><value>Distribute along Y</value></data>
+  <data name="Menu.Edit.Align.DistributeZ" xml:space="preserve"><value>Distribute along Z</value></data>
+  <data name="Name.Align" xml:space="preserve"><value>Align {0}</value></data>
+  <data name="Name.Distribute" xml:space="preserve"><value>Distribute along {0}</value></data>
+  <data name="Msg.AlignLocked" xml:space="preserve"><value>Locked objects were not moved: {0}.</value></data>
   <data name="Msg.FaceAlready" xml:space="preserve"><value>That face already lies on the floor.</value></data>
   <data name="Msg.FaceLocked" xml:space="preserve"><value>{0} is locked and cannot be turned.</value></data>
   <data name="Hint.SelectTool" xml:space="preserve"><value>Drag a rectangle: to the right takes what lies completely inside, to the left everything it touches. Ctrl/Shift adds. Esc cancels. Right-drag orbits, middle-drag pans.</value></data>

@@ -18,8 +18,18 @@
 
 ## Active step
 
-**Status:** none
-(Last finished: patterns and mirror, see "Done". Next candidates: align tool F-SNP-04, face to face F-SNP-03, template management F-TPL-04..07, library F-LIB-02..04, edge chamfer/fillet F-EDG-01, section view E-06, measuring E-07.)
+**Status:** in progress
+**Step name:** Phase 2 block 5: align and distribute, then face to face (two commits)
+**Goal:** the user aligns several selected objects per axis (min, center, max) to the first selected object or to the selection box and distributes three or more evenly (outer ones stay); and puts one face of an object flush onto the face of another with an optional gap or overlap.
+**Requirement IDs:** F-SNP-04 (commit A), F-SNP-03 (commit B).
+**Design (decided):**
+- A: `AlignMath` (Core, pure): `Align(extents, mode, reference)` gives the shift per object along one axis (reference = index of the first selected object, or -1 for the selection box; min/center/max); `Distribute(extents)` gives equal gaps between the boxes of three or more objects, ordered by position, the first and the last stay (a negative gap = overlap). The App measures every selected top-level object (world box of its evaluated parts, `BoundsOf`), moves with `TransformOps.MovedBy` (parent transforms are respected) in one `SetTransformsCommand`; locked objects are not moved. The selection keeps its order (`OrderedIdSet` instead of the `HashSet`) so "the first selected object" is known. UI: an "Align" panel under the properties when two or more objects are selected (Min/Center/Max per axis, Distribute X/Y/Z, a check box "Align to the first selected object", else to the selection box) and the same actions in Edit > Align.
+- B: a two-click mode (like face on floor): the click on a face of the object to move, then the click on the target face; the object is turned so that its face looks against the target face and moved so that the clicked point lies on the target plane at the gap (gap >= 0 apart, < 0 overlap) in front of the target point, one `SetTransformCommand`. The gap is a field in a small panel while the mode is on (expressions, so `Tolerance` works).
+**Checklist:**
+- [x] A. align and distribute (F-SNP-04): `AlignMath` (15 tests), `OrderedIdSet`, panel and menu, 15 App tests, real exe (three objects lined up on the left edge), docs; commit + push done
+- [ ] B. face to face: tests first (math and view model), mode, gap panel, build, real-exe check, docs, commit + push (F-SNP-03)
+**Files touched so far:** none
+**Notes / decisions / problems:** the laptop is charging again; timing tests may still flake under load.
 
 <!-- Template for a new active step:
 
@@ -64,7 +74,7 @@ Done (fully): F-LIB-01 (all 12 shapes), F-GRP-02, F-GRP-04, F-CPY-01, F-ROT-04, 
 
 ## Current state of the project (snapshot)
 
-- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1839 tests green at last run, about 30 s, test projects run one at a time). Executable: `binary\Formwerk.exe`.
+- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1869 tests green at last run, about 30 s, test projects run one at a time). Executable: `binary\Formwerk.exe`.
 - Working application: add box/cylinder/sphere, typed editing of position/rotation/dimensions (numbers, expressions, `+10`, `150%`, variables), selection (viewport and list), hole/group/merge/boolean, duplicate/delete, undo history panel, STL export, **STL/OBJ import (File > Import, Ctrl+I, drag and drop onto the window, unit question for tiny/huge models, lands on the plate, saved in the project)**, 3D view with build plate and orbit camera, new/open/save/save as of `.fwp` projects, modified marker, unsaved-changes questions, autosave every 2 minutes, crash recovery, **move gizmo (arrows + plane handles), rotate gizmo (rings), scale gizmo (box with 6 face and 8 corner handles, Proportional switch, Ctrl = from center, shapes change their dimensions), tools Select/Move/Rotate/Scale (Q/W/E/R), grid and angle snapping and **snapping to other objects (edges and centers flush/centered, floor, bed center, pink guide frames, tolerance 10 px at any zoom, "Objects" switch)**, Alt/Shift suppress snapping, live readout at the cursor, Esc cancels, one undo step per drag, drop to floor (B)**.
 - Also working now (after the lines above were written): settings dialog (File > Settings, Ctrl+,), 3MF export and import, Open in Slicer, mesh check banner with one-click repair. Not done: repair of self-intersections and non-manifold edges, OBJ export, scaling several objects at once, snap point markers / circle centers / face-to-face gap / align tool, edge lines, DirectX renderer, more shapes, holes tool, patterns, templates, "Open in Slicer", `thumbnail.png` in the project file. (Settings dialog and persistent snap settings are done.)
 - Verified in the real exe with real input (UI automation + real mouse events): start, add shapes, title and `*` marker, menus, unsaved-changes dialog on close, crash recovery after a killed process, **mouse drag of the X arrow (0 to 22 mm, readout and highlight, one "Move Box" entry), mouse drag of the Z ring (30 degrees, readout, one "Rotate Box" entry), Esc during a drag (nothing changes, no history entry), mouse drag of the scale corner handle (41 x 41 x 41 mm, proportional) and of the +X face handle (20 to 22 mm, only the width changes, one "Scale Box" entry), mouse drag of a box towards another box (pink guide frame at the flush plane, ends exactly flush at X = -20, one "Move Box 2" entry)**. The user confirmed picking and the camera controls work.

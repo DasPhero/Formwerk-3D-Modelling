@@ -280,6 +280,23 @@
                     <MenuItem Header="{res:Loc Menu.Edit.Pattern.Linear}" Command="{Binding LinearPatternCommand}" />
                     <MenuItem Header="{res:Loc Menu.Edit.Pattern.Circular}" Command="{Binding CircularPatternCommand}" />
                 </MenuItem>
+                <MenuItem Header="{res:Loc Menu.Edit.Align}">
+                    <MenuItem Header="{res:Loc Menu.Edit.Align.XMin}" Command="{Binding AlignCommand}" CommandParameter="X-Min" />
+                    <MenuItem Header="{res:Loc Menu.Edit.Align.XCenter}" Command="{Binding AlignCommand}" CommandParameter="X-Center" />
+                    <MenuItem Header="{res:Loc Menu.Edit.Align.XMax}" Command="{Binding AlignCommand}" CommandParameter="X-Max" />
+                    <Separator />
+                    <MenuItem Header="{res:Loc Menu.Edit.Align.YMin}" Command="{Binding AlignCommand}" CommandParameter="Y-Min" />
+                    <MenuItem Header="{res:Loc Menu.Edit.Align.YCenter}" Command="{Binding AlignCommand}" CommandParameter="Y-Center" />
+                    <MenuItem Header="{res:Loc Menu.Edit.Align.YMax}" Command="{Binding AlignCommand}" CommandParameter="Y-Max" />
+                    <Separator />
+                    <MenuItem Header="{res:Loc Menu.Edit.Align.ZMin}" Command="{Binding AlignCommand}" CommandParameter="Z-Min" />
+                    <MenuItem Header="{res:Loc Menu.Edit.Align.ZCenter}" Command="{Binding AlignCommand}" CommandParameter="Z-Center" />
+                    <MenuItem Header="{res:Loc Menu.Edit.Align.ZMax}" Command="{Binding AlignCommand}" CommandParameter="Z-Max" />
+                    <Separator />
+                    <MenuItem Header="{res:Loc Menu.Edit.Align.DistributeX}" Command="{Binding DistributeCommand}" CommandParameter="X" />
+                    <MenuItem Header="{res:Loc Menu.Edit.Align.DistributeY}" Command="{Binding DistributeCommand}" CommandParameter="Y" />
+                    <MenuItem Header="{res:Loc Menu.Edit.Align.DistributeZ}" Command="{Binding DistributeCommand}" CommandParameter="Z" />
+                </MenuItem>
                 <MenuItem Header="{res:Loc Menu.Edit.Mirror}">
                     <MenuItem Header="{res:Loc Menu.Edit.Mirror.Linked}" Command="{Binding LinkedMirrorCommand}" />
                     <MenuItem Header="{res:Loc Menu.Edit.Mirror.Copy}" Command="{Binding MirroredCopyCommand}" />
@@ -570,6 +587,48 @@
                             </Expander>
                             <TextBlock Text="{Binding PropertiesMessage}" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" />
                             <ContentControl Content="{Binding Properties}" />
+                            <!-- Align and distribute (F-SNP-04): two or more objects are selected -->
+                            <StackPanel Visibility="{Binding IsAlignVisible, Converter={StaticResource BoolToVisibility}}" Margin="0,10,0,0"
+                                        AutomationProperties.AutomationId="AlignPanel">
+                                <TextBlock Text="{res:Loc Align.Title}" Style="{StaticResource PanelHeader}" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{res:Loc Align.Min}" HorizontalAlignment="Center" Foreground="{DynamicResource MutedTextBrush}" />
+                                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{res:Loc Align.Center}" HorizontalAlignment="Center" Foreground="{DynamicResource MutedTextBrush}" />
+                                    <TextBlock Grid.Row="0" Grid.Column="3" Text="{res:Loc Align.Max}" HorizontalAlignment="Center" Foreground="{DynamicResource MutedTextBrush}" />
+                                    <TextBlock Grid.Row="1" Text="X" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <Button Grid.Row="1" Grid.Column="1" Content="◧" Command="{Binding AlignCommand}" CommandParameter="X-Min" ToolTip="{res:Loc Menu.Edit.Align.XMin}" Margin="2" MinWidth="0" />
+                                    <Button Grid.Row="1" Grid.Column="2" Content="◫" Command="{Binding AlignCommand}" CommandParameter="X-Center" ToolTip="{res:Loc Menu.Edit.Align.XCenter}" Margin="2" MinWidth="0" />
+                                    <Button Grid.Row="1" Grid.Column="3" Content="◨" Command="{Binding AlignCommand}" CommandParameter="X-Max" ToolTip="{res:Loc Menu.Edit.Align.XMax}" Margin="2" MinWidth="0" />
+                                    <TextBlock Grid.Row="2" Text="Y" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <Button Grid.Row="2" Grid.Column="1" Content="⬒" Command="{Binding AlignCommand}" CommandParameter="Y-Min" ToolTip="{res:Loc Menu.Edit.Align.YMin}" Margin="2" MinWidth="0" />
+                                    <Button Grid.Row="2" Grid.Column="2" Content="⬓" Command="{Binding AlignCommand}" CommandParameter="Y-Center" ToolTip="{res:Loc Menu.Edit.Align.YCenter}" Margin="2" MinWidth="0" />
+                                    <Button Grid.Row="2" Grid.Column="3" Content="⬔" Command="{Binding AlignCommand}" CommandParameter="Y-Max" ToolTip="{res:Loc Menu.Edit.Align.YMax}" Margin="2" MinWidth="0" />
+                                    <TextBlock Grid.Row="3" Text="Z" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                    <Button Grid.Row="3" Grid.Column="1" Content="⊥" Command="{Binding AlignCommand}" CommandParameter="Z-Min" ToolTip="{res:Loc Menu.Edit.Align.ZMin}" Margin="2" MinWidth="0" />
+                                    <Button Grid.Row="3" Grid.Column="2" Content="⊢" Command="{Binding AlignCommand}" CommandParameter="Z-Center" ToolTip="{res:Loc Menu.Edit.Align.ZCenter}" Margin="2" MinWidth="0" />
+                                    <Button Grid.Row="3" Grid.Column="3" Content="⊤" Command="{Binding AlignCommand}" CommandParameter="Z-Max" ToolTip="{res:Loc Menu.Edit.Align.ZMax}" Margin="2" MinWidth="0" />
+                                </Grid>
+                                <TextBlock Text="{res:Loc Align.Distribute}" Margin="0,8,0,2" Foreground="{DynamicResource MutedTextBrush}" />
+                                <UniformGrid Rows="1" ToolTip="{res:Loc Align.Distribute.Tip}">
+                                    <Button Content="X" Command="{Binding DistributeCommand}" CommandParameter="X" Margin="2" MinWidth="0" AutomationProperties.AutomationId="DistributeX" />
+                                    <Button Content="Y" Command="{Binding DistributeCommand}" CommandParameter="Y" Margin="2" MinWidth="0" AutomationProperties.AutomationId="DistributeY" />
+                                    <Button Content="Z" Command="{Binding DistributeCommand}" CommandParameter="Z" Margin="2" MinWidth="0" AutomationProperties.AutomationId="DistributeZ" />
+                                </UniformGrid>
+                                <CheckBox Content="{res:Loc Align.ToFirst}" ToolTip="{res:Loc Align.ToFirst.Tip}" IsChecked="{Binding AlignToFirst}" Margin="0,8,0,0"
+                                          AutomationProperties.AutomationId="AlignToFirst" />
+                            </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
                 </DockPanel>
