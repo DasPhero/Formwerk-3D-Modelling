@@ -18,18 +18,8 @@
 
 ## Active step
 
-**Status:** in progress
-**Step name:** Phase 2 block 5: align and distribute, then face to face (two commits)
-**Goal:** the user aligns several selected objects per axis (min, center, max) to the first selected object or to the selection box and distributes three or more evenly (outer ones stay); and puts one face of an object flush onto the face of another with an optional gap or overlap.
-**Requirement IDs:** F-SNP-04 (commit A), F-SNP-03 (commit B).
-**Design (decided):**
-- A: `AlignMath` (Core, pure): `Align(extents, mode, reference)` gives the shift per object along one axis (reference = index of the first selected object, or -1 for the selection box; min/center/max); `Distribute(extents)` gives equal gaps between the boxes of three or more objects, ordered by position, the first and the last stay (a negative gap = overlap). The App measures every selected top-level object (world box of its evaluated parts, `BoundsOf`), moves with `TransformOps.MovedBy` (parent transforms are respected) in one `SetTransformsCommand`; locked objects are not moved. The selection keeps its order (`OrderedIdSet` instead of the `HashSet`) so "the first selected object" is known. UI: an "Align" panel under the properties when two or more objects are selected (Min/Center/Max per axis, Distribute X/Y/Z, a check box "Align to the first selected object", else to the selection box) and the same actions in Edit > Align.
-- B: a two-click mode (like face on floor): the click on a face of the object to move, then the click on the target face; the object is turned so that its face looks against the target face and moved so that the clicked point lies on the target plane at the gap (gap >= 0 apart, < 0 overlap) in front of the target point, one `SetTransformCommand`. The gap is a field in a small panel while the mode is on (expressions, so `Tolerance` works).
-**Checklist:**
-- [x] A. align and distribute (F-SNP-04): `AlignMath` (15 tests), `OrderedIdSet`, panel and menu, 15 App tests, real exe (three objects lined up on the left edge), docs; commit + push done
-- [ ] B. face to face: tests first (math and view model), mode, gap panel, build, real-exe check, docs, commit + push (F-SNP-03)
-**Files touched so far:** none
-**Notes / decisions / problems:** the laptop is charging again; timing tests may still flake under load.
+**Status:** none
+(Last finished: align and face to face, see "Done". Next candidates: template management F-TPL-04..07, library F-LIB-02..04, edge chamfer/fillet F-EDG-01, section view E-06, measuring E-07, cut F-GRP-03, split F-SPL-01/03, color F-VIS-01, repair follow-ups.)
 
 <!-- Template for a new active step:
 
@@ -74,7 +64,7 @@ Done (fully): F-LIB-01 (all 12 shapes), F-GRP-02, F-GRP-04, F-CPY-01, F-ROT-04, 
 
 ## Current state of the project (snapshot)
 
-- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1869 tests green at last run, about 30 s, test projects run one at a time). Executable: `binary\Formwerk.exe`.
+- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (1900 tests green at last run, about 30 s, test projects run one at a time). Executable: `binary\Formwerk.exe`.
 - Working application: add box/cylinder/sphere, typed editing of position/rotation/dimensions (numbers, expressions, `+10`, `150%`, variables), selection (viewport and list), hole/group/merge/boolean, duplicate/delete, undo history panel, STL export, **STL/OBJ import (File > Import, Ctrl+I, drag and drop onto the window, unit question for tiny/huge models, lands on the plate, saved in the project)**, 3D view with build plate and orbit camera, new/open/save/save as of `.fwp` projects, modified marker, unsaved-changes questions, autosave every 2 minutes, crash recovery, **move gizmo (arrows + plane handles), rotate gizmo (rings), scale gizmo (box with 6 face and 8 corner handles, Proportional switch, Ctrl = from center, shapes change their dimensions), tools Select/Move/Rotate/Scale (Q/W/E/R), grid and angle snapping and **snapping to other objects (edges and centers flush/centered, floor, bed center, pink guide frames, tolerance 10 px at any zoom, "Objects" switch)**, Alt/Shift suppress snapping, live readout at the cursor, Esc cancels, one undo step per drag, drop to floor (B)**.
 - Also working now (after the lines above were written): settings dialog (File > Settings, Ctrl+,), 3MF export and import, Open in Slicer, mesh check banner with one-click repair. Not done: repair of self-intersections and non-manifold edges, OBJ export, scaling several objects at once, snap point markers / circle centers / face-to-face gap / align tool, edge lines, DirectX renderer, more shapes, holes tool, patterns, templates, "Open in Slicer", `thumbnail.png` in the project file. (Settings dialog and persistent snap settings are done.)
 - Verified in the real exe with real input (UI automation + real mouse events): start, add shapes, title and `*` marker, menus, unsaved-changes dialog on close, crash recovery after a killed process, **mouse drag of the X arrow (0 to 22 mm, readout and highlight, one "Move Box" entry), mouse drag of the Z ring (30 degrees, readout, one "Rotate Box" entry), Esc during a drag (nothing changes, no history entry), mouse drag of the scale corner handle (41 x 41 x 41 mm, proportional) and of the +X face handle (20 to 22 mm, only the width changes, one "Scale Box" entry), mouse drag of a box towards another box (pink guide frame at the flush plane, ends exactly flush at X = -20, one "Move Box 2" entry)**. The user confirmed picking and the camera controls work.
@@ -83,6 +73,12 @@ Done (fully): F-LIB-01 (all 12 shapes), F-GRP-02, F-GRP-04, F-CPY-01, F-ROT-04, 
 - Tooling notes: .NET 10 SDK installed via winget; WPF project uses `LangVersion preview` for CommunityToolkit.Mvvm partial properties; UI automation, screenshot and real-mouse helper scripts live in the session scratchpad (not part of the repo); speed tests use best-of-N and the build script runs test projects sequentially.
 
 ## Done (newest first)
+
+### 2026-10-21 - Align and face to face (F-SNP-03, F-SNP-04; phase 2 block 5)
+- Functional: an Align panel (and Edit > Align) for two or more selected objects: per axis the low edge, middle or high edge to the first selected object or the selection box; Distribute X/Y/Z gives three or more objects equal gaps, the outer ones stay. "Face to Face" (toolbar and Edit menu): click the face of the object that moves, then the face of another object, and it is turned and put flush onto it; a Gap field sets a space (0.2 for a print fit), an overlap (negative) or a formula such as Tolerance; the clicks snap to the face middles (Alt/Shift: no snap).
+- Technical: Core `AlignMath`, `TransformOps.FaceToFace`; App `OrderedIdSet` (the selection keeps its order), `MainViewModel.Align.cs`, `MainViewModel.FaceToFace.cs`, `FaceCenterSnapped`, face to face mode wired into the other face modes. Two commits (0d95efd align, then face to face). Tests: 1900 in total (Core 258, App 735).
+- Real exe checks: three objects selected by a rectangle were lined up on the left edge (panel and menu); two boxes: the first click shows the second hint and the gap panel, the second click turned one box over and put it on top of the other.
+- Not done / caveats: face to face is a two-click mode, not dragging a face (spec wording "ziehen"); the align panel has no preview; distribute uses equal gaps, not equal centers; align and distribute ignore objects without geometry; locked objects stay (the status bar names them) and can distort a distribution in which they stand between others.
 
 ### 2026-10-20 - Patterns and mirror (F-PAT-01..04; phase 2 block 4)
 - Functional: Edit > Pattern > Linear pattern (row or 2D grid: count, spacing or total length, direction X/Y/Z, a second direction, skipped instances) and Circular pattern (count, angle, axis, center on the axis of the body next to the source, radius, distance from the outer edge to the hole middle or hole edge); Edit > Mirror: linked mirror, independent mirrored copy, both also at a clicked face. All stay features (expressions, variables work), a hole in a pattern or mirror cuts at every instance, a click on an instance selects the pattern or mirror, they are saved in projects and templates.

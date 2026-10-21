@@ -19,7 +19,7 @@ public sealed partial class MainViewModel
     public partial bool IsPlacingHole { get; set; }
 
     /// <summary>The viewport reports clicks as faces instead of selecting (hole tool or "face on floor").</summary>
-    public bool IsFacePickActive => IsPickingFace || IsPlacingHole || IsPickingMirrorFace;
+    public bool IsFacePickActive => IsPickingFace || IsPlacingHole || IsPickingMirrorFace || IsPickingFaceToFace;
 
     /// <summary>The settings of the next hole.</summary>
     public HoleToolViewModel HoleTool => _holeTool ??= new HoleToolViewModel(() => _document.ResolveVariables(out _));
@@ -41,6 +41,7 @@ public sealed partial class MainViewModel
         {
             IsPickingFace = false;
             IsPickingMirrorFace = false;
+            EndFaceToFaceMode();
         }
 
         RefreshScaleHint();
@@ -141,6 +142,26 @@ public sealed partial class MainViewModel
         return pick.Point;
     }
 
+
+    /// <summary>
+    /// The clicked point of a face, or the center of that face when the click is close to it (within 15% of the face size, 1 to 8 mm)
+    /// and "Snap to objects" is on and Alt/Shift was not held. Used by "face to face", so that faces that were clicked near their
+    /// middles end up exactly centered on each other.
+    /// </summary>
+    private Vector3 FaceCenterSnapped(FacePick pick)
+    {
+        if (pick.NoSnap || !SnapToObjects || pick.Normal.LengthSquared() < 1e-12f) return pick.Point;
+        var normal = Vector3.Normalize(pick.Normal);
+        foreach (var item in ViewportItems)
+        {
+            if (item.NodeId != pick.NodeId || item.Kind != ViewportItemKind.Solid) continue;
+            if (FaceFinder.Find(item.Mesh, pick.Point, normal) is not { } face) continue;
+            var radius = Math.Clamp(0.15f * face.Extent, 1f, 8f);
+            return Vector3.Distance(pick.Point, face.Center) <= radius ? face.Center : pick.Point;
+        }
+
+        return pick.Point;
+    }
     /// <summary>
     /// How deep a hole has to be to leave the body on the far side: the extent of the body along the axis plus a little. The depth is
     /// stored as a plain number; for a body that is not evaluated yet 10 mm.

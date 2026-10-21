@@ -338,6 +338,17 @@ Try a different location or file name.</value></data>
   <data name="Name.Align" xml:space="preserve"><value>Align {0}</value></data>
   <data name="Name.Distribute" xml:space="preserve"><value>Distribute along {0}</value></data>
   <data name="Msg.AlignLocked" xml:space="preserve"><value>Locked objects were not moved: {0}.</value></data>
+  <data name="Tool.FaceToFace" xml:space="preserve"><value>Face to Face</value></data>
+  <data name="Tool.FaceToFace.Tip" xml:space="preserve"><value>Click a face of the object that should move, then the face of another object it should lie against. A gap or an overlap can be set. Esc cancels</value></data>
+  <data name="Menu.Edit.FaceToFace" xml:space="preserve"><value>Face to Fa_ce</value></data>
+  <data name="Hint.FaceToFaceFirst" xml:space="preserve"><value>Click the face of the object that should move. Esc cancels.</value></data>
+  <data name="Hint.FaceToFaceSecond" xml:space="preserve"><value>Now click the face of the other object that it should lie against. Esc cancels.</value></data>
+  <data name="FaceToFace.Gap" xml:space="preserve"><value>Gap</value></data>
+  <data name="FaceToFace.Title" xml:space="preserve"><value>Face to face</value></data>
+  <data name="FaceToFace.Gap.Tip" xml:space="preserve"><value>Space between the two faces in mm: 0 lies flush, 0.2 leaves a gap for a print fit, a negative value overlaps. Formulas work, for example Tolerance.</value></data>
+  <data name="Name.FaceToFace" xml:space="preserve"><value>Put {0} face to face</value></data>
+  <data name="Msg.FaceToFaceSame" xml:space="preserve"><value>Click a face of another object: the object cannot lie against itself.</value></data>
+  <data name="Msg.FaceToFaceGap" xml:space="preserve"><value>The gap is not a number: {0}</value></data>
   <data name="Msg.FaceAlready" xml:space="preserve"><value>That face already lies on the floor.</value></data>
   <data name="Msg.FaceLocked" xml:space="preserve"><value>{0} is locked and cannot be turned.</value></data>
   <data name="Hint.SelectTool" xml:space="preserve"><value>Drag a rectangle: to the right takes what lies completely inside, to the left everything it touches. Ctrl/Shift adds. Esc cancels. Right-drag orbits, middle-drag pans.</value></data>

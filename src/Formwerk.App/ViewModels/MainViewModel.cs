@@ -769,6 +769,7 @@ public sealed partial class MainViewModel : ObservableObject
         LinearPatternCommand.NotifyCanExecuteChanged();
         CircularPatternCommand.NotifyCanExecuteChanged();
         AlignCommand.NotifyCanExecuteChanged();
+        FaceToFaceCommand.NotifyCanExecuteChanged();
         DistributeCommand.NotifyCanExecuteChanged();
         LinkedMirrorCommand.NotifyCanExecuteChanged();
         MirroredCopyCommand.NotifyCanExecuteChanged();

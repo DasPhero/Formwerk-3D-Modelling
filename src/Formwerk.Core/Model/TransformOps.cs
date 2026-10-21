@@ -71,6 +71,35 @@ public static class TransformOps
         return Math.Abs(worldPoint.Z) < 1e-6f ? turned : MovedBy(node, turned, new Vector3(0, 0, -worldPoint.Z));
     }
 
+    /// <summary>
+    /// "Face to face" (F-SNP-03): the node's transform after putting its face at <paramref name="worldPoint"/> (outward direction
+    /// <paramref name="worldNormal"/>) onto the face of another object at <paramref name="targetPoint"/> (outward direction
+    /// <paramref name="targetNormal"/>). The node is turned about the clicked point until its face looks against the target face (a
+    /// face that looks the other way already needs no turn) and moved so that the clicked point lies on the target point, in front
+    /// of the target face by <paramref name="gap"/> mm along its normal: 0 is flush, a positive gap leaves a space (0.2 for a print
+    /// fit), a negative gap overlaps. Without a direction nothing changes.
+    /// </summary>
+    public static Transform FaceToFace(Node node, Transform start, Vector3 worldPoint, Vector3 worldNormal, Vector3 targetPoint, Vector3 targetNormal, float gap)
+    {
+        if (worldNormal.LengthSquared() < 1e-12f || targetNormal.LengthSquared() < 1e-12f) return start;
+
+        var normal = Vector3.Normalize(worldNormal);
+        var target = Vector3.Normalize(targetNormal);
+        var wanted = -target; // the face has to look against the target face
+        var cosine = Math.Clamp(Vector3.Dot(normal, wanted), -1f, 1f);
+        var turned = start;
+        if (cosine < 0.9999999f)
+        {
+            var axis = Vector3.Cross(normal, wanted);
+            if (axis.LengthSquared() < 1e-12f) // exactly the other way round: any axis across the normal turns it over
+                axis = Vector3.Cross(normal, MathF.Abs(normal.Z) < 0.9f ? Vector3.UnitZ : Vector3.UnitX);
+            turned = RotatedAbout(node, start, worldPoint, axis, Math.Acos(cosine) * 180 / Math.PI);
+        }
+
+        // the turn leaves the clicked point where it is: what is left is to bring it to the target point, plus the gap
+        return MovedBy(node, turned, targetPoint + target * gap - worldPoint);
+    }
+
     /// <summary>The node's transform after moving it by <paramref name="worldDelta"/>.</summary>
     public static Transform MovedBy(Node node, Transform start, Vector3 worldDelta)
     {

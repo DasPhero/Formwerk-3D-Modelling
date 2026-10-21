@@ -59,6 +59,7 @@ public sealed partial class MainViewModel
         {
             IsPlacingHole = false;
             IsPickingMirrorFace = false;
+            EndFaceToFaceMode();
         }
 
         RefreshScaleHint(); // sets the hint for the mode, or the usual one again
@@ -71,7 +72,8 @@ public sealed partial class MainViewModel
         if (pick is null)
         {
             EndFacePick();
-            IsPlacingHole = false; // Esc ends the hole tool and the mirror face mode as well
+            IsPlacingHole = false; // Esc ends the hole tool, the mirror face mode and face to face as well
+            EndFaceToFaceMode();
             IsPickingMirrorFace = false;
             RefreshScaleHint();
             return;
@@ -79,6 +81,7 @@ public sealed partial class MainViewModel
 
         if (IsPlacingHole) PlaceHole(pick);
         else if (IsPickingMirrorFace) MirrorAtFace(pick);
+        else if (IsPickingFaceToFace) FaceToFaceClick(pick);
         else LayFaceOnFloor(pick);
     }
 
