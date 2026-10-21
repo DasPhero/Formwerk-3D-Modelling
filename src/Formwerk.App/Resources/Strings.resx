@@ -394,6 +394,26 @@ Try a different location or file name.</value></data>
   <data name="Dlg.UpdateTemplateButton" xml:space="preserve"><value>Update</value></data>
   <data name="Menu.Edit.UpdateTemplate" xml:space="preserve"><value>_Update Template...</value></data>
   <data name="Msg.TemplateUpdated" xml:space="preserve"><value>Updated template {0} to version {1}.</value></data>
+  <data name="Tool.EdgeCut" xml:space="preserve"><value>Chamfer / Fillet</value></data>
+  <data name="Tool.EdgeCut.Tip" xml:space="preserve"><value>Click a face of an object close to the edge you want to chamfer or round. Type and size are set in the panel. Esc ends the tool</value></data>
+  <data name="Menu.Edit.EdgeCut" xml:space="preserve"><value>Chamfer / _Fillet Edge</value></data>
+  <data name="Hint.EdgeCutPlace" xml:space="preserve"><value>Click a face close to the edge to chamfer or round it (the edge of that face nearest to the click). Esc ends the tool.</value></data>
+  <data name="Edge.Tool.Title" xml:space="preserve"><value>Chamfer / Fillet</value></data>
+  <data name="Edge.Size" xml:space="preserve"><value>Edge size</value></data>
+  <data name="Edge.Err.Size" xml:space="preserve"><value>The edge size must be more than 0 and at most 10000.</value></data>
+  <data name="Name.EdgeCut" xml:space="preserve"><value>Edge cut</value></data>
+  <data name="Name.EdgeChamfer" xml:space="preserve"><value>Chamfer edge of {0}</value></data>
+  <data name="Name.EdgeFillet" xml:space="preserve"><value>Round edge of {0}</value></data>
+  <data name="Msg.EdgeCut" xml:space="preserve"><value>Added {0}. Change its size or type in the properties; delete it to get the sharp edge back.</value></data>
+  <data name="Msg.EdgeLocked" xml:space="preserve"><value>{0} is locked, its edges cannot be changed.</value></data>
+  <data name="Msg.EdgeSize" xml:space="preserve"><value>The edge size does not work: {0}</value></data>
+  <data name="Msg.Edge.NoFace" xml:space="preserve"><value>Click on a flat face of an object, close to the edge.</value></data>
+  <data name="Msg.Edge.NoEdge" xml:space="preserve"><value>This face has no edge that can be cut.</value></data>
+  <data name="Msg.Edge.Concave" xml:space="preserve"><value>Inner edges cannot be chamfered or rounded yet.</value></data>
+  <data name="Msg.Edge.AlmostFlat" xml:space="preserve"><value>The two faces meet at almost a straight angle: there is nothing to cut.</value></data>
+  <data name="Msg.Edge.TooSharp" xml:space="preserve"><value>The two faces meet at a very sharp angle: this edge cannot be cut.</value></data>
+  <data name="Msg.Edge.NotRightAngle" xml:space="preserve"><value>Only round edges at a right angle to the face (cylinders) are supported.</value></data>
+  <data name="Msg.Edge.Curved" xml:space="preserve"><value>This edge is a curve: only straight edges and circular rims are supported.</value></data>
   <data name="Edge.Type" xml:space="preserve"><value>Edge type</value></data>
   <data name="Edge.Where" xml:space="preserve"><value>Edges</value></data>
   <data name="Edge.Chamfer" xml:space="preserve"><value>Chamfer</value></data>

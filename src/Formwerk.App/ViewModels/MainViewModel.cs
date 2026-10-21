@@ -767,6 +767,7 @@ public sealed partial class MainViewModel : ObservableObject
         Rotate90Command.NotifyCanExecuteChanged();
         FaceOnFloorCommand.NotifyCanExecuteChanged();
         DrillCommand.NotifyCanExecuteChanged();
+        EdgeCutCommand.NotifyCanExecuteChanged();
         LinearPatternCommand.NotifyCanExecuteChanged();
         CircularPatternCommand.NotifyCanExecuteChanged();
         AlignCommand.NotifyCanExecuteChanged();

@@ -214,6 +214,9 @@ public sealed partial class PropertiesViewModel : ObservableObject
     /// <summary>The shape has an edge treatment (a box or a cylinder): the choices are offered below the size.</summary>
     public bool HasEdgeChoices => _node is PrimitiveNode primitive && ShapeLibrary.Find(primitive.GeneratorId)?.Parameters.Any(p => p.Name == "edgeSize") == true;
 
+    /// <summary>The shape has the choice of which edges are treated (a cutter sits on one edge and has none).</summary>
+    public bool HasEdgeWhere => _node is PrimitiveNode primitive && ShapeLibrary.Find(primitive.GeneratorId)?.Parameters.Any(p => p.Name == "edgeWhere") == true;
+
     public IReadOnlyList<EdgeChoice> EdgeTypes { get; } = [new(0, Texts.Get("Edge.Chamfer")), new(1, Texts.Get("Edge.Fillet"))];
 
     /// <summary>Which edges: a box has edges, a cylinder has rims.</summary>
@@ -385,7 +388,7 @@ public sealed partial class PropertiesViewModel : ObservableObject
             if (!IsHoleShape)
             {
                 for (var i = 0; i < Parameters.Count && generator is not null; i++)
-                    Parameters[i].IsVisible = generator.Parameters[i].Name is not ("edgeType" or "edgeWhere"); // the choices have their own controls
+                    Parameters[i].IsVisible = generator.Parameters[i].Name is not ("edgeType" or "edgeWhere" or "inside"); // the choices have their own controls (or are facts of the edge)
             }
 
             if (IsHoleShape)

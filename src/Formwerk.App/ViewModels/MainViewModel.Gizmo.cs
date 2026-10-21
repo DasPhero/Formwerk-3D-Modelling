@@ -114,6 +114,7 @@ public sealed partial class MainViewModel : IGizmoTarget
     private void RefreshScaleHint()
     {
         if (IsPlacingHole) HintText = Texts.Get("Hint.HolePlace");
+        else if (IsPlacingEdgeCut) HintText = Texts.Get("Hint.EdgeCutPlace");
         else if (IsPickingMirrorFace) HintText = Texts.Get("Hint.MirrorFace");
         else if (IsPickingFaceToFace) HintText = Texts.Get(FaceToFaceHasFirst ? "Hint.FaceToFaceSecond" : "Hint.FaceToFaceFirst");
         else if (IsPickingFace) HintText = Texts.Get("Hint.FacePick");

@@ -191,7 +191,7 @@
                             <ComboBox Grid.Column="1" ItemsSource="{Binding EdgeTypes}" DisplayMemberPath="Label" SelectedValuePath="Index"
                                       SelectedValue="{Binding EdgeType}" AutomationProperties.AutomationId="EdgeType" />
                         </Grid>
-                        <Grid Margin="0,2">
+                        <Grid Margin="0,2" Visibility="{Binding HasEdgeWhere, Converter={StaticResource BoolToVisibility}}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="86" />
                                 <ColumnDefinition Width="*" />
@@ -298,6 +298,7 @@
                 <MenuItem Header="{res:Loc Menu.Edit.FaceOnFloor}" Command="{Binding FaceOnFloorCommand}" />
                 <MenuItem Header="{res:Loc Menu.Edit.FaceToFace}" Command="{Binding FaceToFaceCommand}" />
                 <MenuItem Header="{res:Loc Menu.Edit.Drill}" Command="{Binding DrillCommand}" />
+                <MenuItem Header="{res:Loc Menu.Edit.EdgeCut}" Command="{Binding EdgeCutCommand}" />
                 <MenuItem Header="{res:Loc Menu.Edit.Pattern}">
                     <MenuItem Header="{res:Loc Menu.Edit.Pattern.Linear}" Command="{Binding LinearPatternCommand}" />
                     <MenuItem Header="{res:Loc Menu.Edit.Pattern.Circular}" Command="{Binding CircularPatternCommand}" />
@@ -385,6 +386,8 @@
                               IsChecked="{Binding IsPickingFaceToFace, Mode=OneWay}" Margin="6,0,0,0" AutomationProperties.AutomationId="FaceToFaceButton" />
                 <ToggleButton Content="{res:Loc Tool.Hole}" ToolTip="{res:Loc Tool.Hole.Tip}" Command="{Binding DrillCommand}"
                               IsChecked="{Binding IsPlacingHole, Mode=OneWay}" Margin="14,0,0,0" AutomationProperties.AutomationId="DrillButton" />
+                <ToggleButton Content="{res:Loc Tool.EdgeCut}" ToolTip="{res:Loc Tool.EdgeCut.Tip}" Command="{Binding EdgeCutCommand}"
+                              IsChecked="{Binding IsPlacingEdgeCut, Mode=OneWay}" Margin="6,0,0,0" AutomationProperties.AutomationId="EdgeCutButton" />
             </StackPanel>
         </Border>
 
@@ -609,6 +612,26 @@
                         <ContentControl Content="{Binding HeadDepth}" Visibility="{Binding ShowHeadDepth, Converter={StaticResource BoolToVisibility}}" />
                         <CheckBox Content="{res:Loc Hole.Through}" ToolTip="{res:Loc Hole.Through.Tip}" IsChecked="{Binding Through}" Margin="0,6,0,2" />
                         <ContentControl Content="{Binding Depth}" Visibility="{Binding ShowDepth, Converter={StaticResource BoolToVisibility}}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Edge tool: what the next chamfer or fillet looks like (F-EDG-02) -->
+                <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="12" Padding="10" Width="260" CornerRadius="4"
+                        BorderThickness="1" BorderBrush="{DynamicResource PanelBorderBrush}" Background="{DynamicResource PanelBrush}"
+                        Visibility="{Binding IsPlacingEdgeCut, Converter={StaticResource BoolToVisibility}}"
+                        AutomationProperties.AutomationId="EdgePanel">
+                    <StackPanel DataContext="{Binding EdgeTool}">
+                        <TextBlock Text="{res:Loc Edge.Tool.Title}" Style="{StaticResource PanelHeader}" Margin="0,0,0,6" />
+                        <Grid Margin="0,0,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="86" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{res:Loc Edge.Type}" VerticalAlignment="Center" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding Types}" DisplayMemberPath="Label" SelectedValuePath="Index"
+                                      SelectedValue="{Binding EdgeType}" AutomationProperties.AutomationId="EdgeToolType" />
+                        </Grid>
+                        <ContentControl Content="{Binding Size}" />
                     </StackPanel>
                 </Border>
                 </Grid>
