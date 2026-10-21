@@ -310,8 +310,9 @@ public class MoreShapesTests
         Assert.True(wall.IsDetail);
         Assert.DoesNotContain(tube.ScaleBindings, b => b.Parameter == "wall");
         Assert.Equal(["outerDiameter", "height"], tube.ScaleBindings.Select(b => b.Parameter).ToArray());
-        // no first or old shape uses details
-        Assert.All(new[] { "box", "cylinder", "sphere" }, id => Assert.DoesNotContain(ShapeLibrary.Find(id)!.Parameters, p => p.IsDetail));
+        // the sphere has no details; a box and a cylinder only have the size of their edge treatment (F-EDG-01)
+        Assert.DoesNotContain(ShapeLibrary.Find("sphere")!.Parameters, p => p.IsDetail);
+        Assert.All(new[] { "box", "cylinder" }, id => Assert.Equal(["edgeSize"], ShapeLibrary.Find(id)!.Parameters.Where(p => p.IsDetail).Select(p => p.Name).ToArray()));
     }
 
     [Fact]

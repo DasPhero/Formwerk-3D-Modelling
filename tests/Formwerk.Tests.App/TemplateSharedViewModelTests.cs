@@ -60,8 +60,8 @@ public sealed class TemplateSharedViewModelTests : IDisposable
     {
         var choices = SharedParameterChoice.For([new PrimitiveNode("box", "Box")]);
 
-        Assert.Equal(["Width", "Depth", "Height"], choices.Select(c => c.ParameterLabel).ToArray());
-        Assert.Equal(["width", "depth", "height"], choices.Select(c => c.Parameter).ToArray());
+        Assert.Equal(["Width", "Depth", "Height", "Edge size"], choices.Select(c => c.ParameterLabel).ToArray());
+        Assert.Equal(["width", "depth", "height", "edgeSize"], choices.Select(c => c.Parameter).ToArray());
         Assert.All(choices, c => Assert.False(c.IsShared));
         Assert.All(choices, c => Assert.Equal([0], c.Path));
         Assert.All(choices, c => Assert.Equal("Box", c.NodeName));
@@ -131,7 +131,7 @@ public sealed class TemplateSharedViewModelTests : IDisposable
         vm.SaveTemplateCommand.Execute(null);
 
         Assert.True(seen!.HasSharedChoices);
-        Assert.Equal(3, seen.SharedChoices.Count);
+        Assert.Equal(4, seen.SharedChoices.Count);
         Assert.True(seen.IsValid);
     }
 

@@ -197,6 +197,7 @@ public sealed partial class PropertiesViewModel : ObservableObject
 
     private IReadOnlyList<ParameterDefinition>? ChoiceDefinitions() => _node switch
     {
+        PrimitiveNode primitive => ShapeLibrary.Find(primitive.GeneratorId)?.Parameters,
         PatternNode pattern => PatternParameters.For(pattern.Kind),
         MirrorNode => MirrorParameters.Definitions,
         _ => null,
@@ -206,6 +207,32 @@ public sealed partial class PropertiesViewModel : ObservableObject
     {
         if (_node is ParametricNode node && ChoiceDefinitions() is not null && IntParameter(name) != value)
             _history.Execute(new SetParameterCommand(_document, node, name, value.ToString(CultureInfo.InvariantCulture)));
+    }
+
+    // ---- chamfer and fillet (F-EDG-01) ---------------------------------------------------------
+
+    /// <summary>The shape has an edge treatment (a box or a cylinder): the choices are offered below the size.</summary>
+    public bool HasEdgeChoices => _node is PrimitiveNode primitive && ShapeLibrary.Find(primitive.GeneratorId)?.Parameters.Any(p => p.Name == "edgeSize") == true;
+
+    public IReadOnlyList<EdgeChoice> EdgeTypes { get; } = [new(0, Texts.Get("Edge.Chamfer")), new(1, Texts.Get("Edge.Fillet"))];
+
+    /// <summary>Which edges: a box has edges, a cylinder has rims.</summary>
+    public IReadOnlyList<EdgeChoice> EdgeWheres => _node is PrimitiveNode { GeneratorId: "cylinder" }
+        ? [new(0, Texts.Get("Edge.Where.Rims")), new(1, Texts.Get("Edge.Where.TopRim")), new(2, Texts.Get("Edge.Where.BottomRim"))]
+        : [new(0, Texts.Get("Edge.Where.All")), new(1, Texts.Get("Edge.Where.Top")), new(2, Texts.Get("Edge.Where.Bottom"))];
+
+    /// <summary>0 chamfer, 1 fillet.</summary>
+    public int EdgeType
+    {
+        get => IntParameter("edgeType");
+        set => SetChoice("edgeType", value);
+    }
+
+    /// <summary>0 all, 1 top, 2 bottom.</summary>
+    public int EdgeWhere
+    {
+        get => IntParameter("edgeWhere");
+        set => SetChoice("edgeWhere", value);
     }
 
     // ---- mirror (F-PAT-04) ---------------------------------------------------------------------
@@ -353,6 +380,12 @@ public sealed partial class PropertiesViewModel : ObservableObject
                 var stored = primitive.Parameters.TryGetValue(definition.Name, out var text) ? text : Format(definition.Default);
                 Parameters[i].SetFromModel(stored);
                 Parameters[i].ShowLinks(ExpressionParser.UsedNames(stored)); // marked when it uses project variables (F-PAR-03)
+            }
+
+            if (!IsHoleShape)
+            {
+                for (var i = 0; i < Parameters.Count && generator is not null; i++)
+                    Parameters[i].IsVisible = generator.Parameters[i].Name is not ("edgeType" or "edgeWhere"); // the choices have their own controls
             }
 
             if (IsHoleShape)

@@ -14,6 +14,9 @@ public sealed class BoxGenerator : ShapeGenerator
         new("width", "Width", 20, 0.01, 10000),
         new("depth", "Depth", 20, 0.01, 10000),
         new("height", "Height", 20, 0.01, 10000),
+        new("edgeSize", "Edge size", 0, 0, 10000, IsDetail: true),
+        new("edgeType", "Edge type", 1, 0, 1, IsInteger: true),    // 0 chamfer, 1 fillet (F-EDG-01)
+        new("edgeWhere", "Edge position", 0, 0, 2, IsInteger: true), // 0 all, 1 top, 2 bottom
     ];
 
     public override IReadOnlyList<ScaleBinding> ScaleBindings { get; } =
@@ -28,6 +31,7 @@ public sealed class BoxGenerator : ShapeGenerator
         var hx = (float)p["width"] / 2;
         var hy = (float)p["depth"] / 2;
         var h = (float)p["height"];
+        if (p["edgeSize"] > 0) return EdgeMeshes.Box(hx * 2, hy * 2, h, (float)p["edgeSize"], (EdgeKind)(int)p["edgeType"], (EdgeSide)(int)p["edgeWhere"]);
 
         Vector3[] v =
         [
@@ -58,6 +62,9 @@ public sealed class CylinderGenerator : ShapeGenerator
         new("diameter", "Diameter", 20, 0.01, 10000),
         new("height", "Height", 20, 0.01, 10000),
         new("segments", "Segments", 64, 3, 512, IsInteger: true),
+        new("edgeSize", "Edge size", 0, 0, 10000, IsDetail: true),
+        new("edgeType", "Edge type", 1, 0, 1, IsInteger: true),    // 0 chamfer, 1 fillet (F-EDG-01)
+        new("edgeWhere", "Edge position", 0, 0, 2, IsInteger: true), // 0 all, 1 top, 2 bottom
     ];
 
     public override IReadOnlyList<ScaleBinding> ScaleBindings { get; } =
@@ -71,6 +78,7 @@ public sealed class CylinderGenerator : ShapeGenerator
         var r = (float)p["diameter"] / 2;
         var h = (float)p["height"];
         var n = (int)p["segments"];
+        if (p["edgeSize"] > 0) return EdgeMeshes.Cylinder(r, h, n, (float)p["edgeSize"], (EdgeKind)(int)p["edgeType"], (EdgeSide)(int)p["edgeWhere"]);
 
         var v = new Vector3[2 * n + 2];
         for (var k = 0; k < n; k++)

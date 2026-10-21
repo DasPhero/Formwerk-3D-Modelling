@@ -180,6 +180,27 @@
                                   AutomationProperties.AutomationId="PropertiesHoleThrough" />
                     </StackPanel>
                     <ItemsControl ItemsSource="{Binding Parameters}" />
+                    <!-- Chamfer and fillet (F-EDG-01): the size is a field above, type and position are choices -->
+                    <StackPanel Visibility="{Binding HasEdgeChoices, Converter={StaticResource BoolToVisibility}}" Margin="0,2,0,0">
+                        <Grid Margin="0,2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="86" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{res:Loc Edge.Type}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding EdgeTypes}" DisplayMemberPath="Label" SelectedValuePath="Index"
+                                      SelectedValue="{Binding EdgeType}" AutomationProperties.AutomationId="EdgeType" />
+                        </Grid>
+                        <Grid Margin="0,2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="86" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="{res:Loc Edge.Where}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding EdgeWheres}" DisplayMemberPath="Label" SelectedValuePath="Index"
+                                      SelectedValue="{Binding EdgeWhere}" AutomationProperties.AutomationId="EdgeWhere" />
+                        </Grid>
+                    </StackPanel>
                     <!-- Mirror (F-PAT-04): the plane and whether the original stays -->
                     <StackPanel Visibility="{Binding IsMirror, Converter={StaticResource BoolToVisibility}}" Margin="0,6,0,0">
                         <Grid Margin="0,2" ToolTip="{res:Loc Mirror.Axis.Tip}">

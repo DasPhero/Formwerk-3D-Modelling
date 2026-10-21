@@ -18,7 +18,7 @@
 
 ## Active step
 
-**Status:** none (phase 2 block 6 is finished; ask the user what to start next, see Candidate next steps)
+**Status:** none (phase 2 block 7 is finished; ask the user what to start next, see Candidate next steps)
 
 <!-- Template for a new active step:
 
@@ -63,7 +63,7 @@ Done (fully): F-LIB-01 (all 12 shapes), F-GRP-02, F-GRP-04, F-CPY-01, F-ROT-04, 
 
 ## Current state of the project (snapshot)
 
-- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (2025 tests green at last run, about 30 s, test projects run one at a time). Executable: `binary\Formwerk.exe`.
+- Solution `Formwerk.sln`: 9 source projects, 9 test projects. Build and test: `.\scripts\build.ps1` (2067 tests green at last run, about 30 s, test projects run one at a time). Executable: `binary\Formwerk.exe`.
 - Working application: add box/cylinder/sphere, typed editing of position/rotation/dimensions (numbers, expressions, `+10`, `150%`, variables), selection (viewport and list), hole/group/merge/boolean, duplicate/delete, undo history panel, STL export, **STL/OBJ import (File > Import, Ctrl+I, drag and drop onto the window, unit question for tiny/huge models, lands on the plate, saved in the project)**, 3D view with build plate and orbit camera, new/open/save/save as of `.fwp` projects, modified marker, unsaved-changes questions, autosave every 2 minutes, crash recovery, **move gizmo (arrows + plane handles), rotate gizmo (rings), scale gizmo (box with 6 face and 8 corner handles, Proportional switch, Ctrl = from center, shapes change their dimensions), tools Select/Move/Rotate/Scale (Q/W/E/R), grid and angle snapping and **snapping to other objects (edges and centers flush/centered, floor, bed center, pink guide frames, tolerance 10 px at any zoom, "Objects" switch)**, Alt/Shift suppress snapping, live readout at the cursor, Esc cancels, one undo step per drag, drop to floor (B)**.
 - Also working now (after the lines above were written): settings dialog (File > Settings, Ctrl+,), 3MF export and import, Open in Slicer, mesh check banner with one-click repair. Not done: repair of self-intersections and non-manifold edges, OBJ export, scaling several objects at once, snap point markers / circle centers / face-to-face gap / align tool, edge lines, DirectX renderer, more shapes, holes tool, patterns, templates, "Open in Slicer", `thumbnail.png` in the project file. (Settings dialog and persistent snap settings are done.)
 - Verified in the real exe with real input (UI automation + real mouse events): start, add shapes, title and `*` marker, menus, unsaved-changes dialog on close, crash recovery after a killed process, **mouse drag of the X arrow (0 to 22 mm, readout and highlight, one "Move Box" entry), mouse drag of the Z ring (30 degrees, readout, one "Rotate Box" entry), Esc during a drag (nothing changes, no history entry), mouse drag of the scale corner handle (41 x 41 x 41 mm, proportional) and of the +X face handle (20 to 22 mm, only the width changes, one "Scale Box" entry), mouse drag of a box towards another box (pink guide frame at the flush plane, ends exactly flush at X = -20, one "Move Box 2" entry)**. The user confirmed picking and the camera controls work.
@@ -73,6 +73,8 @@ Done (fully): F-LIB-01 (all 12 shapes), F-GRP-02, F-GRP-04, F-CPY-01, F-ROT-04, 
 
 ## Done (newest first)
 
+### 2026-10-21 - Chamfer and fillet as shape parameters (F-EDG-01; phase 2 block 7)
+Box and cylinder get a size, a type (chamfer or fillet) and a position (all / top / bottom edges, cylinder: rims) in the properties panel. New: `Features/Shapes/EdgeMeshes.cs` (cylinder = turned outline, box all edges = pushed cube surface, box top/bottom = height field with mitred corners), parameters `edgeSize`/`edgeType`/`edgeWhere` on `BoxGenerator`/`CylinderGenerator`, `PropertiesViewModel.EdgeType/EdgeWhere`, two combo boxes in `MainWindow.xaml`. 42 new tests (Features 29, App 13), total 2067 green; checked in the real app. Caveats: only box and cylinder (not prism, tube, frustum, wedge); a box has no "top and bottom but not the vertical edges" choice; the history entry says "Set edgeSize of Box" (the generic parameter wording); F-EDG-02 (edges of any object, as negative bodies) is the next stage and still open.
 ### 2026-10-21 - Shared parameters of templates (F-TPL-06; phase 2 block 6, commit C)
 Save as Template lists the numeric parameters of the saved objects (also in groups and patterns) with a check box and a label; the ticked ones are stored in `template.json` ("shared"). Inserting such a template first shows a small form with only these fields, preset with the stored values; the confirmed values go into the copies in the same undo step. New: `SharedParameter`, `TemplateInfo.Shared`, `TemplateShared`, `SharedParameterChoice`, `TemplateParametersViewModel`/`TemplateParametersWindow`, `IDialogService.ShowTemplateParameters`. 50 new tests (IO 23, App 27), total 2025 green; checked in the real app. Caveats: what is asked cannot be changed afterwards in "Properties..." (save the template again or update it); choice-like parameters (hole type, direction) and text/flags are not offered; no color or position fields.
 ### 2026-10-21 - Update a template (F-TPL-05; phase 2 block 6, commit B)
