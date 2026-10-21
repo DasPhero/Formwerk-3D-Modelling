@@ -387,6 +387,25 @@ Try a different location or file name.</value></data>
   <data name="Tpl.Err.Tags" xml:space="preserve"><value>Use at most {0} tags of at most {1} characters each.</value></data>
   <data name="Name.InsertTemplate" xml:space="preserve"><value>Insert template {0}</value></data>
   <data name="Msg.TemplateSaved" xml:space="preserve"><value>Saved template {0}.</value></data>
+  <data name="Dlg.TemplatePropertiesTitle" xml:space="preserve"><value>Template Properties</value></data>
+  <data name="Dlg.TemplateFilter" xml:space="preserve"><value>Formwerk template (*.fwt)|*.fwt</value></data>
+  <data name="Dlg.TemplateExportTitle" xml:space="preserve"><value>Export Template</value></data>
+  <data name="Dlg.TemplateImportTitle" xml:space="preserve"><value>Import Template</value></data>
+  <data name="Tpl.Edit" xml:space="preserve"><value>Properties...</value></data>
+  <data name="Tpl.Duplicate" xml:space="preserve"><value>Duplicate</value></data>
+  <data name="Tpl.Export" xml:space="preserve"><value>Export...</value></data>
+  <data name="Tpl.Delete" xml:space="preserve"><value>Delete...</value></data>
+  <data name="Tpl.Import" xml:space="preserve"><value>Import...</value></data>
+  <data name="Tpl.ImportTip" xml:space="preserve"><value>Add a template file (.fwt) from another computer</value></data>
+  <data name="Msg.TemplateChanged" xml:space="preserve"><value>Changed template {0}.</value></data>
+  <data name="Msg.TemplateDuplicated" xml:space="preserve"><value>Created template {0}.</value></data>
+  <data name="Msg.TemplateDeleted" xml:space="preserve"><value>Deleted template {0}.</value></data>
+  <data name="Msg.TemplateDeleteAsk" xml:space="preserve"><value>Delete the template "{0}"? Objects that were inserted before stay in your projects.</value></data>
+  <data name="Msg.TemplateExported" xml:space="preserve"><value>Exported template {0}.</value></data>
+  <data name="Msg.TemplateImported" xml:space="preserve"><value>Added template {0}.</value></data>
+  <data name="Msg.TemplateImportedRenamed" xml:space="preserve"><value>Added template {0} (the name was already taken, so it was renamed).</value></data>
+  <data name="Msg.TemplateImportFailed" xml:space="preserve"><value>The file is not a usable template: {0}</value></data>
+  <data name="Msg.TemplateActionFailed" xml:space="preserve"><value>The template could not be changed: {0}</value></data>
   <data name="Msg.TemplateVariableKept" xml:space="preserve"><value>Your project already has the variable(s) {0} with another value: your value is used.</value></data>
   <data name="Msg.TemplateTaken" xml:space="preserve"><value>A template named "{0}" already exists in this category. Try "{1}".</value></data>
   <data name="Msg.TemplateSaveFailed" xml:space="preserve"><value>The template could not be saved: {0}</value></data>

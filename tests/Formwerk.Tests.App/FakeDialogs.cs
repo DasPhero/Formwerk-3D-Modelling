@@ -60,6 +60,17 @@ public sealed class FakeDialogs : IDialogService
 
     public void ShowError(string message) => Errors.Add(message);
 
+    /// <summary>The answer to a yes/no question (deleting a template); no by default, like a careful user.</summary>
+    public bool ConfirmAnswer { get; set; }
+
+    public List<string> ConfirmPrompts { get; } = [];
+
+    public bool Confirm(string message)
+    {
+        ConfirmPrompts.Add(message);
+        return ConfirmAnswer;
+    }
+
     /// <summary>What the file picker returns for Import.</summary>
     public List<string> FilesToImport { get; } = [];
 

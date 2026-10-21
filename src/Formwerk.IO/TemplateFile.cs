@@ -126,6 +126,55 @@ public static class TemplateFile
         json.WriteEndObject();
     }
 
+    // ---- changing the description of a file ----------------------------------------------------------
+
+    /// <summary>
+    /// Writes a template like <paramref name="source"/> but with another description (name, description, category, tags, size, date):
+    /// the preview and the objects are copied as they are. The source part must be a sound template.
+    /// </summary>
+    public static void WriteWithInfo(Stream source, Stream destination, TemplateInfo info)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(destination);
+        ArgumentNullException.ThrowIfNull(info);
+        if (TemplateNames.Validate(info.Name) is { } problem) throw new ArgumentException(problem, nameof(info));
+
+        byte[]? preview;
+        byte[] project;
+        try
+        {
+            using var zip = OpenZip(source);
+            ParseInfo(ReadEntry(zip, InfoEntry, TemplateLimits.MaxInfoBytes, required: true)!);
+            preview = ReadEntry(zip, PreviewEntry, TemplateLimits.MaxPreviewBytes, required: false);
+            project = ReadEntry(zip, ProjectEntry, ProjectFile.Limits.MaxFileBytes, required: true)!;
+        }
+        catch (Exception ex) when (ex is InvalidDataException or IOException or JsonException or InvalidOperationException or FormatException)
+        {
+            throw new TemplateFormatException("The file is not a valid template: " + ex.Message, ex);
+        }
+
+        using var outZip = new ZipArchive(destination, ZipArchiveMode.Create, leaveOpen: true);
+        using (var s = outZip.CreateEntry(InfoEntry, CompressionLevel.Optimal).Open()) WriteInfo(s, info);
+        if (preview is { Length: > 0 })
+        {
+            using var s = outZip.CreateEntry(PreviewEntry, CompressionLevel.NoCompression).Open();
+            s.Write(preview);
+        }
+
+        using (var s = outZip.CreateEntry(ProjectEntry, CompressionLevel.NoCompression).Open()) s.Write(project);
+    }
+
+    /// <summary>Writes the template at <paramref name="sourcePath"/> to <paramref name="destinationPath"/> with another description (atomically).</summary>
+    public static void SaveCopy(string sourcePath, string destinationPath, TemplateInfo info)
+    {
+        var bytes = File.ReadAllBytes(sourcePath);
+        ProjectFile.SaveAtomic(destinationPath, stream => WriteWithInfo(new MemoryStream(bytes), stream, info));
+    }
+
+    /// <summary>Gives the file another description in place (atomically).</summary>
+    public static void ReplaceInfo(string path, TemplateInfo info) => SaveCopy(path, path, info);
+
+
     // ---- reading -------------------------------------------------------------------------------
 
     /// <summary>The description and the preview, without reading the objects (for the list).</summary>

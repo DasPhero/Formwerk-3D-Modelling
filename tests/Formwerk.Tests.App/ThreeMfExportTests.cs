@@ -346,6 +346,8 @@ public sealed class ThreeMfExportTests : IDisposable
 
         public void ShowError(string message) => inner.ShowError(message);
 
+        public bool Confirm(string message) => inner.Confirm(message);
+
         public IReadOnlyList<string> PickImportFiles(string title, string filter) => inner.PickImportFiles(title, filter);
 
         public ImportUnit? PickImportUnit(string modelName, double largestExtentInFile) => inner.PickImportUnit(modelName, largestExtentInFile);

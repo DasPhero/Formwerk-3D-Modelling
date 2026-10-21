@@ -13,6 +13,7 @@ namespace Formwerk.App.ViewModels;
 public sealed partial class SaveTemplateViewModel : ObservableObject
 {
     private readonly TemplateStore _store;
+    private readonly string? _exceptPath;
 
     public SaveTemplateViewModel(TemplateStore store, string suggestedName)
     {
@@ -21,6 +22,23 @@ public sealed partial class SaveTemplateViewModel : ObservableObject
         Name = suggestedName;
         Validate();
     }
+
+    /// <summary>Edit mode (F-TPL-04): the dialog starts with what the template has now, and its own name is no conflict.</summary>
+    public SaveTemplateViewModel(TemplateStore store, TemplateInfo existing, string path)
+    {
+        _store = store;
+        _exceptPath = path;
+        Title = Texts.Get("Dlg.TemplatePropertiesTitle");
+        Categories = store.Categories();
+        Name = existing.Name;
+        Description = existing.Description;
+        Category = existing.Category;
+        TagsText = string.Join(", ", existing.Tags);
+        Validate();
+    }
+
+    /// <summary>The window title.</summary>
+    public string Title { get; } = Texts.Get("Dlg.SaveTemplateTitle");
 
     public IReadOnlyList<string> Categories { get; }
 
@@ -83,7 +101,7 @@ public sealed partial class SaveTemplateViewModel : ObservableObject
             : ParseTags() is null ? Texts.Format("Tpl.Err.Tags", TemplateLimits.MaxTags, TemplateLimits.MaxTagLength)
             : null;
 
-        if (Error is null && _store.NameTaken(name, category))
+        if (Error is null && (_exceptPath is null ? _store.NameTaken(name, category) : _store.NameTaken(name, category, _exceptPath)))
         {
             Suggestion = _store.SuggestName(name, category);
             Error = Texts.Format("Tpl.Err.Taken", name);

@@ -19,22 +19,52 @@ public interface ITemplatePreview
     byte[]? Render(IReadOnlyList<ViewportItem> items);
 }
 
-/// <summary>One template in the "My Templates" list.</summary>
-public sealed class TemplateItemViewModel(TemplateEntry entry)
+/// <summary>One template in the "My Templates" list, with the actions of its context menu.</summary>
+public sealed class TemplateItemViewModel
 {
-    public string Path { get; } = entry.Path;
+    public TemplateItemViewModel(
+        TemplateEntry entry,
+        Action<TemplateItemViewModel>? edit = null,
+        Action<TemplateItemViewModel>? duplicate = null,
+        Action<TemplateItemViewModel>? export = null,
+        Action<TemplateItemViewModel>? delete = null)
+    {
+        Path = entry.Path;
+        Info = entry.Info;
+        PreviewPng = entry.Preview;
+        Tooltip = Texts.Format("Tpl.InsertTip", entry.Info.Name) + (entry.Info.Description.Length > 0 ? "\n" + entry.Info.Description : "");
+        EditCommand = new RelayCommand(() => edit?.Invoke(this));
+        DuplicateCommand = new RelayCommand(() => duplicate?.Invoke(this));
+        ExportCommand = new RelayCommand(() => export?.Invoke(this));
+        DeleteCommand = new RelayCommand(() => delete?.Invoke(this));
+    }
 
-    public string Name { get; } = entry.Info.Name;
+    public string Path { get; }
 
-    public string Category { get; } = entry.Info.Category;
+    public TemplateInfo Info { get; }
 
-    public string Description { get; } = entry.Info.Description;
+    public string Name => Info.Name;
 
-    public Vector3 Size { get; } = entry.Info.Size;
+    public string Category => Info.Category;
 
-    public byte[]? PreviewPng { get; } = entry.Preview;
+    public string Description => Info.Description;
 
-    public string Tooltip { get; } = Texts.Format("Tpl.InsertTip", entry.Info.Name) + (entry.Info.Description.Length > 0 ? "\n" + entry.Info.Description : "");
+    public Vector3 Size => Info.Size;
+
+    public byte[]? PreviewPng { get; }
+
+    public string Tooltip { get; }
+
+    /// <summary>Name, description, category and tags.</summary>
+    public IRelayCommand EditCommand { get; }
+
+    public IRelayCommand DuplicateCommand { get; }
+
+    /// <summary>Writes the template as a file that can be copied to another computer.</summary>
+    public IRelayCommand ExportCommand { get; }
+
+    /// <summary>Asks first, then removes the template (objects inserted before stay).</summary>
+    public IRelayCommand DeleteCommand { get; }
 }
 
 /// <summary>Templates (F-TPL-01 save, F-TPL-02 insert, F-TPL-03 structure stays editable).</summary>
@@ -52,15 +82,115 @@ public sealed partial class MainViewModel
         var entries = _templateStore.List();
 
         // unchanged: leave the list alone (it is refreshed whenever the window is activated, that must not flicker)
-        if (entries.Select(e => (e.Path, e.Info.Name, e.Info.Category)).SequenceEqual(Templates.Select(t => (t.Path, t.Name, t.Category)))) return;
+        if (entries.Select(e => Fingerprint(e.Path, e.Info)).SequenceEqual(Templates.Select(t => Fingerprint(t.Path, t.Info)))) return;
 
         Templates.Clear();
-        foreach (var entry in entries) Templates.Add(new TemplateItemViewModel(entry));
+        foreach (var entry in entries) Templates.Add(new TemplateItemViewModel(entry, EditTemplate, DuplicateTemplate, ExportTemplate, DeleteTemplate));
     }
 
     /// <summary>Reads the template folder again: files that came or went while the program ran (called when the window is activated).</summary>
     [RelayCommand]
     private void RefreshTemplates() => LoadTemplateList();
+
+    private static string Fingerprint(string path, TemplateInfo info) =>
+        string.Join("\u001f", path, info.Name, info.Description, info.Category, string.Join("\u001e", info.Tags), info.CreatedUtc.Ticks);
+
+    private bool CanImportTemplate() => _templateStore is not null;
+
+    /// <summary>The dialog for name, description, category and tags of a template; the objects and the picture stay as they are.</summary>
+    private void EditTemplate(TemplateItemViewModel item)
+    {
+        if (_templateStore is null) return;
+        var dialog = new SaveTemplateViewModel(_templateStore, item.Info, item.Path);
+        if (!_dialogs.ShowSaveTemplate(dialog)) return;
+        if (!dialog.IsValid)
+        {
+            SetNotice(dialog.Suggestion is { } next
+                ? Texts.Format("Msg.TemplateTaken", TemplateNames.Clean(dialog.Name), next)
+                : dialog.Error ?? Texts.Get("Tpl.Err.NameRequired"));
+            return;
+        }
+
+        var info = dialog.Build(item.Info.Size) with { CreatedUtc = item.Info.CreatedUtc };
+        if (!TryChangeLibrary(() => _templateStore.UpdateInfo(item.Path, info))) return;
+        LoadTemplateList();
+        SetNotice(Texts.Format("Msg.TemplateChanged", info.Name));
+    }
+
+    private void DuplicateTemplate(TemplateItemViewModel item)
+    {
+        if (_templateStore is null) return;
+        var path = "";
+        if (!TryChangeLibrary(() => path = _templateStore.Duplicate(item.Path))) return;
+        LoadTemplateList();
+        SetNotice(Texts.Format("Msg.TemplateDuplicated", Templates.FirstOrDefault(t => t.Path == path)?.Name ?? item.Name));
+    }
+
+    private void DeleteTemplate(TemplateItemViewModel item)
+    {
+        if (_templateStore is null) return;
+        if (!_dialogs.Confirm(Texts.Format("Msg.TemplateDeleteAsk", item.Name))) return;
+        if (!TryChangeLibrary(() => _templateStore.Delete(item.Path))) return;
+        LoadTemplateList();
+        SetNotice(Texts.Format("Msg.TemplateDeleted", item.Name));
+    }
+
+    /// <summary>Writes the template to a file of the user's choice (a USB stick, a mail attachment).</summary>
+    private void ExportTemplate(TemplateItemViewModel item)
+    {
+        if (_templateStore is null) return;
+        var invalid = Path.GetInvalidFileNameChars();
+        var stem = new string([.. item.Name.Select(c => Array.IndexOf(invalid, c) >= 0 ? '_' : c)]).Trim();
+        var destination = _dialogs.PickSaveFile(
+            Texts.Get("Dlg.TemplateExportTitle"), Texts.Get("Dlg.TemplateFilter"), (stem.Length > 0 ? stem : "template") + TemplateFile.Extension);
+        if (destination is null) return;
+        if (!TryChangeLibrary(() => _templateStore.Export(item.Path, destination))) return;
+        SetNotice(Texts.Format("Msg.TemplateExported", item.Name));
+    }
+
+    /// <summary>Takes a template file from somewhere else into the library; a name that is taken is renamed, a bad file is reported.</summary>
+    [RelayCommand(CanExecute = nameof(CanImportTemplate))]
+    private void ImportTemplate()
+    {
+        if (_templateStore is null) return;
+        var source = _dialogs.PickOpenFile(Texts.Get("Dlg.TemplateImportTitle"), Texts.Get("Dlg.TemplateFilter"));
+        if (source is null) return;
+
+        TemplateImportResult result;
+        try
+        {
+            result = _templateStore.Import(source);
+        }
+        catch (Exception ex) when (ex is TemplateFormatException or FileNotFoundException)
+        {
+            _dialogs.ShowError(Texts.Format("Msg.TemplateImportFailed", ex.Message));
+            return;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _dialogs.ShowError(Texts.Format("Msg.TemplateActionFailed", ex.Message));
+            return;
+        }
+
+        LoadTemplateList();
+        SetNotice(Texts.Format(result.Renamed ? "Msg.TemplateImportedRenamed" : "Msg.TemplateImported", result.Info.Name));
+    }
+
+    /// <summary>Runs a change of the template folder; problems with the files are shown in the status bar instead of crashing.</summary>
+    private bool TryChangeLibrary(Action change)
+    {
+        try
+        {
+            change();
+            return true;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or IOException or UnauthorizedAccessException or TemplateFormatException)
+        {
+            SetNotice(Texts.Format("Msg.TemplateActionFailed", ex.Message));
+            LoadTemplateList();
+            return false;
+        }
+    }
 
     private bool CanSaveTemplate() => _templateStore is not null && HasSelection();
 

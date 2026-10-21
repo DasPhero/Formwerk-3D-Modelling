@@ -59,6 +59,8 @@ public sealed class DialogService : IDialogService
 
     public void ShowError(string message) => MessageWindow.Ask(MessageViewModel.Error(message));
 
+    public bool Confirm(string message) => MessageWindow.Ask(MessageViewModel.Question(message)) == MessageViewModel.YesId;
+
     public bool ShowSaveTemplate(Formwerk.App.ViewModels.SaveTemplateViewModel viewModel) =>
         new SaveTemplateWindow(viewModel) { Owner = Application.Current?.MainWindow }.ShowDialog() == true;
 

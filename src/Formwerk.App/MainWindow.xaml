@@ -418,7 +418,11 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                        <TextBlock Text="{res:Loc Panel.Templates}" Style="{StaticResource PanelHeader}" />
+                        <DockPanel LastChildFill="True">
+                            <Button DockPanel.Dock="Right" Content="{res:Loc Tpl.Import}" Padding="8,2" Margin="0,8,0,0" VerticalAlignment="Bottom"
+                                    Command="{Binding ImportTemplateCommand}" ToolTip="{res:Loc Tpl.ImportTip}" AutomationProperties.AutomationId="ImportTemplate" />
+                            <TextBlock Text="{res:Loc Panel.Templates}" Style="{StaticResource PanelHeader}" />
+                        </DockPanel>
                         <TextBlock Text="{res:Loc Panel.Templates.Empty}" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,10">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
@@ -438,6 +442,15 @@
                                         <Button Margin="0,0,0,4" HorizontalContentAlignment="Stretch" ToolTip="{Binding Tooltip}"
                                                 Command="{Binding DataContext.InsertTemplateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                 CommandParameter="{Binding}">
+                                            <Button.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Header="{res:Loc Tpl.Edit}" Command="{Binding EditCommand}" />
+                                                    <MenuItem Header="{res:Loc Tpl.Duplicate}" Command="{Binding DuplicateCommand}" />
+                                                    <MenuItem Header="{res:Loc Tpl.Export}" Command="{Binding ExportCommand}" />
+                                                    <Separator />
+                                                    <MenuItem Header="{res:Loc Tpl.Delete}" Command="{Binding DeleteCommand}" />
+                                                </ContextMenu>
+                                            </Button.ContextMenu>
                                             <DockPanel LastChildFill="True">
                                                 <Image DockPanel.Dock="Left" Source="{Binding PreviewPng}" Width="40" Height="40" Margin="0,0,8,0" />
                                                 <StackPanel VerticalAlignment="Center">

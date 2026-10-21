@@ -23,6 +23,9 @@ public interface IDialogService
 
     void ShowError(string message);
 
+    /// <summary>A yes/no question in the style of the program (for example before a template is deleted); true for yes.</summary>
+    bool Confirm(string message);
+
     /// <summary>Lets the user choose model files to import; empty when cancelled.</summary>
     IReadOnlyList<string> PickImportFiles(string title, string filter);
 
