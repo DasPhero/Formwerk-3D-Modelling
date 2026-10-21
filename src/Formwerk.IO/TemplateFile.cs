@@ -13,7 +13,7 @@ public sealed class TemplateFormatException(string message, Exception? inner = n
 
 /// <summary>What a template is called and described as (F-TPL-01).</summary>
 /// <param name="Size">Size in mm of what the template contains (saved on the plate), so inserting needs no calculation.</param>
-public sealed record TemplateInfo(string Name, string Description, string Category, IReadOnlyList<string> Tags, Vector3 Size, DateTime CreatedUtc);
+public sealed record TemplateInfo(string Name, string Description, string Category, IReadOnlyList<string> Tags, Vector3 Size, DateTime CreatedUtc, int Version = 1);
 
 /// <summary>Limits for template files: they come from a folder the user (or other programs) can fill, so they are treated like imports.</summary>
 public static class TemplateLimits
@@ -23,6 +23,7 @@ public static class TemplateLimits
     public const int MaxCategoryLength = 60;
     public const int MaxTags = 20;
     public const int MaxTagLength = 40;
+    public const int MaxVersion = 99999;
     public const int MaxEntries = 8;
     public const long MaxInfoBytes = 64 * 1024;
     public const long MaxPreviewBytes = 2 * 1024 * 1024;
@@ -123,6 +124,7 @@ public static class TemplateFile
         json.WriteNumberValue(info.Size.Z);
         json.WriteEndArray();
         json.WriteString("created", info.CreatedUtc.ToUniversalTime().ToString("O", System.Globalization.CultureInfo.InvariantCulture));
+        json.WriteNumber("version", Math.Max(1, info.Version));
         json.WriteEndObject();
     }
 
@@ -298,7 +300,14 @@ public static class TemplateFile
             && DateTime.TryParse(text, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AdjustToUniversal | System.Globalization.DateTimeStyles.AssumeUniversal, out var parsed))
             created = parsed;
 
-        return new TemplateInfo(name, description, category, tags, new Vector3(numbers[0], numbers[1], numbers[2]), created);
+        var fileVersion = 1;
+        if (root["version"] is { } versionNode)
+        {
+            if (versionNode is not JsonValue v || !v.TryGetValue<int>(out fileVersion) || fileVersion < 1 || fileVersion > TemplateLimits.MaxVersion)
+                throw new InvalidDataException("the version is not valid");
+        }
+
+        return new TemplateInfo(name, description, category, tags, new Vector3(numbers[0], numbers[1], numbers[2]), created, fileVersion);
     }
 
     private static string Text(JsonObject o, string key, bool required)

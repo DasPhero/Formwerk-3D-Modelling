@@ -39,6 +39,9 @@ public interface IDialogService
     /// <summary>The "Save as Template" dialog (F-TPL-01); true when the user confirmed a valid description.</summary>
     bool ShowSaveTemplate(SaveTemplateViewModel viewModel);
 
+    /// <summary>Asks which template the selection becomes a new version of; true when the user confirmed a choice.</summary>
+    bool ShowUpdateTemplate(UpdateTemplateViewModel viewModel);
+
     SettingsResult? ShowSettings(Formwerk.Core.Model.DocumentSettings project, Formwerk.IO.UserSettings user);
 }
 

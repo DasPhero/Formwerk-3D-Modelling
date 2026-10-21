@@ -324,6 +324,7 @@
                 </MenuItem>
                 <Separator />
                 <MenuItem Header="{res:Loc Menu.Edit.SaveTemplate}" Command="{Binding SaveTemplateCommand}" />
+                <MenuItem Header="{res:Loc Menu.Edit.UpdateTemplate}" Command="{Binding UpdateTemplateCommand}" />
             </MenuItem>
             <MenuItem Header="{res:Loc Menu.View}">
                 <MenuItem Header="{res:Loc Menu.View.Frame}" Command="{Binding FrameSelectionCommand}" InputGestureText="F" />

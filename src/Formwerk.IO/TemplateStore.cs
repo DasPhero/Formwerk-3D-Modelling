@@ -1,3 +1,4 @@
+using System.Numerics;
 using System.Text;
 using Formwerk.Core.Model;
 using Formwerk.Geometry;
@@ -96,7 +97,25 @@ public sealed class TemplateStore(string folder)
         if (List().Any(e => !string.Equals(System.IO.Path.GetFullPath(e.Path), full, StringComparison.OrdinalIgnoreCase) && Same(e.Info, info.Name, info.Category)))
             throw new InvalidOperationException($"A template named '{TemplateNames.Clean(info.Name)}' already exists in this category. Try '{SuggestName(info.Name, info.Category)}'.");
 
-        TemplateFile.ReplaceInfo(path, info);
+        TemplateFile.ReplaceInfo(path, info with { Version = TemplateFile.LoadInfo(path).Info.Version }); // renaming is no new version
+    }
+
+    /// <summary>
+    /// Saves a new version of a template (F-TPL-05): the objects, size and picture are replaced, the version number goes up by one;
+    /// name, description, category, tags and creation date stay. The file stays where it is and is replaced atomically. A
+    /// <paramref name="preview"/> of null leaves the template without a picture (the old one would show the old shape).
+    /// </summary>
+    /// <exception cref="ArgumentException">The file is not in the library folder.</exception>
+    /// <exception cref="TemplateFormatException">The existing file is not a sound template (it is left as it is).</exception>
+    /// <exception cref="IOException">The file cannot be read or written (a missing file is not created).</exception>
+    /// <returns>The description that was written.</returns>
+    public TemplateInfo Update(string path, FormwerkDocument document, MeshStore? meshes, Vector3 size, byte[]? preview)
+    {
+        EnsureInFolder(path);
+        var (old, _) = TemplateFile.LoadInfo(path);
+        var info = old with { Size = size, Version = Math.Min(old.Version + 1, TemplateLimits.MaxVersion) };
+        TemplateFile.SaveAtomic(path, document, meshes, info, preview);
+        return info;
     }
 
     /// <summary>A copy of a template under the next free name of its category ("Name (2)"). Returns the path of the copy.</summary>

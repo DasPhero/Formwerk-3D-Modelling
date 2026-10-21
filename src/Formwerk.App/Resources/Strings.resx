@@ -387,6 +387,14 @@ Try a different location or file name.</value></data>
   <data name="Tpl.Err.Tags" xml:space="preserve"><value>Use at most {0} tags of at most {1} characters each.</value></data>
   <data name="Name.InsertTemplate" xml:space="preserve"><value>Insert template {0}</value></data>
   <data name="Msg.TemplateSaved" xml:space="preserve"><value>Saved template {0}.</value></data>
+  <data name="Dlg.UpdateTemplateTitle" xml:space="preserve"><value>Update Template</value></data>
+  <data name="Dlg.UpdateTemplateHint" xml:space="preserve"><value>Choose the template that the selected objects become a new version of. Name, description and category stay; objects that were inserted before are not changed.</value></data>
+  <data name="Dlg.UpdateTemplateChoose" xml:space="preserve"><value>Choose a template.</value></data>
+  <data name="Dlg.UpdateTemplateSummary" xml:space="preserve"><value>{0} gets version {2} (now version {1}).</value></data>
+  <data name="Dlg.UpdateTemplateButton" xml:space="preserve"><value>Update</value></data>
+  <data name="Menu.Edit.UpdateTemplate" xml:space="preserve"><value>_Update Template...</value></data>
+  <data name="Msg.TemplateUpdated" xml:space="preserve"><value>Updated template {0} to version {1}.</value></data>
+  <data name="Msg.TemplateUpdateNone" xml:space="preserve"><value>There is no template to update yet. Use Save as Template first.</value></data>
   <data name="Dlg.TemplatePropertiesTitle" xml:space="preserve"><value>Template Properties</value></data>
   <data name="Dlg.TemplateFilter" xml:space="preserve"><value>Formwerk template (*.fwt)|*.fwt</value></data>
   <data name="Dlg.TemplateExportTitle" xml:space="preserve"><value>Export Template</value></data>

@@ -1,0 +1,35 @@
+<Window x:Class="Formwerk.App.Views.UpdateTemplateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:res="clr-namespace:Formwerk.App.Resources"
+        xmlns:vm="clr-namespace:Formwerk.App.ViewModels"
+        Title="{res:Loc Dlg.UpdateTemplateTitle}" SizeToContent="Height" Width="460"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize" ShowInTaskbar="False"
+        Background="{DynamicResource WindowBrush}" Foreground="{DynamicResource TextBrush}">
+    <StackPanel Margin="20">
+        <TextBlock Text="{res:Loc Dlg.UpdateTemplateHint}" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,10" />
+        <ListBox ItemsSource="{Binding Templates}" SelectedItem="{Binding Selected, Mode=TwoWay}" MaxHeight="260"
+                 Background="Transparent" BorderThickness="1" BorderBrush="{DynamicResource PanelBorderBrush}"
+                 MouseDoubleClick="OnDoubleClick" AutomationProperties.AutomationId="UpdateTemplateList">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="{x:Type vm:TemplateItemViewModel}">
+                    <DockPanel LastChildFill="True" Margin="0,2">
+                        <Image DockPanel.Dock="Left" Source="{Binding PreviewPng}" Width="36" Height="36" Margin="0,0,8,0" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Category}" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </DockPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Margin="0,10,0,0" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="{res:Loc Dlg.UpdateTemplateButton}" IsDefault="True" MinWidth="90" Margin="0,0,8,0" Click="OnOk"
+                    IsEnabled="{Binding CanConfirm}" AutomationProperties.AutomationId="UpdateTemplateOk" />
+            <Button Content="{res:Loc Tpl.Cancel}" IsCancel="True" MinWidth="90" AutomationProperties.AutomationId="UpdateTemplateCancel" />
+        </StackPanel>
+    </StackPanel>
+</Window>

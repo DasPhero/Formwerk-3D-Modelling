@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.IO;
 using System.Numerics;
 using CommunityToolkit.Mvvm.Input;
@@ -93,7 +93,7 @@ public sealed partial class MainViewModel
     private void RefreshTemplates() => LoadTemplateList();
 
     private static string Fingerprint(string path, TemplateInfo info) =>
-        string.Join("\u001f", path, info.Name, info.Description, info.Category, string.Join("\u001e", info.Tags), info.CreatedUtc.Ticks);
+        string.Join("\u001f", path, info.Name, info.Description, info.Category, string.Join("\u001e", info.Tags), info.CreatedUtc.Ticks, info.Version, info.Size);
 
     private bool CanImportTemplate() => _templateStore is not null;
 
@@ -223,16 +223,18 @@ public sealed partial class MainViewModel
         return [.. _document.Variables.Where(v => needed.Contains(v.Key))];
     }
 
-    /// <summary>
-    /// Saves the selected objects under a name (the dialog asks). They are saved with their whole structure, normalised to the center of
-    /// the plate and the floor (X and Y of the middle of the selection at 0, lowest point at Z = 0), with the size and a picture.
-    /// </summary>
-    [RelayCommand(CanExecute = nameof(CanSaveTemplate))]
-    private void SaveTemplate()
+    /// <summary>The objects that become a template, measured: the ids of everything in them and the box around what is visible.</summary>
+    private sealed record TemplateSource(List<Node> Nodes, HashSet<Guid> Ids, (Vector3 Min, Vector3 Max) Box);
+
+    /// <summary>What a template file is made of: the objects with their variables and meshes, the size and the picture.</summary>
+    private sealed record TemplateContent(FormwerkDocument Document, MeshStore Meshes, Vector3 Size, byte[]? Preview);
+
+    /// <summary>Measures the selected top-level objects; null (and a message) when there is nothing to save or nothing visible.</summary>
+    private TemplateSource? MeasureTemplateSource()
     {
-        if (_templateStore is null || _lastResult is null) return;
+        if (_lastResult is null) return null;
         var nodes = SelectedTopLevel();
-        if (nodes.Count == 0) return;
+        if (nodes.Count == 0) return null;
 
         var ids = new HashSet<Guid>();
         foreach (var node in nodes) ids.UnionWith(node.Descendants().Select(d => d.Id).Prepend(node.Id));
@@ -240,21 +242,19 @@ public sealed partial class MainViewModel
         if (bounds is not { } box)
         {
             SetNotice(Texts.Get("Msg.TemplateNothing"));
-            return;
+            return null;
         }
 
-        var dialog = new SaveTemplateViewModel(_templateStore, nodes.Count == 1 ? nodes[0].Name : Texts.Get("Tpl.DefaultName"));
-        if (!_dialogs.ShowSaveTemplate(dialog)) return;
-        if (!dialog.IsValid)
-        {
-            // the window only confirms a valid description; this is a safety net for anything else that confirms
-            SetNotice(dialog.Suggestion is { } next
-                ? Texts.Format("Msg.TemplateTaken", TemplateNames.Clean(dialog.Name), next)
-                : dialog.Error ?? Texts.Get("Tpl.Err.NameRequired"));
-            return;
-        }
+        return new TemplateSource(nodes, ids, box);
+    }
 
-        var size = box.Max - box.Min;
+    /// <summary>
+    /// The objects normalised to the center of the plate and the floor (X and Y of the middle at 0, lowest point at Z = 0), with their
+    /// whole structure, the variables they use, their imported meshes, the size and a picture.
+    /// </summary>
+    private TemplateContent BuildTemplateContent(TemplateSource source)
+    {
+        var (nodes, ids, box) = source;
         var shift = Matrix4x4.CreateTranslation(-(box.Min.X + box.Max.X) / 2, -(box.Min.Y + box.Max.Y) / 2, -box.Min.Z);
 
         var template = new FormwerkDocument();
@@ -276,10 +276,34 @@ public sealed partial class MainViewModel
         }
 
         var preview = _templatePreview?.Render([.. ViewportItems.Where(i => ids.Contains(i.NodeId))]);
-        var info = dialog.Build(size);
+        return new TemplateContent(template, meshes, box.Max - box.Min, preview);
+    }
+
+    /// <summary>
+    /// Saves the selected objects under a name (the dialog asks). They are saved with their whole structure, normalised to the center of
+    /// the plate and the floor (X and Y of the middle of the selection at 0, lowest point at Z = 0), with the size and a picture.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanSaveTemplate))]
+    private void SaveTemplate()
+    {
+        if (_templateStore is null || MeasureTemplateSource() is not { } source) return;
+
+        var dialog = new SaveTemplateViewModel(_templateStore, source.Nodes.Count == 1 ? source.Nodes[0].Name : Texts.Get("Tpl.DefaultName"));
+        if (!_dialogs.ShowSaveTemplate(dialog)) return;
+        if (!dialog.IsValid)
+        {
+            // the window only confirms a valid description; this is a safety net for anything else that confirms
+            SetNotice(dialog.Suggestion is { } next
+                ? Texts.Format("Msg.TemplateTaken", TemplateNames.Clean(dialog.Name), next)
+                : dialog.Error ?? Texts.Get("Tpl.Err.NameRequired"));
+            return;
+        }
+
+        var content = BuildTemplateContent(source);
+        var info = dialog.Build(content.Size);
         try
         {
-            _templateStore.Save(info, template, meshes, preview);
+            _templateStore.Save(info, content.Document, content.Meshes, content.Preview);
         }
         catch (InvalidOperationException) // somebody saved the same name in the meantime
         {
@@ -294,6 +318,47 @@ public sealed partial class MainViewModel
 
         LoadTemplateList();
         SetNotice(Texts.Format("Msg.TemplateSaved", info.Name));
+    }
+
+    /// <summary>
+    /// The template that an object named <paramref name="objectName"/> most likely came from: the one with the same name, or, for a
+    /// numbered copy ("Hinge 2"), the one without the number. Null when none fits.
+    /// </summary>
+    private TemplateItemViewModel? TemplateNamedLike(string objectName)
+    {
+        TemplateItemViewModel? Find(string name) => Templates.FirstOrDefault(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (Find(objectName) is { } exact) return exact;
+
+        var space = objectName.LastIndexOf(' ');
+        return space > 0 && int.TryParse(objectName.AsSpan(space + 1), out _) ? Find(objectName[..space]) : null;
+    }
+
+    /// <summary>
+    /// Edit > Update Template (F-TPL-05): the selected objects become a new version of an existing template that the dialog asks for (the
+    /// one the selected object is named after is preselected). Objects, size, variables and picture are replaced and the version goes
+    /// up; name, description, category and tags stay. Objects that were inserted before are never touched. Not a change of the project.
+    /// </summary>
+    [RelayCommand(CanExecute = nameof(CanSaveTemplate))]
+    private void UpdateTemplate()
+    {
+        if (_templateStore is null) return;
+        LoadTemplateList();
+        if (Templates.Count == 0)
+        {
+            SetNotice(Texts.Get("Msg.TemplateUpdateNone"));
+            return;
+        }
+
+        if (MeasureTemplateSource() is not { } source) return;
+        var preselected = source.Nodes.Count == 1 ? TemplateNamedLike(source.Nodes[0].Name) : null;
+        var dialog = new UpdateTemplateViewModel([.. Templates], preselected);
+        if (!_dialogs.ShowUpdateTemplate(dialog) || dialog.Selected is not { } chosen) return;
+
+        var content = BuildTemplateContent(source);
+        TemplateInfo? written = null;
+        if (!TryChangeLibrary(() => written = _templateStore.Update(chosen.Path, content.Document, content.Meshes, content.Size, content.Preview))) return;
+        LoadTemplateList();
+        SetNotice(Texts.Format("Msg.TemplateUpdated", chosen.Name, written!.Version));
     }
 
     /// <summary>

@@ -14,6 +14,11 @@ public sealed class FakeDialogs : IDialogService
 
     public bool ShowSaveTemplate(SaveTemplateViewModel viewModel) => SaveTemplateScript?.Invoke(viewModel) ?? false;
 
+    /// <summary>What the user does in the "Update Template" dialog; null cancels it.</summary>
+    public Func<UpdateTemplateViewModel, bool>? UpdateTemplateScript { get; set; }
+
+    public bool ShowUpdateTemplate(UpdateTemplateViewModel viewModel) => UpdateTemplateScript?.Invoke(viewModel) ?? false;
+
     public UnsavedChoice UnsavedAnswer { get; set; } = UnsavedChoice.Cancel;
 
     public bool RecoveryAnswer { get; set; } = true;
