@@ -294,6 +294,7 @@
                 <MenuItem Header="{res:Loc Menu.Edit.Ungroup}" Command="{Binding UngroupCommand}" InputGestureText="Ctrl+Shift+G" />
                 <MenuItem Header="{res:Loc Menu.Edit.Merge}" Command="{Binding MergeCommand}" InputGestureText="Ctrl+M" />
                 <MenuItem Header="{res:Loc Menu.Edit.Flatten}" Command="{Binding FlattenCommand}" />
+                <MenuItem Header="{res:Loc Menu.Edit.Cut}" Command="{Binding CutCommand}" ToolTip="{res:Loc Menu.Edit.Cut.Tip}" />
                 <MenuItem Header="{res:Loc Menu.Edit.DropToFloor}" Command="{Binding DropToFloorCommand}" InputGestureText="B" />
                 <MenuItem Header="{res:Loc Menu.Edit.FaceOnFloor}" Command="{Binding FaceOnFloorCommand}" />
                 <MenuItem Header="{res:Loc Menu.Edit.FaceToFace}" Command="{Binding FaceToFaceCommand}" />

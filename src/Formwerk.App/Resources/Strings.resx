@@ -217,6 +217,13 @@ Try a different location or file name.</value></data>
   <data name="Settings.EdgeAngle.Tip" xml:space="preserve"><value>Edges between faces that meet at this angle or more are drawn as lines</value></data>
   <data name="Menu.Edit.Flatten" xml:space="preserve"><value>Fl_atten</value></data>
   <data name="Msg.Flattened" xml:space="preserve"><value>Flattened {0} into one mesh ({1} triangles). It can no longer be edited by its dimensions; undo brings the original back.</value></data>
+  <data name="Menu.Edit.Cut" xml:space="preserve"><value>Cut _Apart</value></data>
+  <data name="Menu.Edit.Cut.Tip" xml:space="preserve"><value>Cuts the selected objects with the last one in the object list (the knife): each becomes the part outside and the part inside the knife. The knife is removed</value></data>
+  <data name="Name.CutPiece" xml:space="preserve"><value>{0} piece</value></data>
+  <data name="Msg.Cut" xml:space="preserve"><value>Cut {0} with {1}: {2} parts now. The knife is gone; undo brings everything back.</value></data>
+  <data name="Msg.NothingCut" xml:space="preserve"><value>Nothing was cut: the knife ({0}, the last selected object in the list) does not go through any of the other selected objects.</value></data>
+  <data name="Msg.CutKnifeLocked" xml:space="preserve"><value>The knife ({0}) is locked and cannot be used to cut.</value></data>
+  <data name="Msg.CutFailed" xml:space="preserve"><value>The cut failed: {0}. Nothing was changed.</value></data>
   <data name="Msg.NothingToFlatten" xml:space="preserve"><value>There is nothing to flatten: select a group, a boolean or a shape that is not locked and has a visible solid part.</value></data>
   <data name="Menu.Edit.Copy" xml:space="preserve"><value>_Copy</value></data>
   <data name="Menu.Edit.Paste" xml:space="preserve"><value>_Paste</value></data>

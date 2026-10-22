@@ -769,6 +769,7 @@ public sealed partial class MainViewModel : ObservableObject
         UngroupCommand.NotifyCanExecuteChanged();
         MergeCommand.NotifyCanExecuteChanged();
         FlattenCommand.NotifyCanExecuteChanged();
+        CutCommand.NotifyCanExecuteChanged();
         SaveTemplateCommand.NotifyCanExecuteChanged();
         UpdateTemplateCommand.NotifyCanExecuteChanged();
         Rotate90Command.NotifyCanExecuteChanged();

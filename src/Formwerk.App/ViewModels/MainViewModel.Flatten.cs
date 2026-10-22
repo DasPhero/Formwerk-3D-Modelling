@@ -62,22 +62,25 @@ public sealed partial class MainViewModel
         var ids = new HashSet<Guid>(node.Descendants().Select(d => d.Id)) { node.Id };
         var parts = result.Parts.Where(p => p.Kind == PartKind.Solid && !p.Mesh.IsEmpty && ids.Contains(p.Source.Id)).ToList();
         if (parts.Count == 0) return null;
-        if (!Matrix4x4.Invert(TransformOps.ParentToWorld(node), out var worldToParent)) return null;
+        var colors = parts.Select(p => p.Source.Color).Distinct().ToList();
+        return CreateMeshNodeInParentSpace(node, node.Name, MeshCombine.Concat(parts.Select(p => p.Mesh)), colors.Count == 1 ? colors[0] : node.Color);
+    }
 
-        // The parts are in world coordinates; the new object lives where the old one did, in the space of its parent, and
-        // gets its origin in the center of its bottom like every imported or generated object.
-        var inParent = MeshCombine.Concat(parts.Select(p => p.Mesh)).Transformed(worldToParent);
+    /// <summary>
+    /// A mesh object for <paramref name="world"/> (world coordinates) that lives where <paramref name="original"/> did, in the space of its
+    /// parent, with its origin in the center of its bottom like every imported or generated object. Null when the parent space cannot be inverted.
+    /// </summary>
+    private MeshNode? CreateMeshNodeInParentSpace(Node original, string name, MeshData world, uint color)
+    {
+        if (!Matrix4x4.Invert(TransformOps.ParentToWorld(original), out var worldToParent)) return null;
+
+        var inParent = world.Transformed(worldToParent);
         var bounds = inParent.ComputeBounds();
         var origin = new Vector3(bounds.Center.X, bounds.Center.Y, bounds.Min.Z);
         var mesh = inParent.Transformed(Matrix4x4.CreateTranslation(-origin));
 
         var meshId = Guid.NewGuid();
         Meshes.Add(meshId, mesh);
-        var colors = parts.Select(p => p.Source.Color).Distinct().ToList();
-        return new MeshNode(node.Name, meshId)
-        {
-            Transform = Transform.FromPosition(origin),
-            Color = colors.Count == 1 ? colors[0] : node.Color,
-        };
+        return new MeshNode(name, meshId) { Transform = Transform.FromPosition(origin), Color = color };
     }
 }
