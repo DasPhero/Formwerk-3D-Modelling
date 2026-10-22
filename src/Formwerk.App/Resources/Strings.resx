@@ -187,6 +187,16 @@ Try a different location or file name.</value></data>
   <data name="Msg.OpenedInSlicer" xml:space="preserve"><value>Opened in {0}.</value></data>
   <data name="Repair.Banner.One" xml:space="preserve"><value>{0} has mesh problems: {1}</value></data>
   <data name="Repair.Banner.Many" xml:space="preserve"><value>{0} objects have mesh problems: {1}</value></data>
+  <data name="Repair.Problem.OpenEdges" xml:space="preserve"><value>Open edges</value></data>
+  <data name="Repair.Problem.NonManifoldEdges" xml:space="preserve"><value>Edges with too many triangles</value></data>
+  <data name="Repair.Problem.InconsistentEdges" xml:space="preserve"><value>Turned triangles</value></data>
+  <data name="Repair.Problem.DegenerateTriangles" xml:space="preserve"><value>Degenerate triangles</value></data>
+  <data name="Repair.Problem.DuplicateTriangles" xml:space="preserve"><value>Doubled triangles</value></data>
+  <data name="Repair.Problem.DuplicateVertices" xml:space="preserve"><value>Doubled points</value></data>
+  <data name="Repair.Problem.LooseSpecks" xml:space="preserve"><value>Specks</value></data>
+  <data name="Repair.Problem.InvertedParts" xml:space="preserve"><value>Inside-out parts</value></data>
+  <data name="Repair.Problem.Tip" xml:space="preserve"><value>Click to show the places of this problem in the view; click again to hide them</value></data>
+  <data name="Msg.ProblemPlacesTruncated" xml:space="preserve"><value>Only the first {0} places of this problem are shown.</value></data>
   <data name="Repair.Button" xml:space="preserve"><value>Repair</value></data>
   <data name="Repair.Tip" xml:space="preserve"><value>Fix holes, wrongly turned triangles and other mesh errors in the selected objects (can be undone)</value></data>
   <data name="Repair.Holes" xml:space="preserve"><value>{0} hole(s)</value></data>

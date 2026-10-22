@@ -4,7 +4,7 @@ using Formwerk.Geometry;
 namespace Formwerk.Repair;
 
 /// <summary>Checks a mesh for the defects that keep it from being printed or used in boolean operations (F-REP-01).</summary>
-public static class MeshAnalyzer
+public static partial class MeshAnalyzer
 {
     /// <summary>Larger meshes are not analysed (the edge table would need too much memory); the report says so.</summary>
     public const int MaxTriangles = 3_000_000;

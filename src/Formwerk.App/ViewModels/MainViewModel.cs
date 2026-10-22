@@ -521,6 +521,7 @@ public sealed partial class MainViewModel : ObservableObject
         Properties?.Refresh();
         RefreshColor();
         if (!_dragging) QueueRepairCheck(); // a repair, its undo or opening a project changes the mesh of an object
+        if (!_dragging && _shownProblem is { } shown) _repairCheck = Task.WhenAll(_repairCheck, ShowProblemAsync(shown, _problemVersion)); // the marks stay on the object that moved
         _ = RequestEvaluation();
     }
 

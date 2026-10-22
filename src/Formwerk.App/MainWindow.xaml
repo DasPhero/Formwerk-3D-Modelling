@@ -598,6 +598,7 @@
                                     FaceHoverCommand="{Binding FaceHoveredCommand}"
                                     EdgeHighlight="{Binding EdgeHighlight}"
                                     Measurements="{Binding ViewportMeasurements}"
+                                    ProblemMarks="{Binding ProblemMarks}"
                                     Orthographic="{Binding IsOrthographic}"
                                     LightTheme="{Binding LightTheme}"
                                     ViewCubeLabels="{Binding ViewCubeLabels}"
@@ -619,8 +620,24 @@
                         <Button DockPanel.Dock="Right" Content="{res:Loc Repair.Button}" ToolTip="{res:Loc Repair.Tip}"
                                 Command="{Binding RepairMeshCommand}" Margin="12,0,0,0" MinWidth="80" VerticalAlignment="Center"
                                 AutomationProperties.AutomationId="RepairButton" />
-                        <TextBlock Text="{Binding RepairBannerText}" TextWrapping="Wrap" VerticalAlignment="Center"
-                                   Foreground="#F2D98A" AutomationProperties.AutomationId="RepairBanner" />
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{Binding RepairBannerText}" TextWrapping="Wrap"
+                                       Foreground="#F2D98A" AutomationProperties.AutomationId="RepairBanner" />
+                            <ItemsControl ItemsSource="{Binding RepairProblems}" Margin="0,4,0,0" AutomationProperties.AutomationId="RepairProblems">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:RepairProblemItem}">
+                                        <ToggleButton Margin="0,0,6,4" Padding="8,2" ToolTip="{res:Loc Repair.Problem.Tip}" IsChecked="{Binding IsShown, Mode=OneWay}"
+                                                      Command="{Binding DataContext.HighlightProblemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                      CommandParameter="{Binding}" AutomationProperties.Name="{Binding Label}">
+                                            <TextBlock><Run Text="{Binding Label, Mode=OneWay}" /><Run Text=" (" /><Run Text="{Binding Count, Mode=OneWay}" /><Run Text=")" /></TextBlock>
+                                        </ToggleButton>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
                     </DockPanel>
                 </Border>
 

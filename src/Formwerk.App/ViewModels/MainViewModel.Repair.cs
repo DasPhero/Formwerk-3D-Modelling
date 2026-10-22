@@ -1,15 +1,42 @@
+using System.Collections.ObjectModel;
+using System.Numerics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Formwerk.App.Resources;
 using Formwerk.Core.Commands;
 using Formwerk.Core.Model;
 using Formwerk.Repair;
+using Formwerk.Viewport;
 
 namespace Formwerk.App.ViewModels;
+
+/// <summary>One kind of problem in the banner: its name, how many there are and whether its places are shown in the view (F-REP-01).</summary>
+public sealed partial class RepairProblemItem(ProblemKind kind, string label, int count) : ObservableObject
+{
+    public ProblemKind Kind { get; } = kind;
+
+    public string Label { get; } = label;
+
+    public int Count { get; } = count;
+
+    [ObservableProperty]
+    public partial bool IsShown { get; set; }
+}
 
 /// <summary>Checking selected meshes and repairing them with one click (F-IMP-03, F-REP-01, F-REP-02, F-REP-04).</summary>
 public sealed partial class MainViewModel
 {
+    private ProblemKind? _shownProblem;
+    private int _problemVersion;
+    private readonly Dictionary<(Guid Mesh, ProblemKind Kind), ProblemPlaces> _placeCache = [];
+
+    /// <summary>The kinds of problems of the selected meshes, as buttons of the banner.</summary>
+    public ObservableCollection<RepairProblemItem> RepairProblems { get; } = [];
+
+    /// <summary>The places of the shown kind of problem, in world coordinates; null when none is shown.</summary>
+    [ObservableProperty]
+    public partial ViewportProblemMarks? ProblemMarks { get; set; }
+
     /// <summary>Analyses by mesh id. A mesh never changes under its id, so an analysis stays valid.</summary>
     private readonly Dictionary<Guid, MeshReport> _reports = [];
 
@@ -50,6 +77,7 @@ public sealed partial class MainViewModel
         var key = string.Join(",", nodes.Select(n => $"{n.Id:N}:{n.MeshId:N}").Order()); // objects count, not only meshes: copies share one mesh
         if (key == _repairCheckKey) return;
         _repairCheckKey = key;
+        ClearProblems();
         _repairCheck = CheckMeshesAsync(nodes, ++_repairCheckVersion);
     }
 
@@ -87,6 +115,7 @@ public sealed partial class MainViewModel
         }
 
         var reports = damaged.Select(n => _reports[n.MeshId]).ToArray();
+        RebuildProblemList(reports);
         var problems = RepairText.Problems(reports);
         var text = damaged.Count == 1
             ? Texts.Format("Repair.Banner.One", damaged[0].Name, problems)
@@ -142,6 +171,7 @@ public sealed partial class MainViewModel
                 return;
             }
 
+            ClearProblems();
             _history.Execute(commands.Count == 1 ? commands[0] : new CompositeCommand($"Repair {label}", commands));
             SetNotice(RepairSummary(label, summary));
         }
@@ -164,5 +194,86 @@ public sealed partial class MainViewModel
         var left = RepairText.Problems([.. results.Select(r => r.After)]);
         var end = left.Length == 0 ? Texts.Get("Msg.RepairedFine") : Texts.Format("Msg.RepairedLeft", left);
         return Texts.Format("Msg.Repaired", label, done.Length == 0 ? "-" : done, end);
+    }
+
+    // ---- showing the places of a problem (F-REP-01) ------------------------------------------------
+
+    private void RebuildProblemList(MeshReport[] reports)
+    {
+        RepairProblems.Clear();
+        void Add(ProblemKind kind, int count)
+        {
+            if (count > 0) RepairProblems.Add(new RepairProblemItem(kind, Texts.Get($"Repair.Problem.{kind}"), count) { IsShown = kind == _shownProblem });
+        }
+
+        Add(ProblemKind.OpenEdges, reports.Sum(r => r.OpenEdges));
+        Add(ProblemKind.NonManifoldEdges, reports.Sum(r => r.NonManifoldEdges));
+        Add(ProblemKind.InconsistentEdges, reports.Sum(r => r.InconsistentEdges));
+        Add(ProblemKind.DegenerateTriangles, reports.Sum(r => r.DegenerateTriangles));
+        Add(ProblemKind.DuplicateTriangles, reports.Sum(r => r.DuplicateTriangles));
+        Add(ProblemKind.DuplicateVertices, reports.Sum(r => r.DuplicateVertices));
+        Add(ProblemKind.LooseSpecks, reports.Sum(r => r.TinyLooseParts));
+        Add(ProblemKind.InvertedParts, reports.Sum(r => r.InvertedParts));
+    }
+
+    /// <summary>Nothing is shown any more and the list is empty (a new selection, a repair).</summary>
+    private void ClearProblems()
+    {
+        _problemVersion++;
+        _shownProblem = null;
+        ProblemMarks = null;
+        RepairProblems.Clear();
+    }
+
+    /// <summary>A click on a kind of problem in the banner: its places are shown in the view, a second click hides them.</summary>
+    [RelayCommand]
+    private void HighlightProblem(RepairProblemItem? item)
+    {
+        if (item is null) return;
+        var show = !item.IsShown;
+        foreach (var other in RepairProblems) other.IsShown = false;
+        _problemVersion++;
+        if (!show)
+        {
+            _shownProblem = null;
+            ProblemMarks = null;
+            return;
+        }
+
+        item.IsShown = true;
+        _shownProblem = item.Kind;
+        _repairCheck = Task.WhenAll(_repairCheck, ShowProblemAsync(item.Kind, _problemVersion));
+    }
+
+    /// <summary>Finds the places in every damaged mesh of the selection (on a background thread, once per mesh and kind) and shows them where the objects stand.</summary>
+    private async Task ShowProblemAsync(ProblemKind kind, int version)
+    {
+        var nodes = SelectedMeshNodes()
+            .Where(n => _reports.TryGetValue(n.MeshId, out var r) && !r.Skipped && r.ProblemCount > 0 && Meshes.Contains(n.MeshId))
+            .ToList();
+        var missing = nodes.Select(n => n.MeshId).Distinct().Where(id => !_placeCache.ContainsKey((id, kind))).ToList();
+        if (missing.Count > 0)
+        {
+            var meshes = missing.Select(id => (Id: id, Mesh: Meshes.Get(id)!)).ToList();
+            var found = await Task.Run(() => meshes.Select(m => (m.Id, Places: MeshAnalyzer.Locate(m.Mesh, kind))).ToList()).ConfigureAwait(true);
+            foreach (var (id, places) in found) _placeCache[(id, kind)] = places;
+        }
+
+        if (version != _problemVersion) return; // another kind was clicked or the selection changed in the meantime
+
+        var segments = new List<(Vector3, Vector3)>();
+        var points = new List<Vector3>();
+        var truncated = false;
+        foreach (var node in nodes)
+        {
+            var places = _placeCache[(node.MeshId, kind)];
+            var world = TransformOps.LocalToWorld(node);
+            segments.AddRange(places.Segments.Select(s => (Vector3.Transform(s.From, world), Vector3.Transform(s.To, world))));
+            points.AddRange(places.Points.Select(p => Vector3.Transform(p, world)));
+            truncated |= places.Truncated;
+        }
+
+        ProblemMarks = new ViewportProblemMarks(segments, points);
+        if (truncated) SetNotice(Texts.Format("Msg.ProblemPlacesTruncated", MeshAnalyzer.DefaultPlaceLimit));
     }
 }

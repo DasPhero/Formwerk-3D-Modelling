@@ -148,6 +148,7 @@ public sealed partial class ViewportControl
         if (hot.Positions.Count > 0) group.Children.Add(MarkerModel(hot, LightTheme ? Color.FromRgb(0xE0, 0x8A, 0x00) : SnapMarkerColor));
         AddEdgeHighlight(group);
         AddMeasurements(group);
+        AddProblemMarks(group);
         _markerVisual.Content = group.Children.Count > 0 ? group : null;
     }
 
