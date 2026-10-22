@@ -277,6 +277,27 @@ public sealed class SetVisibleCommand(FormwerkDocument document, Node node, bool
     }
 }
 
+/// <summary>Sets the color of a node (F-VIS-01). The color is always opaque.</summary>
+public sealed class SetColorCommand(FormwerkDocument document, Node node, uint color) : IDocumentCommand
+{
+    private uint _old;
+
+    public string Name => $"Color {node.Name}";
+
+    public void Do()
+    {
+        _old = node.Color;
+        node.Color = color | 0xFF000000u;
+        document.NotifyChanged();
+    }
+
+    public void Undo()
+    {
+        node.Color = _old;
+        document.NotifyChanged();
+    }
+}
+
 public sealed class SetBooleanOperationCommand(FormwerkDocument document, BooleanNode node, BooleanOperation operation) : IDocumentCommand
 {
     private BooleanOperation _old;

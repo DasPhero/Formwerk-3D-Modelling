@@ -730,6 +730,44 @@
                                 </StackPanel>
                             </Expander>
                             <TextBlock Text="{Binding PropertiesMessage}" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" />
+                            <!-- Color (F-VIS-01): any selection; applies to everything inside a group too -->
+                            <StackPanel Visibility="{Binding IsColorVisible, Converter={StaticResource BoolToVisibility}}" Margin="0,4,0,10"
+                                        AutomationProperties.AutomationId="ColorPanel">
+                                <TextBlock Text="{res:Loc Panel.Color}" Style="{StaticResource PanelHeader}" />
+                                <ItemsControl ItemsSource="{Binding ColorSwatches}">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Width="26" Height="26" Margin="0,0,4,4" Padding="0" MinWidth="0" ToolTip="{Binding Name}"
+                                                    AutomationProperties.Name="{Binding Name}"
+                                                    Command="{Binding DataContext.ApplyColorCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                    CommandParameter="{Binding}">
+                                                <Button.Template>
+                                                    <ControlTemplate TargetType="Button">
+                                                        <Border Background="{Binding Hex}" BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1" CornerRadius="3" />
+                                                    </ControlTemplate>
+                                                </Button.Template>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <DockPanel Margin="0,4,0,0">
+                                    <Border DockPanel.Dock="Left" Width="26" Height="26" CornerRadius="3" BorderThickness="1" Margin="0,0,6,0"
+                                            BorderBrush="{DynamicResource PanelBorderBrush}" Background="{Binding ColorPreview}"
+                                            AutomationProperties.AutomationId="ColorPreview" />
+                                    <TextBlock DockPanel.Dock="Left" Text="#" VerticalAlignment="Center" Margin="0,0,2,0" />
+                                    <TextBox Text="{Binding ColorHex, UpdateSourceTrigger=PropertyChanged}" MaxLength="8" ToolTip="{res:Loc Color.Hex.Tip}"
+                                             AutomationProperties.AutomationId="ColorHex" AutomationProperties.Name="{res:Loc Color.Hex}" />
+                                </DockPanel>
+                                <TextBlock Text="{res:Loc Color.Mixed}" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
+                                           Visibility="{Binding IsColorMixed, Converter={StaticResource BoolToVisibility}}" />
+                                <TextBlock Text="{Binding ColorError}" TextWrapping="Wrap" Foreground="{DynamicResource ErrorBrush}"
+                                           AutomationProperties.AutomationId="ColorError" />
+                            </StackPanel>
                             <ContentControl Content="{Binding Properties}" />
                             <!-- Align and distribute (F-SNP-04): two or more objects are selected -->
                             <StackPanel Visibility="{Binding IsAlignVisible, Converter={StaticResource BoolToVisibility}}" Margin="0,10,0,0"

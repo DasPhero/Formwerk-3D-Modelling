@@ -422,6 +422,23 @@ Try a different location or file name.</value></data>
   <data name="Section.Axis.Y" xml:space="preserve"><value>Y</value></data>
   <data name="Section.Axis.Z" xml:space="preserve"><value>Z</value></data>
   <data name="Section.Axis.Face" xml:space="preserve"><value>A face</value></data>
+  <data name="Panel.Color" xml:space="preserve"><value>Color</value></data>
+  <data name="Color.Hex" xml:space="preserve"><value>Hex</value></data>
+  <data name="Color.Hex.Tip" xml:space="preserve"><value>Color as RRGGBB, for example FF8800 (with or without #). It applies as soon as it is complete</value></data>
+  <data name="Color.Mixed" xml:space="preserve"><value>The selection has different colors</value></data>
+  <data name="Color.Err.Hex" xml:space="preserve"><value>Enter six hex digits, for example FF8800.</value></data>
+  <data name="Color.Name.Gray" xml:space="preserve"><value>Gray</value></data>
+  <data name="Color.Name.White" xml:space="preserve"><value>White</value></data>
+  <data name="Color.Name.Black" xml:space="preserve"><value>Black</value></data>
+  <data name="Color.Name.Red" xml:space="preserve"><value>Red</value></data>
+  <data name="Color.Name.Orange" xml:space="preserve"><value>Orange</value></data>
+  <data name="Color.Name.Yellow" xml:space="preserve"><value>Yellow</value></data>
+  <data name="Color.Name.Green" xml:space="preserve"><value>Green</value></data>
+  <data name="Color.Name.Teal" xml:space="preserve"><value>Teal</value></data>
+  <data name="Color.Name.Blue" xml:space="preserve"><value>Blue</value></data>
+  <data name="Color.Name.Purple" xml:space="preserve"><value>Purple</value></data>
+  <data name="Color.Name.Pink" xml:space="preserve"><value>Pink</value></data>
+  <data name="Color.Name.Brown" xml:space="preserve"><value>Brown</value></data>
   <data name="Section.Position" xml:space="preserve"><value>Position</value></data>
   <data name="Section.Err.Position" xml:space="preserve"><value>The position must be a number.</value></data>
   <data name="Section.Flip" xml:space="preserve"><value>Show the other side</value></data>

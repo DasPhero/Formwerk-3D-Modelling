@@ -515,6 +515,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         Properties?.Refresh();
+        RefreshColor();
         if (!_dragging) QueueRepairCheck(); // a repair, its undo or opening a project changes the mesh of an object
         _ = RequestEvaluation();
     }
@@ -612,6 +613,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         SelectedIds = new HashSet<Guid>(_selected);
+        RefreshColor();
         OnPropertyChanged(nameof(IsAlignVisible));
         UpdatePivot();
 
