@@ -10,6 +10,9 @@ namespace Formwerk.IO;
 /// </summary>
 public sealed record UserSettings
 {
+    /// <summary>The ids of the library elements marked as favorites (F-LIB-02).</summary>
+    public IdList FavoriteLibraryItems { get; init; } = IdList.None;
+
     public Vector3 DefaultBuildVolume { get; init; } = new(256, 256, 256);
 
     public double DefaultNozzleDiameter { get; init; } = 0.4;
@@ -63,6 +66,7 @@ public sealed record UserSettings
         AutosaveMinutes = Clamp(AutosaveMinutes, 1, 60, 2),
         EdgeAngleDegrees = Clamp(EdgeAngleDegrees, 1, 90, 30),
         SlicerPath = string.IsNullOrWhiteSpace(SlicerPath) ? null : SlicerPath.Trim(),
+        FavoriteLibraryItems = (FavoriteLibraryItems ?? IdList.None).Cleaned(),
     };
 
     private static float Clamp(float value, float min, float max, float fallback) =>
@@ -109,6 +113,7 @@ public sealed class UserSettingsStore(string path)
                 AlwaysOnFloor = ReadBool(root, "alwaysOnFloor") ?? defaults.AlwaysOnFloor,
                 LightTheme = ReadBool(root, "lightTheme") ?? defaults.LightTheme,
                 SlicerPath = ReadText(root, "slicerPath"),
+                FavoriteLibraryItems = ReadIds(root, "favoriteLibraryItems"),
             }.Normalized();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException)
@@ -146,6 +151,13 @@ public sealed class UserSettingsStore(string path)
             json.WriteBoolean("alwaysOnFloor", s.AlwaysOnFloor);
             json.WriteBoolean("lightTheme", s.LightTheme);
             if (s.SlicerPath is not null) json.WriteString("slicerPath", s.SlicerPath);
+            if (s.FavoriteLibraryItems.Ids.Count > 0)
+            {
+                json.WriteStartArray("favoriteLibraryItems");
+                foreach (var id in s.FavoriteLibraryItems.Ids) json.WriteStringValue(id);
+                json.WriteEndArray();
+            }
+
             json.WriteEndObject();
         });
     }
@@ -168,10 +180,49 @@ public sealed class UserSettingsStore(string path)
         catch (Exception ex) when (ex is InvalidOperationException or FormatException) { return null; }
     }
 
+    private static IdList ReadIds(JsonObject o, string key)
+    {
+        if (o[key] is not JsonArray array) return IdList.None;
+        var ids = new List<string>();
+        foreach (var node in array)
+        {
+            try
+            {
+                if (node?.GetValue<string>() is { } id) ids.Add(id);
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or FormatException)
+            {
+                // an entry that is not text is skipped
+            }
+        }
+
+        return new IdList(ids);
+    }
+
     private static Vector3? ReadVector(JsonObject o, string key)
     {
         if (o[key] is not JsonArray { Count: 3 } array) return null;
         try { return new Vector3(array[0]!.GetValue<float>(), array[1]!.GetValue<float>(), array[2]!.GetValue<float>()); }
         catch (Exception ex) when (ex is InvalidOperationException or FormatException) { return null; }
+    }
+}
+
+/// <summary>A list of ids (text) that compares by its content, so that settings with the same favorites are equal.</summary>
+public sealed record IdList(IReadOnlyList<string> Ids)
+{
+    public const int MaxCount = 1000;
+
+    public static IdList None { get; } = new([]);
+
+    public bool Equals(IdList? other) => other is not null && Ids.SequenceEqual(other.Ids, StringComparer.Ordinal);
+
+    public override int GetHashCode() => Ids.Count;
+
+    /// <summary>Blank entries and doubles (any case) removed, the order kept, at most <see cref="MaxCount"/> entries.</summary>
+    public IdList Cleaned()
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var cleaned = Ids.Where(id => !string.IsNullOrWhiteSpace(id)).Select(id => id.Trim()).Where(seen.Add).Take(MaxCount).ToList();
+        return cleaned.Count == 0 ? None : new IdList(cleaned);
     }
 }

@@ -63,6 +63,7 @@ public sealed partial class MainViewModel : ObservableObject
         _hintText = Texts.Get("Hint.Default");
         _statusText = Texts.Get("Status.Ready");
         _settingsStore = userSettings;
+        InitializeLibrary();
         LoadUserSettings();
         ApplyDefaultsTo(_document);
 

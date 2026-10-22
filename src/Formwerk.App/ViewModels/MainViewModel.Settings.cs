@@ -61,6 +61,7 @@ public sealed partial class MainViewModel
         EdgeAngleDegrees = EdgeAngle,
         AlwaysOnFloor = AlwaysOnFloor,
         LightTheme = LightTheme,
+        FavoriteLibraryItems = new IdList([.. _favoriteIds]),
     };
 
     /// <summary>Number of objects that reach outside the build volume (F-VIS-05).</summary>
@@ -92,6 +93,7 @@ public sealed partial class MainViewModel
             _applyingUser = false;
         }
 
+        ApplyFavorites(_user.FavoriteLibraryItems.Ids);
         OnPropertyChanged(nameof(SlicerPath));
     }
 

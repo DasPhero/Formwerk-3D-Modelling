@@ -377,6 +377,13 @@ Try a different location or file name.</value></data>
   <data name="Msg.ExportedObj" xml:space="preserve"><value>Exported {0} object(s) to {1}.</value></data>
   <data name="Hint.GroupOpen" xml:space="preserve"><value>Editing inside {0}: click parts to select and move them. Double-click empty space or press Esc to leave.</value></data>
   <data name="Menu.View.ShowHoles" xml:space="preserve"><value>Show _Holes</value></data>
+  <data name="Panel.Library" xml:space="preserve"><value>Library</value></data>
+  <data name="Library.Search" xml:space="preserve"><value>Search...</value></data>
+  <data name="Library.Search.Tip" xml:space="preserve"><value>Search the library by name or keyword, for example screw, nut, box. All words must match</value></data>
+  <data name="Library.All" xml:space="preserve"><value>All</value></data>
+  <data name="Library.Favorites" xml:space="preserve"><value>Favorites</value></data>
+  <data name="Library.Empty" xml:space="preserve"><value>Nothing found.</value></data>
+  <data name="Library.Star.Tip" xml:space="preserve"><value>Mark as favorite</value></data>
   <data name="Panel.Templates" xml:space="preserve"><value>My Templates</value></data>
   <data name="Panel.Templates.Empty" xml:space="preserve"><value>No templates yet. Select objects and choose Edit > Save as Template...</value></data>
   <data name="Menu.Edit.SaveTemplate" xml:space="preserve"><value>Save as _Template...</value></data>

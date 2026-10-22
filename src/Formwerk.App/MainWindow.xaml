@@ -436,19 +436,60 @@
                     </Grid.RowDefinitions>
 
                     <StackPanel>
-                        <TextBlock Text="{res:Loc Panel.Shapes}" Style="{StaticResource PanelHeader}" />
-                        <ItemsControl ItemsSource="{Binding Shapes}" Margin="0,0,0,12">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate DataType="{x:Type vm:ShapeEntryViewModel}">
-                                    <Button Content="{Binding DisplayName}" Margin="0,0,6,6" MinWidth="64"
-                                            Command="{Binding DataContext.AddShapeCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                            CommandParameter="{Binding Id}" />
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <TextBlock Text="{res:Loc Panel.Library}" Style="{StaticResource PanelHeader}" />
+                        <!-- Library (F-LIB-02): search, category, list with favorites -->
+                        <Grid Margin="0,0,0,6">
+                            <TextBox Text="{Binding LibrarySearchText, UpdateSourceTrigger=PropertyChanged}" ToolTip="{res:Loc Library.Search.Tip}"
+                                     AutomationProperties.AutomationId="LibrarySearch" AutomationProperties.Name="{res:Loc Library.Search}" />
+                            <TextBlock Text="{res:Loc Library.Search}" IsHitTestVisible="False" Margin="8,0,0,0" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource MutedTextBrush}">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding LibrarySearchText}" Value="">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                        <ComboBox ItemsSource="{Binding LibraryCategoryChoices}" DisplayMemberPath="Label" SelectedValuePath="Index"
+                                  SelectedValue="{Binding LibraryCategoryIndex}" Margin="0,0,0,6" AutomationProperties.AutomationId="LibraryCategory" />
+                        <TextBlock Text="{res:Loc Library.Empty}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,8"
+                                   Visibility="{Binding IsLibraryEmpty, Converter={StaticResource BoolToVisibility}}" />
+                        <ScrollViewer MaxHeight="210" VerticalScrollBarVisibility="Auto" Margin="0,0,0,12">
+                            <ItemsControl ItemsSource="{Binding LibraryEntries}" AutomationProperties.AutomationId="LibraryList">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:LibraryEntryViewModel}">
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,6,6">
+                                            <Button Content="{Binding Name}" MinWidth="40" ToolTip="{Binding Tip}"
+                                                    Command="{Binding DataContext.AddLibraryItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}" />
+                                            <ToggleButton IsChecked="{Binding IsFavorite, Mode=TwoWay}" Content="&#x2605;" Padding="4,0" MinWidth="0"
+                                                          ToolTip="{res:Loc Library.Star.Tip}" AutomationProperties.Name="{res:Loc Library.Star.Tip}">
+                                                <ToggleButton.Style>
+                                                    <Style TargetType="ToggleButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
+                                                        <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+                                                        <Setter Property="Background" Value="Transparent" />
+                                                        <Setter Property="BorderThickness" Value="0" />
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsChecked" Value="True">
+                                                                <Setter Property="Foreground" Value="#F2C94C" />
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </ToggleButton.Style>
+                                            </ToggleButton>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
                         <DockPanel LastChildFill="True">
                             <Button DockPanel.Dock="Right" Content="{res:Loc Tpl.Import}" Padding="8,2" Margin="0,8,0,0" VerticalAlignment="Bottom"
                                     Command="{Binding ImportTemplateCommand}" ToolTip="{res:Loc Tpl.ImportTip}" AutomationProperties.AutomationId="ImportTemplate" />

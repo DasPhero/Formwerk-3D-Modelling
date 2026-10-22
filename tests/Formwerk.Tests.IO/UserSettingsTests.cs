@@ -63,6 +63,31 @@ public sealed class UserSettingsTests : IDisposable
     }
 
     [Fact]
+    public void The_library_favorites_are_kept_in_order_and_cleaned()
+    {
+        var store = Store();
+        store.Save(new UserSettings { FavoriteLibraryItems = new IdList(["hex-nut-m3", " washer-m3 ", "HEX-NUT-M3", "", "box"]) });
+
+        var loaded = store.Load();
+
+        Assert.Equal(["hex-nut-m3", "washer-m3", "box"], loaded.FavoriteLibraryItems.Ids);
+        Assert.Equal(loaded, Store().Load());
+        Assert.Empty(new UserSettings().FavoriteLibraryItems.Ids);
+    }
+
+    [Fact]
+    public void Wrong_favorites_in_the_file_are_ignored()
+    {
+        Directory.CreateDirectory(_folder);
+        var store = Store();
+        File.WriteAllText(store.Path, "{ \"favoriteLibraryItems\": [\"box\", 5, null, \"cone\"] }");
+        Assert.Equal(["box", "cone"], store.Load().FavoriteLibraryItems.Ids);
+
+        File.WriteAllText(store.Path, "{ \"favoriteLibraryItems\": \"box\" }");
+        Assert.Empty(store.Load().FavoriteLibraryItems.Ids);
+    }
+
+    [Fact]
     public void The_always_on_floor_option_is_written_and_a_wrong_type_gives_the_default()
     {
         var store = Store();
