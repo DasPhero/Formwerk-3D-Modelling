@@ -17,6 +17,8 @@ public static class RepairText
         Add(parts, "Repair.Unwelded", reports.Sum(r => r.DuplicateVertices));
         Add(parts, "Repair.Specks", reports.Sum(r => r.TinyLooseParts));
         Add(parts, "Repair.NonManifold", reports.Sum(r => r.NonManifoldEdges));
+        Add(parts, "Repair.NonManifoldPoints", reports.Sum(r => r.NonManifoldVertices));
+        Add(parts, "Repair.SelfIntersections", reports.Sum(r => r.SelfIntersections));
         return string.Join(", ", parts);
     }
 
@@ -30,6 +32,7 @@ public static class RepairText
         Add(parts, "Act.Inside", actions.FlippedParts);
         Add(parts, "Act.Junk", actions.RemovedDegenerateTriangles + actions.RemovedDuplicateTriangles);
         Add(parts, "Act.Specks", actions.RemovedLooseParts);
+        Add(parts, "Act.United", actions.UnitedBodies);
         return string.Join(", ", parts);
     }
 

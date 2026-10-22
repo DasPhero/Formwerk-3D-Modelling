@@ -207,4 +207,51 @@ public sealed class RepairHighlightTests : IDisposable
         Assert.Equal(6, vm.ProblemMarks!.Segments.Count);
         Assert.Equal(6, vm.RepairProblems.Single().Count); // the list counts the damaged mesh objects together, like the banner
     }
+
+    // ---- bodies that overlap and points where surfaces touch --------------------------------------
+
+    private static MeshData TwoOverlappingBoxes() =>
+        MeshCombine.Concat([Box(), Box().Transformed(Matrix4x4.CreateTranslation(4, 3, 5.5f))]);
+
+    [UiFact]
+    public async Task Overlapping_bodies_are_listed_shown_and_united_by_the_repair()
+    {
+        var vm = await Import(TwoOverlappingBoxes(), "overlap.stl");
+        var item = vm.RepairProblems.Single(p => p.Kind == ProblemKind.SelfIntersections);
+        Assert.True(item.Count > 0);
+        Assert.True(vm.RepairMeshCommand.CanExecute(null));
+
+        await Highlight(vm, ProblemKind.SelfIntersections);
+        Assert.NotEmpty(vm.ProblemMarks!.Segments);
+
+        await vm.RepairMeshCommand.ExecuteAsync(null);
+        await vm.WaitForEvaluationAsync();
+        await vm.WaitForRepairCheckAsync();
+
+        Assert.Empty(vm.RepairProblems);
+        Assert.Null(vm.ProblemMarks);
+        Assert.Contains("united", vm.StatusText);
+        var volume = vm.ViewportItems.Where(i => i.Kind == ViewportItemKind.Solid).Sum(i => i.Mesh.ComputeVolume());
+        var single = Box().ComputeVolume();
+        Assert.True(volume < 2 * single && volume > single, $"the united body has less than two bodies ({volume} of {2 * single})");
+    }
+
+    [UiFact]
+    public async Task Points_where_surfaces_only_touch_are_listed_but_the_repair_is_not_offered_for_them()
+    {
+        var a = new[] { Vector3.Zero, new Vector3(1, 0, 0), new Vector3(0, 1, 0), new Vector3(0, 0, 1) };
+        var vertices = a.Concat([new Vector3(2, 0, 0), new Vector3(1, 1, 0), new Vector3(1, 0, 1)]).ToArray();
+        int[] first = [0, 2, 1, 0, 1, 3, 1, 2, 3, 2, 0, 3];
+        int[] second = [1, 5, 4, 1, 4, 6, 4, 5, 6, 5, 1, 6]; // a second tetrahedron that shares the corner 1 with the first
+        var mesh = new MeshData(vertices, [.. first, .. second]);
+
+        var vm = await Import(mesh, "bowtie.stl");
+
+        // the file is unwelded by the writer: it is welded when read, so the shared corner is the one point
+        var item = vm.RepairProblems.SingleOrDefault(p => p.Kind == ProblemKind.NonManifoldVertices);
+        Assert.NotNull(item);
+        Assert.Equal(1, item!.Count);
+        await Highlight(vm, ProblemKind.NonManifoldVertices);
+        Assert.Single(vm.ProblemMarks!.Points);
+    }
 }

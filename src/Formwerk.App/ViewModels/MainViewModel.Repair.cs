@@ -151,7 +151,8 @@ public sealed partial class MainViewModel
             // objects that share a mesh (copies) are repaired once
             var meshIds = targets.Select(n => n.MeshId).Distinct().ToList();
             var meshes = meshIds.Select(id => (Id: id, Mesh: Meshes.Get(id)!)).ToList();
-            var results = await Task.Run(() => meshes.Select(m => (m.Id, Result: MeshRepair.Repair(m.Mesh))).ToList()).ConfigureAwait(true);
+            var repairKernel = new SharedKernel(_kernel, _evaluatorLock); // the repair may unite overlapping bodies; the kernel is shared with the evaluator
+            var results = await Task.Run(() => meshes.Select(m => (m.Id, Result: MeshRepair.Repair(m.Mesh, default, repairKernel))).ToList()).ConfigureAwait(true);
 
             var commands = new List<IDocumentCommand>();
             var summary = new List<RepairResult>();
@@ -191,7 +192,7 @@ public sealed partial class MainViewModel
             results.Sum(r => r.Actions.WeldedVertices), results.Sum(r => r.Actions.RemovedDegenerateTriangles),
             results.Sum(r => r.Actions.RemovedDuplicateTriangles), results.Sum(r => r.Actions.FlippedTriangles),
             results.Sum(r => r.Actions.FilledHoles), results.Sum(r => r.Actions.AddedTriangles), results.Sum(r => r.Actions.UnfilledHoles),
-            results.Sum(r => r.Actions.FlippedParts), results.Sum(r => r.Actions.RemovedLooseParts)));
+            results.Sum(r => r.Actions.FlippedParts), results.Sum(r => r.Actions.RemovedLooseParts), results.Sum(r => r.Actions.UnitedBodies)));
         var left = RepairText.Problems([.. results.Select(r => r.After)]);
         var end = left.Length == 0 ? Texts.Get("Msg.RepairedFine") : Texts.Format("Msg.RepairedLeft", left);
         return Texts.Format("Msg.Repaired", label, done.Length == 0 ? "-" : done, end);
@@ -212,6 +213,8 @@ public sealed partial class MainViewModel
         Add(ProblemKind.InconsistentEdges, reports.Sum(r => r.InconsistentEdges));
         Add(ProblemKind.DegenerateTriangles, reports.Sum(r => r.DegenerateTriangles));
         Add(ProblemKind.DuplicateTriangles, reports.Sum(r => r.DuplicateTriangles));
+        Add(ProblemKind.NonManifoldVertices, reports.Sum(r => r.NonManifoldVertices));
+        Add(ProblemKind.SelfIntersections, reports.Sum(r => r.SelfIntersections));
         Add(ProblemKind.DuplicateVertices, reports.Sum(r => r.DuplicateVertices));
         Add(ProblemKind.LooseSpecks, reports.Sum(r => r.TinyLooseParts));
         Add(ProblemKind.InvertedParts, reports.Sum(r => r.InvertedParts));
@@ -276,5 +279,16 @@ public sealed partial class MainViewModel
 
         ProblemMarks = new ViewportProblemMarks(segments, points);
         if (truncated) SetNotice(Texts.Format("Msg.ProblemPlacesTruncated", MeshAnalyzer.DefaultPlaceLimit));
+    }
+}
+
+/// <summary>The boolean kernel of the program with a lock around every call: the evaluator uses the same kernel and it is not thread-safe.</summary>
+internal sealed class SharedKernel(Formwerk.Geometry.IGeometryKernel inner, object gate) : Formwerk.Geometry.IGeometryKernel
+{
+    public string Name => inner.Name;
+
+    public Formwerk.Geometry.MeshData Boolean(BooleanOperation operation, IReadOnlyList<Formwerk.Geometry.MeshData> operands, CancellationToken cancellationToken)
+    {
+        lock (gate) return inner.Boolean(operation, operands, cancellationToken);
     }
 }

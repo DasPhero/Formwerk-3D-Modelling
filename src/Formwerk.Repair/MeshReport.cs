@@ -18,6 +18,8 @@ namespace Formwerk.Repair;
 /// <param name="TinyLooseParts">Loose pieces that are mere specks: at most 100 triangles and much smaller than the whole model.</param>
 /// <param name="InvertedParts">Closed pieces that are turned inside out (their triangles face inwards); cavities inside another piece do not count.</param>
 /// <param name="Skipped">The mesh is too large to be analysed; all other numbers are zero.</param>
+/// <param name="SelfIntersections">Pairs of triangles that cut through each other (bodies that overlap, a surface that folds through itself); meshes of more than 300000 triangles are not checked.</param>
+/// <param name="NonManifoldVertices">Points where the surface touches itself without sharing an edge (two bodies that meet in a corner).</param>
 public sealed record MeshReport(
     int Vertices,
     int Triangles,
@@ -31,15 +33,17 @@ public sealed record MeshReport(
     int LooseParts,
     int TinyLooseParts,
     int InvertedParts,
-    bool Skipped = false)
+    bool Skipped = false,
+    int NonManifoldVertices = 0,
+    int SelfIntersections = 0)
 {
     /// <summary>Number of things the user would call an error. Several bodies in one mesh are not an error, specks are.</summary>
     public int ProblemCount =>
-        OpenLoops + NonManifoldEdges + InconsistentEdges + DegenerateTriangles + DuplicateTriangles + DuplicateVertices + TinyLooseParts + InvertedParts;
+        OpenLoops + NonManifoldEdges + NonManifoldVertices + SelfIntersections + InconsistentEdges + DegenerateTriangles + DuplicateTriangles + DuplicateVertices + TinyLooseParts + InvertedParts;
 
     /// <summary>Closed, manifold, consistently oriented and without junk: ready for booleans and printing.</summary>
     public bool IsHealthy => !Skipped && Triangles > 0 && OpenEdges == 0 && ProblemCount == 0;
 
-    /// <summary>What repair can fix (everything except non-manifold edges).</summary>
-    public bool HasRepairableProblems => !Skipped && (ProblemCount - NonManifoldEdges > 0 || OpenEdges > 0);
+    /// <summary>What repair can fix (everything except non-manifold edges and points).</summary>
+    public bool HasRepairableProblems => !Skipped && (ProblemCount - NonManifoldEdges - NonManifoldVertices > 0 || OpenEdges > 0);
 }

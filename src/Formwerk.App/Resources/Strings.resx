@@ -192,6 +192,11 @@ Try a different location or file name.</value></data>
   <data name="Repair.Problem.InconsistentEdges" xml:space="preserve"><value>Turned triangles</value></data>
   <data name="Repair.Problem.DegenerateTriangles" xml:space="preserve"><value>Degenerate triangles</value></data>
   <data name="Repair.Problem.DuplicateTriangles" xml:space="preserve"><value>Doubled triangles</value></data>
+  <data name="Repair.NonManifoldPoints" xml:space="preserve"><value>{0} point(s) where surfaces only touch</value></data>
+  <data name="Repair.Problem.NonManifoldVertices" xml:space="preserve"><value>Touching points</value></data>
+  <data name="Repair.SelfIntersections" xml:space="preserve"><value>{0} place(s) where the surface cuts through itself</value></data>
+  <data name="Act.United" xml:space="preserve"><value>united {0} overlapping bod(ies)</value></data>
+  <data name="Repair.Problem.SelfIntersections" xml:space="preserve"><value>Cuts through itself</value></data>
   <data name="Repair.Problem.DuplicateVertices" xml:space="preserve"><value>Doubled points</value></data>
   <data name="Repair.Problem.LooseSpecks" xml:space="preserve"><value>Specks</value></data>
   <data name="Repair.Problem.InvertedParts" xml:space="preserve"><value>Inside-out parts</value></data>

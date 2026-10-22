@@ -29,6 +29,12 @@ public enum ProblemKind
 
     /// <summary>Closed pieces turned inside out.</summary>
     InvertedParts,
+
+    /// <summary>Points where the surface touches itself without sharing an edge.</summary>
+    NonManifoldVertices,
+
+    /// <summary>Lines where the surface cuts through itself.</summary>
+    SelfIntersections,
 }
 
 /// <summary>Where a problem is: bars along edges and points at triangles, vertices or pieces, in the coordinates of the mesh.</summary>
@@ -130,6 +136,21 @@ public static partial class MeshAnalyzer
                 {
                     if (Full(points.Count)) break;
                     points.Add((scan.PieceMin[root] + scan.PieceMax[root]) * 0.5f);
+                }
+
+                break;
+
+            case ProblemKind.SelfIntersections:
+                var cuts = FindSelfIntersections(vertices, indices, scan.Repeated, limit, out var more);
+                segments.AddRange(cuts.Select(c => (c.From, c.To)));
+                truncated |= more;
+                break;
+
+            case ProblemKind.NonManifoldVertices:
+                foreach (var v in FindNonManifoldVertices(vertices, indices, scan.Repeated))
+                {
+                    if (Full(points.Count)) break;
+                    points.Add(vertices[v]);
                 }
 
                 break;

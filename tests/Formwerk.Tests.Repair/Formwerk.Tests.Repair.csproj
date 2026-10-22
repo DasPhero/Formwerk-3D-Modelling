@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Formwerk.Repair\Formwerk.Repair.csproj" />
+    <ProjectReference Include="..\..\src\Formwerk.Kernel\Formwerk.Kernel.csproj" />
     <ProjectReference Include="..\..\src\Formwerk.Features\Formwerk.Features.csproj" />
   </ItemGroup>
 

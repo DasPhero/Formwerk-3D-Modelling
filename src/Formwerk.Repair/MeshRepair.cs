@@ -13,12 +13,13 @@ public sealed record RepairActions(
     int AddedTriangles,
     int UnfilledHoles,
     int FlippedParts,
-    int RemovedLooseParts)
+    int RemovedLooseParts,
+    int UnitedBodies = 0)
 {
     public static RepairActions None { get; } = new(0, 0, 0, 0, 0, 0, 0, 0, 0);
 
     public bool AnythingDone =>
-        WeldedVertices + RemovedDegenerateTriangles + RemovedDuplicateTriangles + FlippedTriangles + FilledHoles + FlippedParts + RemovedLooseParts > 0;
+        WeldedVertices + RemovedDegenerateTriangles + RemovedDuplicateTriangles + FlippedTriangles + FilledHoles + FlippedParts + RemovedLooseParts + UnitedBodies > 0;
 }
 
 /// <param name="Mesh">The repaired mesh; the very same instance as the input when there was nothing to do.</param>
@@ -30,15 +31,16 @@ public sealed record RepairResult(MeshData Mesh, MeshReport Before, MeshReport A
 
 /// <summary>
 /// One-click repair (F-REP-02): welds vertices, removes degenerate and duplicate triangles, makes the orientation consistent,
-/// closes holes, turns inside-out pieces around and removes specks. Self-intersections and edges shared by more than two
-/// triangles are not repaired; the report of the result says what is left.
+/// closes holes, turns inside-out pieces around and removes specks. With a kernel, bodies that overlap each other are united.
+/// Edges shared by more than two triangles, points where surfaces touch and a single surface that cuts through itself are not
+/// repaired; the report of the result says what is left.
 /// </summary>
 public static class MeshRepair
 {
     /// <summary>Holes with more corners than this are closed with a fan around their center instead of by ear clipping.</summary>
     public const int MaxEarClippingCorners = 2000;
 
-    public static RepairResult Repair(MeshData mesh, CancellationToken cancellationToken = default)
+    public static RepairResult Repair(MeshData mesh, CancellationToken cancellationToken = default, IGeometryKernel? kernel = null)
     {
         ArgumentNullException.ThrowIfNull(mesh);
         var before = MeshAnalyzer.Analyze(mesh);
@@ -85,8 +87,43 @@ public static class MeshRepair
         }
 
         var result = Compact(vertices, all);
-        var actions = new RepairActions(welded, degenerate, duplicates, flipped, holes, added, unfilled, flippedParts, removedParts);
+        var united = 0;
+        if (kernel is not null) result = UniteOverlappingBodies(result, kernel, cancellationToken, out united);
+        var actions = new RepairActions(welded, degenerate, duplicates, flipped, holes, added, unfilled, flippedParts, removedParts, united);
         return new RepairResult(result, before, MeshAnalyzer.Analyze(result), actions, Changed: true);
+    }
+
+    // ---- bodies that overlap ---------------------------------------------------------------------
+
+    /// <summary>
+    /// Bodies that cut through each other (separate closed shells that overlap) are united with the boolean kernel. Only done when the mesh
+    /// has several shells, every one of them is healthy on its own (closed, manifold, no cuts through itself) and the united result is
+    /// healthy too; otherwise the mesh is returned as it is. A single surface that cuts through itself cannot be united this way.
+    /// </summary>
+    private static MeshData UniteOverlappingBodies(MeshData mesh, IGeometryKernel kernel, CancellationToken cancellationToken, out int united)
+    {
+        united = 0;
+        if (MeshAnalyzer.Analyze(mesh).SelfIntersections == 0) return mesh;
+
+        var shells = MeshShells.Split(mesh);
+        if (shells.Count < 2) return mesh;
+        foreach (var shell in shells)
+        {
+            if (shell.ComputeVolume() <= 0 || !MeshAnalyzer.Analyze(shell).IsHealthy) return mesh;
+        }
+
+        try
+        {
+            var union = kernel.Boolean(Formwerk.Core.Model.BooleanOperation.Union, shells, cancellationToken);
+            if (union.IsEmpty || !MeshAnalyzer.Analyze(union).IsHealthy) return mesh;
+
+            united = Math.Max(shells.Count - MeshShells.Split(union).Count, 0);
+            return union;
+        }
+        catch (GeometryException)
+        {
+            return mesh;
+        }
     }
 
     // ---- 1. weld ---------------------------------------------------------------------------------

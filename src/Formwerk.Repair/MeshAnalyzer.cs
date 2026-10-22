@@ -24,7 +24,9 @@ public static partial class MeshAnalyzer
 
         var scan = Scan(mesh.Vertices.ToArray(), mesh.Indices.ToArray());
         return new MeshReport(scan.UsedCount, triangleCount, scan.OpenEdges, scan.OpenLoops, scan.NonManifoldEdges, scan.InconsistentEdges,
-            scan.Degenerate, scan.Duplicates, scan.DuplicateVertices, scan.LooseParts, TinyParts(scan).Count, InvertedPieces(scan).Count);
+            scan.Degenerate, scan.Duplicates, scan.DuplicateVertices, scan.LooseParts, TinyParts(scan).Count, InvertedPieces(scan).Count,
+            NonManifoldVertices: FindNonManifoldVertices(scan.Vertices, scan.Indices, scan.Repeated).Count,
+            SelfIntersections: FindSelfIntersections(scan.Vertices, scan.Indices, scan.Repeated, int.MaxValue, out _).Count);
     }
 
     /// <summary>Everything the analysis and the repair need to know about a triangle list.</summary>
