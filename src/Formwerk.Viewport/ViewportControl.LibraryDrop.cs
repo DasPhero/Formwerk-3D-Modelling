@@ -26,21 +26,57 @@ public sealed partial class ViewportControl
         set => SetValue(LibraryDropCommandProperty, value);
     }
 
+    public static readonly DependencyProperty LibraryDragOverCommandProperty = DependencyProperty.Register(
+        nameof(LibraryDragOverCommand), typeof(ICommand), typeof(ViewportControl));
+
+    public static readonly DependencyProperty LibraryDragEndCommandProperty = DependencyProperty.Register(
+        nameof(LibraryDragEndCommand), typeof(ICommand), typeof(ViewportControl));
+
+    /// <summary>Executed with a <see cref="LibraryDropRequest"/> (about every 30 ms) while an element of the library is dragged over the view: where a drop would put it.</summary>
+    public ICommand? LibraryDragOverCommand
+    {
+        get => (ICommand?)GetValue(LibraryDragOverCommandProperty);
+        set => SetValue(LibraryDragOverCommandProperty, value);
+    }
+
+    /// <summary>Executed when the dragged element leaves the view or is dropped.</summary>
+    public ICommand? LibraryDragEndCommand
+    {
+        get => (ICommand?)GetValue(LibraryDragEndCommandProperty);
+        set => SetValue(LibraryDragEndCommandProperty, value);
+    }
+
+    private long _lastDragOver;
+
     protected override void OnDragEnter(DragEventArgs e) => Allow(e);
 
     protected override void OnDragOver(DragEventArgs e) => Allow(e);
+
+    protected override void OnDragLeave(DragEventArgs e)
+    {
+        base.OnDragLeave(e);
+        if (LibraryDragEndCommand?.CanExecute(null) == true) LibraryDragEndCommand.Execute(null);
+    }
 
     private void Allow(DragEventArgs e)
     {
         if (!e.Data.GetDataPresent(LibraryItemFormat)) return;
         e.Effects = LibraryDropCommand is null ? DragDropEffects.None : DragDropEffects.Copy;
         e.Handled = true;
+
+        var now = Environment.TickCount64;
+        if (now - _lastDragOver < 30 || LibraryDragOverCommand is null || e.Data.GetData(LibraryItemFormat) is not string id) return;
+        _lastDragOver = now;
+        if (DropTarget(e.GetPosition(this)) is not { } pick) return;
+        var request = new LibraryDropRequest(id, pick);
+        if (LibraryDragOverCommand.CanExecute(request)) LibraryDragOverCommand.Execute(request);
     }
 
     protected override void OnDrop(DragEventArgs e)
     {
         if (!e.Data.GetDataPresent(LibraryItemFormat) || e.Data.GetData(LibraryItemFormat) is not string id) return;
         e.Handled = true;
+        if (LibraryDragEndCommand?.CanExecute(null) == true) LibraryDragEndCommand.Execute(null);
         if (DropTarget(e.GetPosition(this)) is not { } pick) return;
 
         var request = new LibraryDropRequest(id, pick);

@@ -17,7 +17,7 @@ public sealed class TemplatePreviewRenderer : ITemplatePreview
         if (items.Count == 0) return null;
         try
         {
-            var control = new ViewportControl { Width = Size, Height = Size, ShowViewCube = false, Items = [.. items.Select(i => i with { Dimmed = false })] };
+            var control = new ViewportControl { Width = Size, Height = Size, ShowViewCube = false, ShowAxes = false, Items = [.. items.Select(i => i with { Dimmed = false })] };
             var size = new Size(Size, Size);
             control.Measure(size);
             control.Arrange(new Rect(size));

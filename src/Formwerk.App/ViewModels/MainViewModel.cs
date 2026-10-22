@@ -447,10 +447,11 @@ public sealed partial class MainViewModel : ObservableObject
     private void ApplyResult(EvaluationResult result)
     {
         // The result of a finished drag already contains the new position: the preview has done its job (not while a new drag runs).
-        if (!_dragging && PreviewTransforms is not null) PreviewTransforms = null;
+        if (!_dragging && PreviewTransforms is not null && _ghostFor is null) PreviewTransforms = null;
         _lastResult = result;
         _outside = FindOutside(result);
         BuildViewportItems(result);
+        KeepLibraryGhost(); // an evaluation while an element is dragged over the view must not take its ghost away
 
         _errors.Clear();
         foreach (var error in result.Errors) _errors[error.Node.Id] = error.Message;

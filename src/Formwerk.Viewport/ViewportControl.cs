@@ -43,6 +43,7 @@ public sealed partial class ViewportControl : Grid
     private readonly OrbitCamera _orbit = new();
     private readonly DirectionalLight _keyLight = new(Colors.White, new Vector3D(0, 0, -1));
     private readonly ModelVisual3D _bedVisual = new();
+    private bool _showAxes = true;
     private readonly ModelVisual3D _partsVisual = new();
     private readonly Dictionary<Model3D, ModelInfo> _models = [];
     private readonly Dictionary<(uint, bool, ViewportItemKind, bool, ViewportDisplayMode, bool, int), Material> _materials = [];
@@ -281,6 +282,18 @@ public sealed partial class ViewportControl : Grid
 
     // ---- build plate, grid and axes ------------------------------------------------------------
 
+    /// <summary>False leaves out the axes at the origin (the pictures of templates and library elements are drawn without them).</summary>
+    public bool ShowAxes
+    {
+        get => _showAxes;
+        set
+        {
+            if (_showAxes == value) return;
+            _showAxes = value;
+            RebuildBed();
+        }
+    }
+
     private void RebuildBed()
     {
         var v = BuildVolume;
@@ -323,9 +336,12 @@ public sealed partial class ViewportControl : Grid
         }
 
         // Axes: X red, Y green, Z blue (spec section 7).
-        group.Children.Add(Flat(Axis(new Vector3D(1, 0, 0)), Color.FromRgb(0xE5, 0x53, 0x4B)));
-        group.Children.Add(Flat(Axis(new Vector3D(0, 1, 0)), Color.FromRgb(0x5F, 0xC2, 0x5F)));
-        group.Children.Add(Flat(Axis(new Vector3D(0, 0, 1)), Color.FromRgb(0x4C, 0x8D, 0xFF)));
+        if (_showAxes)
+        {
+            group.Children.Add(Flat(Axis(new Vector3D(1, 0, 0)), Color.FromRgb(0xE5, 0x53, 0x4B)));
+            group.Children.Add(Flat(Axis(new Vector3D(0, 1, 0)), Color.FromRgb(0x5F, 0xC2, 0x5F)));
+            group.Children.Add(Flat(Axis(new Vector3D(0, 0, 1)), Color.FromRgb(0x4C, 0x8D, 0xFF)));
+        }
 
         _bedVisual.Content = group;
     }

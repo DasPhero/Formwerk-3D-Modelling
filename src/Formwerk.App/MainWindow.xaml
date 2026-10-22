@@ -593,6 +593,8 @@
                                     FacePickMode="{Binding IsFacePickActive}"
                                     FacePickCommand="{Binding FacePickedCommand}"
                                     LibraryDropCommand="{Binding DropLibraryItemCommand}"
+                                    LibraryDragOverCommand="{Binding LibraryDragOverCommand}"
+                                    LibraryDragEndCommand="{Binding LibraryDragEndCommand}"
                                     FaceHoverCommand="{Binding FaceHoveredCommand}"
                                     EdgeHighlight="{Binding EdgeHighlight}"
                                     Measurements="{Binding ViewportMeasurements}"

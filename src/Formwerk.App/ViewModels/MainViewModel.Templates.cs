@@ -380,9 +380,10 @@ public sealed partial class MainViewModel
     /// Inserts a template; without a <paramref name="placement"/> at the first free spot, with one (a drop into the view, F-LIB-04) with its
     /// origin on the point and its up axis along the normal.
     /// </summary>
-    private void InsertTemplateAt(TemplateItemViewModel? item, Transform? placement)
+    private void InsertTemplateAt(TemplateItemViewModel? item, Transform? placement, Node? parent = null)
     {
         if (item is null) return;
+        var addTo = parent ?? _document.Root;
 
         var meshes = new MeshStore();
         FormwerkDocument template;
@@ -451,13 +452,13 @@ public sealed partial class MainViewModel
             copy.Name = UniqueName(item.Name);
             var t = copy.Transform;
             copy.Transform = placement is { } p ? Transform.Compose(p, t) : new Transform(t.Position + spot, t.Rotation, t.Scale);
-            commands.Add(new AddNodeCommand(_document, _document.Root, copy));
+            commands.Add(new AddNodeCommand(_document, addTo, copy));
             inserted = copy.Id;
         }
         else
         {
             var group = new GroupNode(UniqueName(item.Name)) { Transform = placement ?? Transform.FromPosition(spot) };
-            commands.Add(new AddNodeCommand(_document, _document.Root, group));
+            commands.Add(new AddNodeCommand(_document, addTo, group));
             foreach (var copy in copies) commands.Add(new AddNodeCommand(_document, group, copy));
             inserted = group.Id;
         }

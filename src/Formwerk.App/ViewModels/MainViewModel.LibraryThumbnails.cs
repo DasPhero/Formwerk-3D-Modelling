@@ -31,6 +31,7 @@ public sealed partial class MainViewModel
     private async Task MakeLibraryThumbnailsAsync()
     {
         if (_templatePreview is null) return;
+        CleanThumbnailFolder();
         var evaluator = new SceneEvaluator(_kernel); // its own caches; the kernel is shared, so it is used under the lock
 
         foreach (var entry in _libraryAll)
@@ -56,6 +57,24 @@ public sealed partial class MainViewModel
 
             entry.Thumbnail = png;
             await Task.Yield(); // let the window handle its messages between two pictures
+        }
+    }
+
+    /// <summary>Deletes the pictures of other versions of the catalog and of elements that are gone; other files in the folder stay.</summary>
+    private void CleanThumbnailFolder()
+    {
+        if (_thumbnailFolder is null || !Directory.Exists(_thumbnailFolder)) return;
+        var keep = new HashSet<string>(LibraryCatalog.Items.Select(i => $"{i.Id}-v{LibraryCatalog.ThumbnailVersion}.png"), StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            foreach (var file in Directory.EnumerateFiles(_thumbnailFolder, "*-v*.png"))
+            {
+                if (!keep.Contains(Path.GetFileName(file))) File.Delete(file);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // an old picture that cannot be deleted does no harm
         }
     }
 
