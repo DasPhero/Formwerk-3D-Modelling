@@ -504,6 +504,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void OnDocumentChanged()
     {
+        if (Measurements.Count > 0 || _measurePending.Count > 0) ClearMeasurements(); // they would no longer fit the model
         if (OpenContainerId is { } openId && _document.FindNode(openId) is null) SetOpenContainer(null); // the group is gone (undo, new, open)
         OnPropertyChanged(nameof(BuildVolume)); // a settings change, New or Open may have changed it
         // While a handle is dragged only transforms change: keep the list and the selection untouched (no flicker).
@@ -773,6 +774,7 @@ public sealed partial class MainViewModel : ObservableObject
         DrillCommand.NotifyCanExecuteChanged();
         EdgeCutCommand.NotifyCanExecuteChanged();
         SectionAtFaceCommand.NotifyCanExecuteChanged();
+        MeasureCommand.NotifyCanExecuteChanged();
         LinearPatternCommand.NotifyCanExecuteChanged();
         CircularPatternCommand.NotifyCanExecuteChanged();
         AlignCommand.NotifyCanExecuteChanged();

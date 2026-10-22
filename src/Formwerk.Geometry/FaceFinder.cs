@@ -29,6 +29,33 @@ public sealed class FaceInfo
     /// <summary>The diagonal of the box around the face, in mm: how big the face is.</summary>
     public float Extent { get; }
 
+    /// <summary>
+    /// The edges of the outline of the face, also around its holes: the edges that only one of its triangles has (points at the same place
+    /// are the same point), as pairs of end points.
+    /// </summary>
+    public IReadOnlyList<(Vector3 A, Vector3 B)> Boundary()
+    {
+        static (int, int, int) Key(Vector3 v) => ((int)MathF.Round(v.X * 1000), (int)MathF.Round(v.Y * 1000), (int)MathF.Round(v.Z * 1000));
+        var edges = new Dictionary<((int, int, int), (int, int, int)), (Vector3 A, Vector3 B, int Count)>();
+
+        void Add(Vector3 a, Vector3 b)
+        {
+            var ka = Key(a);
+            var kb = Key(b);
+            var key = ka.CompareTo(kb) <= 0 ? (ka, kb) : (kb, ka);
+            edges[key] = edges.TryGetValue(key, out var seen) ? (seen.A, seen.B, seen.Count + 1) : (a, b, 1);
+        }
+
+        foreach (var (a, b, c) in _triangles)
+        {
+            Add(a, b);
+            Add(b, c);
+            Add(c, a);
+        }
+
+        return [.. edges.Values.Where(e => e.Count == 1).Select(e => (e.A, e.B))];
+    }
+
     /// <summary>True when the point lies on the face (in its plane, within a triangle of it), not in a hole of it.</summary>
     public bool Contains(Vector3 point)
     {

@@ -116,6 +116,7 @@ public sealed partial class ViewportControl
         _gizmoViewport.Children.Add(_gizmoVisual);
         _gizmoViewport.Children.Add(_guideVisual);
         InitializeMarkers();
+        InitializeMeasurements();
         InitializeDimensions();
         _gizmoViewport.Camera = _camera;
         RebuildGizmo();

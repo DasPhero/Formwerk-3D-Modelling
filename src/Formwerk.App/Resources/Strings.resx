@@ -429,6 +429,34 @@ Try a different location or file name.</value></data>
   <data name="Section.PickFace.Tip" xml:space="preserve"><value>Click a face of an object: the cutting plane is put on that face and can be moved inwards with the slider</value></data>
   <data name="Hint.SectionFace" xml:space="preserve"><value>Click the face that the cutting plane should lie on; then move it with the slider. Esc cancels.</value></data>
   <data name="Msg.SectionFailed" xml:space="preserve"><value>The section view could not be made: {0}</value></data>
+  <data name="Tool.Measure" xml:space="preserve"><value>Measure</value></data>
+  <data name="Tool.Measure.Tip" xml:space="preserve"><value>Measure distances, angles and diameters: click points or faces of objects. Esc ends the tool</value></data>
+  <data name="Menu.Edit.Measure" xml:space="preserve"><value>_Measure</value></data>
+  <data name="Measure.Title" xml:space="preserve"><value>Measure</value></data>
+  <data name="Measure.Mode.Distance" xml:space="preserve"><value>Distance</value></data>
+  <data name="Measure.Mode.Faces" xml:space="preserve"><value>Faces</value></data>
+  <data name="Measure.Mode.Angle" xml:space="preserve"><value>Angle</value></data>
+  <data name="Measure.Mode.Diameter" xml:space="preserve"><value>Diameter</value></data>
+  <data name="Measure.Clear" xml:space="preserve"><value>Clear</value></data>
+  <data name="Measure.Empty" xml:space="preserve"><value>Nothing measured yet.</value></data>
+  <data name="Hint.MeasureDistance1" xml:space="preserve"><value>Click the first point. Corners, edge middles and face centers snap; Alt or Shift: the point as clicked. Esc ends the tool.</value></data>
+  <data name="Hint.MeasureDistance2" xml:space="preserve"><value>Click the second point.</value></data>
+  <data name="Hint.MeasureFaces1" xml:space="preserve"><value>Click the first face. Parallel faces give their distance, others the angle between them.</value></data>
+  <data name="Hint.MeasureFaces2" xml:space="preserve"><value>Click the second face.</value></data>
+  <data name="Hint.MeasureAngle1" xml:space="preserve"><value>Click the first point of the angle.</value></data>
+  <data name="Hint.MeasureAngle2" xml:space="preserve"><value>Click the corner of the angle.</value></data>
+  <data name="Hint.MeasureAngle3" xml:space="preserve"><value>Click the last point of the angle.</value></data>
+  <data name="Hint.MeasureDiameter" xml:space="preserve"><value>Click a round wall (a cylinder or a hole), or a flat face close to a round edge.</value></data>
+  <data name="Measure.Result.Distance" xml:space="preserve"><value>Distance {0} mm (X {1}, Y {2}, Z {3})</value></data>
+  <data name="Measure.Result.FacesDistance" xml:space="preserve"><value>Faces: distance {0} mm</value></data>
+  <data name="Measure.Result.FacesAngle" xml:space="preserve"><value>Faces: angle {0}°</value></data>
+  <data name="Measure.Result.Angle" xml:space="preserve"><value>Angle {0}°</value></data>
+  <data name="Measure.Result.Diameter" xml:space="preserve"><value>Diameter {0} mm (radius {1} mm)</value></data>
+  <data name="Measure.Result.DiameterHole" xml:space="preserve"><value>Diameter of the hole {0} mm (radius {1} mm)</value></data>
+  <data name="Measure.Label.Distance" xml:space="preserve"><value>{0} mm</value></data>
+  <data name="Measure.Label.Angle" xml:space="preserve"><value>{0}°</value></data>
+  <data name="Measure.Label.Diameter" xml:space="preserve"><value>Ø {0} mm</value></data>
+  <data name="Msg.MeasureNoRound" xml:space="preserve"><value>There is nothing round here: click the wall of a cylinder or a hole, or a flat face close to a round edge.</value></data>
   <data name="Edge.Type" xml:space="preserve"><value>Edge type</value></data>
   <data name="Edge.Where" xml:space="preserve"><value>Edges</value></data>
   <data name="Edge.Chamfer" xml:space="preserve"><value>Chamfer</value></data>

@@ -299,6 +299,7 @@
                 <MenuItem Header="{res:Loc Menu.Edit.FaceToFace}" Command="{Binding FaceToFaceCommand}" />
                 <MenuItem Header="{res:Loc Menu.Edit.Drill}" Command="{Binding DrillCommand}" />
                 <MenuItem Header="{res:Loc Menu.Edit.EdgeCut}" Command="{Binding EdgeCutCommand}" />
+                <MenuItem Header="{res:Loc Menu.Edit.Measure}" Command="{Binding MeasureCommand}" />
                 <MenuItem Header="{res:Loc Menu.Edit.Pattern}">
                     <MenuItem Header="{res:Loc Menu.Edit.Pattern.Linear}" Command="{Binding LinearPatternCommand}" />
                     <MenuItem Header="{res:Loc Menu.Edit.Pattern.Circular}" Command="{Binding CircularPatternCommand}" />
@@ -389,6 +390,8 @@
                               IsChecked="{Binding IsPlacingHole, Mode=OneWay}" Margin="14,0,0,0" AutomationProperties.AutomationId="DrillButton" />
                 <ToggleButton Content="{res:Loc Tool.EdgeCut}" ToolTip="{res:Loc Tool.EdgeCut.Tip}" Command="{Binding EdgeCutCommand}"
                               IsChecked="{Binding IsPlacingEdgeCut, Mode=OneWay}" Margin="6,0,0,0" AutomationProperties.AutomationId="EdgeCutButton" />
+                <ToggleButton Content="{res:Loc Tool.Measure}" ToolTip="{res:Loc Tool.Measure.Tip}" Command="{Binding MeasureCommand}"
+                              IsChecked="{Binding IsMeasuring, Mode=OneWay}" Margin="6,0,0,0" AutomationProperties.AutomationId="MeasureButton" />
             </StackPanel>
         </Border>
 
@@ -544,6 +547,7 @@
                                     FacePickCommand="{Binding FacePickedCommand}"
                                     FaceHoverCommand="{Binding FaceHoveredCommand}"
                                     EdgeHighlight="{Binding EdgeHighlight}"
+                                    Measurements="{Binding ViewportMeasurements}"
                                     Orthographic="{Binding IsOrthographic}"
                                     LightTheme="{Binding LightTheme}"
                                     ViewCubeLabels="{Binding ViewCubeLabels}"
@@ -645,6 +649,41 @@
                         <ToggleButton Content="{res:Loc Section.PickFace}" ToolTip="{res:Loc Section.PickFace.Tip}" Command="{Binding SectionAtFaceCommand}"
                                       IsChecked="{Binding IsPickingSectionFace, Mode=OneWay}" Margin="0,8,0,0" HorizontalAlignment="Left"
                                       AutomationProperties.AutomationId="SectionPickFace" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Measuring tool (E-07): mode, results -->
+                <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="12" Padding="10" Width="300" CornerRadius="4"
+                        BorderThickness="1" BorderBrush="{DynamicResource PanelBorderBrush}" Background="{DynamicResource PanelBrush}"
+                        Visibility="{Binding IsMeasuring, Converter={StaticResource BoolToVisibility}}"
+                        AutomationProperties.AutomationId="MeasurePanel">
+                    <StackPanel>
+                        <TextBlock Text="{res:Loc Measure.Title}" Style="{StaticResource PanelHeader}" Margin="0,0,0,6" />
+                        <ComboBox ItemsSource="{Binding MeasureModes}" DisplayMemberPath="Label" SelectedValuePath="Index"
+                                  SelectedValue="{Binding MeasureMode}" Margin="0,0,0,8" AutomationProperties.AutomationId="MeasureMode" />
+                        <TextBlock Text="{res:Loc Measure.Empty}" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Measurements.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Measurements}" AutomationProperties.AutomationId="MeasureResults">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Text}" TextWrapping="Wrap" Margin="0,0,0,3" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                        <Button Content="{res:Loc Measure.Clear}" Command="{Binding ClearMeasurementsCommand}" HorizontalAlignment="Left" Margin="0,8,0,0"
+                                AutomationProperties.AutomationId="MeasureClear" />
                     </StackPanel>
                 </Border>
 
