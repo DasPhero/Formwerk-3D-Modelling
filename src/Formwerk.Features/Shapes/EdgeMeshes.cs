@@ -23,7 +23,7 @@ public enum EdgeSide
 /// and watertight, the origin stays in the middle of the bottom face, and flat faces stay flat. A size that is too big for the shape is
 /// cut down to just below the largest one that works (like the wall of a tube).
 /// </summary>
-public static class EdgeMeshes
+public static partial class EdgeMeshes
 {
     /// <summary>Segments of a quarter circle in a fillet along an edge.</summary>
     private const int QuarterSteps = 8;

@@ -20,6 +20,8 @@ public sealed class HemisphereGenerator : ShapeGenerator
         new("diameter", "Diameter", 20, 0.01, 10000),
         new("segments", "Segments", 64, 3, 512, IsInteger: true),
         new("rings", "Rings", 16, 2, 256, IsInteger: true),
+        new("edgeSize", "Edge size", 0, 0, 10000, IsDetail: true),
+        new("edgeType", "Edge type", 1, 0, 1, IsInteger: true),    // 0 chamfer, 1 fillet (F-EDG-01)
     ];
 
     public override IReadOnlyList<ScaleBinding> ScaleBindings { get; } =
@@ -32,6 +34,7 @@ public sealed class HemisphereGenerator : ShapeGenerator
         var r = (float)p["diameter"] / 2;
         var n = (int)p["segments"];
         var rings = (int)p["rings"];
+        if (p["edgeSize"] > 0) return EdgeMeshes.Hemisphere(r, n, rings, (float)p["edgeSize"], (EdgeKind)(int)p["edgeType"]);
 
         // Layout: [center of the base][ring 0 = the rim of the base .. ring rings-1][pole]
         var v = new List<Vector3>(2 + rings * n) { Vector3.Zero };
@@ -79,6 +82,8 @@ public sealed class ConeGenerator : ShapeGenerator
         new("diameter", "Diameter", 20, 0.01, 10000),
         new("height", "Height", 20, 0.01, 10000),
         new("segments", "Segments", 64, 3, 512, IsInteger: true),
+        new("edgeSize", "Edge size", 0, 0, 10000, IsDetail: true),
+        new("edgeType", "Edge type", 1, 0, 1, IsInteger: true),    // 0 chamfer, 1 fillet (F-EDG-01)
     ];
 
     public override IReadOnlyList<ScaleBinding> ScaleBindings { get; } =
@@ -88,7 +93,9 @@ public sealed class ConeGenerator : ShapeGenerator
     ];
 
     protected override MeshData Build(IReadOnlyDictionary<string, double> p) =>
-        ShapeMesh.Stump((float)p["diameter"] / 2, 0, (float)p["height"], (int)p["segments"]);
+        p["edgeSize"] > 0
+            ? EdgeMeshes.Cone((float)p["diameter"] / 2, (float)p["height"], (int)p["segments"], (float)p["edgeSize"], (EdgeKind)(int)p["edgeType"])
+            : ShapeMesh.Stump((float)p["diameter"] / 2, 0, (float)p["height"], (int)p["segments"]);
 }
 
 /// <summary>A cone with its tip cut off: different diameters at the bottom and at the top.</summary>
@@ -104,6 +111,9 @@ public sealed class FrustumGenerator : ShapeGenerator
         new("topDiameter", "Top diameter", 10, 0.01, 10000),
         new("height", "Height", 20, 0.01, 10000),
         new("segments", "Segments", 64, 3, 512, IsInteger: true),
+        new("edgeSize", "Edge size", 0, 0, 10000, IsDetail: true),
+        new("edgeType", "Edge type", 1, 0, 1, IsInteger: true),    // 0 chamfer, 1 fillet (F-EDG-01)
+        new("edgeWhere", "Edge position", 0, 0, 2, IsInteger: true), // 0 all, 1 top, 2 bottom
     ];
 
     // Both diameters belong to the plan (X and Y): the scale handles change them together.
@@ -115,7 +125,11 @@ public sealed class FrustumGenerator : ShapeGenerator
     ];
 
     protected override MeshData Build(IReadOnlyDictionary<string, double> p) =>
-        ShapeMesh.Stump((float)p["bottomDiameter"] / 2, (float)p["topDiameter"] / 2, (float)p["height"], (int)p["segments"]);
+        p["edgeSize"] > 0
+            ? EdgeMeshes.Frustum(
+                (float)p["bottomDiameter"] / 2, (float)p["topDiameter"] / 2, (float)p["height"], (int)p["segments"], (float)p["edgeSize"],
+                (EdgeKind)(int)p["edgeType"], (EdgeSide)(int)p["edgeWhere"])
+            : ShapeMesh.Stump((float)p["bottomDiameter"] / 2, (float)p["topDiameter"] / 2, (float)p["height"], (int)p["segments"]);
 }
 
 /// <summary>A pyramid with a rectangular base and the tip straight above its center.</summary>
@@ -167,6 +181,9 @@ public sealed class PrismGenerator : ShapeGenerator
         new("diameter", "Diameter", 20, 0.01, 10000),
         new("height", "Height", 20, 0.01, 10000),
         new("sides", "Sides", 6, 3, 64, IsInteger: true),
+        new("edgeSize", "Edge size", 0, 0, 10000, IsDetail: true),
+        new("edgeType", "Edge type", 1, 0, 1, IsInteger: true),    // 0 chamfer, 1 fillet (F-EDG-01)
+        new("edgeWhere", "Edge position", 0, 0, 2, IsInteger: true), // 0 all, 1 top, 2 bottom
     ];
 
     // The diameter is that of the circle through the corners; the extents in X and Y follow from it (a fixed ratio for a given number of sides).
@@ -179,6 +196,8 @@ public sealed class PrismGenerator : ShapeGenerator
     protected override MeshData Build(IReadOnlyDictionary<string, double> p)
     {
         var r = (float)p["diameter"] / 2;
+        if (p["edgeSize"] > 0)
+            return EdgeMeshes.Prism(r, (float)p["height"], (int)p["sides"], (float)p["edgeSize"], (EdgeKind)(int)p["edgeType"], (EdgeSide)(int)p["edgeWhere"]);
         return ShapeMesh.Stump(r, r, (float)p["height"], (int)p["sides"]);
     }
 }
@@ -195,6 +214,9 @@ public sealed class WedgeGenerator : ShapeGenerator
         new("width", "Width", 20, 0.01, 10000),
         new("depth", "Depth", 20, 0.01, 10000),
         new("height", "Height", 20, 0.01, 10000),
+        new("edgeSize", "Edge size", 0, 0, 10000, IsDetail: true),
+        new("edgeType", "Edge type", 1, 0, 1, IsInteger: true),    // 0 chamfer, 1 fillet (F-EDG-01)
+        new("edgeWhere", "Edge position", 0, 0, 2, IsInteger: true), // 0 all, 1 top, 2 bottom
     ];
 
     public override IReadOnlyList<ScaleBinding> ScaleBindings { get; } =
@@ -207,6 +229,8 @@ public sealed class WedgeGenerator : ShapeGenerator
     protected override MeshData Build(IReadOnlyDictionary<string, double> p)
     {
         float hx = (float)p["width"] / 2, hy = (float)p["depth"] / 2, h = (float)p["height"];
+        if (p["edgeSize"] > 0)
+            return EdgeMeshes.Wedge((float)p["width"], (float)p["depth"], h, (float)p["edgeSize"], (EdgeKind)(int)p["edgeType"], (EdgeSide)(int)p["edgeWhere"]);
         Vector3[] v =
         [
             new(-hx, -hy, 0), new(hx, -hy, 0), new(hx, hy, 0), new(-hx, hy, 0), // 0..3 base
@@ -295,6 +319,9 @@ public sealed class TubeGenerator : ShapeGenerator
         new("wall", "Wall", 2, 0.01, 5000, IsDetail: true),
         new("height", "Height", 20, 0.01, 10000),
         new("segments", "Segments", 64, 3, 512, IsInteger: true),
+        new("edgeSize", "Edge size", 0, 0, 10000, IsDetail: true),
+        new("edgeType", "Edge type", 1, 0, 1, IsInteger: true),    // 0 chamfer, 1 fillet (F-EDG-01)
+        new("edgeWhere", "Edge position", 0, 0, 2, IsInteger: true), // 0 all, 1 top, 2 bottom
     ];
 
     public override IReadOnlyList<ScaleBinding> ScaleBindings { get; } =
@@ -309,6 +336,8 @@ public sealed class TubeGenerator : ShapeGenerator
         var ri = ro - MathF.Min((float)p["wall"], ro * 0.98f); // a wall of at least the whole radius would close the hole
         var h = (float)p["height"];
         var n = (int)p["segments"];
+        if (p["edgeSize"] > 0)
+            return EdgeMeshes.Tube(ro, ri, h, n, (float)p["edgeSize"], (EdgeKind)(int)p["edgeType"], (EdgeSide)(int)p["edgeWhere"]);
 
         // Layout: outer bottom [0,n), outer top [n,2n), inner bottom [2n,3n), inner top [3n,4n)
         var v = new Vector3[4 * n];

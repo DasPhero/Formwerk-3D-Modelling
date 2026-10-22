@@ -220,7 +220,7 @@ public sealed partial class PropertiesViewModel : ObservableObject
     public IReadOnlyList<EdgeChoice> EdgeTypes { get; } = [new(0, Texts.Get("Edge.Chamfer")), new(1, Texts.Get("Edge.Fillet"))];
 
     /// <summary>Which edges: a box has edges, a cylinder has rims.</summary>
-    public IReadOnlyList<EdgeChoice> EdgeWheres => _node is PrimitiveNode { GeneratorId: "cylinder" }
+    public IReadOnlyList<EdgeChoice> EdgeWheres => _node is PrimitiveNode { GeneratorId: "cylinder" or "frustum" or "tube" }
         ? [new(0, Texts.Get("Edge.Where.Rims")), new(1, Texts.Get("Edge.Where.TopRim")), new(2, Texts.Get("Edge.Where.BottomRim"))]
         : [new(0, Texts.Get("Edge.Where.All")), new(1, Texts.Get("Edge.Where.Top")), new(2, Texts.Get("Edge.Where.Bottom"))];
 
