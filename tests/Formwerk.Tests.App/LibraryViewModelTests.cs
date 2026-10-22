@@ -208,7 +208,8 @@ public sealed class LibraryViewModelTests : IDisposable
     [UiFact]
     public async Task Every_element_of_the_library_can_be_inserted()
     {
-        var vm = NewViewModel();
+        var dialogs = new FakeDialogs { TemplateParametersScript = _ => true }; // elements with parameters ask first: take the defaults
+        var vm = new MainViewModel(new ManifoldKernel(), dialogs);
 
         foreach (var item in LibraryCatalog.Items) await Insert(vm, item.Id);
 

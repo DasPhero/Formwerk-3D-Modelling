@@ -109,7 +109,43 @@ public static class LibraryCatalog
             ["axle", "achse", "pin", "stift", "shaft", "welle", "rod"], "Round pin 4 mm across and 30 mm long with chamfered ends.",
             new Vector3(4, 4, 30), AxlePin));
 
+        // Elements with parameters (F-PAR-05): a small form asks for the values when they are inserted
+        ElementParameter[] boxParameters =
+        [
+            new("innerWidth", "Inner width", 50, 5, 1000), new("innerDepth", "Inner depth", 30, 5, 1000), new("innerHeight", "Inner height", 20, 2, 1000),
+            new("wall", "Wall", 2, 0.4, 20), new("play", "Play", 0.2, 0, 2),
+        ];
+        items.Add(Parametric("box-with-lid", "Box with Lid", LibraryCategory.Enclosures,
+            ["case", "housing", "gehaeuse", "deckel", "lid", "cover", "container", "variant", "variante"],
+            "Open box with a lid that has a lip with play; asks for the inner size, the wall and the play.", boxParameters, BoxWithLid,
+            v => new Vector3((float)(2 * (v.N("innerWidth") + 2 * v.N("wall")) + 6), (float)(v.N("innerDepth") + 2 * v.N("wall")),
+                (float)Math.Max(v.N("innerHeight") + v.N("wall"), 2 * v.N("wall")))));
+
+        ElementParameter[] sleeveParameters = [new("height", "Height", 10, 0.5, 500), new("outerDiameter", "Outer diameter", 6, 1, 200), new("holeDiameter", "Hole diameter", 3.2, 0.5, 199)];
+        items.Add(Parametric("spacer-sleeve", "Spacer Sleeve", LibraryCategory.Fasteners,
+            ["spacer", "standoff", "abstandshalter", "sleeve", "buchse", "variant", "variante"],
+            "Round spacer with a through hole; asks for the height and the two diameters.", sleeveParameters, SpacerSleeve,
+            v => new Vector3((float)v.N("outerDiameter"), (float)v.N("outerDiameter"), (float)v.N("height"))));
+
+        ElementParameter[] plateParameters =
+        [
+            new("width", "Width", 60, 10, 1000), new("depth", "Depth", 40, 10, 1000), new("thickness", "Thickness", 3, 0.4, 50),
+            new("holeDiameter", "Hole diameter", 4, 0.5, 50), new("margin", "Margin", 8, 1, 100),
+        ];
+        items.Add(Parametric("mounting-plate", "Mounting Plate", LibraryCategory.Brackets,
+            ["plate", "platte", "mounting", "halterung", "holder", "variant", "variante"],
+            "Flat plate with four screw holes near the corners; asks for the size, the hole and the margin.", plateParameters, MountingPlate,
+            v => new Vector3((float)v.N("width"), (float)v.N("depth"), (float)v.N("thickness"))));
+
         return items;
+    }
+
+    private static LibraryItem Parametric(string id, string name, LibraryCategory category, string[] keywords, string description,
+        ElementParameter[] parameters, Func<ElementValues, Node> build, Func<ElementValues, Vector3> footprintFor)
+    {
+        var defaults = ElementValues.Defaults(parameters);
+        return new LibraryItem(id, name, category, keywords, description, footprintFor(defaults), Recipe: () => build(defaults),
+            Parameters: parameters, ParametricRecipe: build, FootprintFor: footprintFor);
     }
 
     private static LibraryItem Recipe(string id, string name, LibraryCategory category, string[] keywords, string description, Vector3 footprint, Func<Node> build) =>
@@ -197,6 +233,50 @@ public static class LibraryCatalog
     }
 
     // ---- building blocks -------------------------------------------------------------------------
+
+    // ---- the recipes with parameters ---------------------------------------------------------------
+
+    private static Node BoxWithLid(ElementValues v)
+    {
+        var wall = v.N("wall");
+        var outerWidth = v.N("innerWidth") + 2 * wall;
+        var shift = (float)((outerWidth + 6) / 2); // the box and the lid side by side, 6 mm apart, the whole centered
+
+        var tree = new Tree();
+        var top = tree.Add(tree.Root, new GroupNode("Box with Lid"));
+        var box = tree.Add(top, new BooleanNode("Box", BooleanOperation.Difference) { Transform = Transform.FromPosition(new Vector3(-shift, 0, 0)) });
+        tree.Add(box, Shape("box", "Outside", Vector3.Zero, ("width", v.Calc("innerWidth + 2*wall")), ("depth", v.Calc("innerDepth + 2*wall")), ("height", v.Calc("innerHeight + wall"))));
+        tree.Add(box, Shape("box", "Inside", new Vector3(0, 0, (float)wall), ("width", v.Calc("innerWidth")), ("depth", v.Calc("innerDepth")), ("height", v.Calc("innerHeight + wall"))));
+        var lid = tree.Add(top, new MergeNode("Lid") { Transform = Transform.FromPosition(new Vector3(shift, 0, 0)) });
+        tree.Add(lid, Shape("box", "Plate", Vector3.Zero, ("width", v.Calc("innerWidth + 2*wall")), ("depth", v.Calc("innerDepth + 2*wall")), ("height", v.Calc("wall"))));
+        tree.Add(lid, Shape("box", "Lip", new Vector3(0, 0, (float)wall), ("width", v.Calc("innerWidth - 2*play")), ("depth", v.Calc("innerDepth - 2*play")), ("height", v.Calc("wall"))));
+        return tree.Take(top);
+    }
+
+    private static Node SpacerSleeve(ElementValues v) =>
+        Shape("tube", "Spacer Sleeve", Vector3.Zero, ("outerDiameter", v.Calc("outerDiameter")), ("wall", v.Calc("(outerDiameter - holeDiameter)/2")), ("height", v.Calc("height")), ("segments", "64"));
+
+    private static Node MountingPlate(ElementValues v)
+    {
+        var tree = new Tree();
+        var top = tree.Add(tree.Root, new BooleanNode("Mounting Plate", BooleanOperation.Difference));
+        tree.Add(top, Shape("box", "Plate", Vector3.Zero, ("width", v.Calc("width")), ("depth", v.Calc("depth")), ("height", v.Calc("thickness"))));
+        var x = (float)(v.N("width") / 2 - v.N("margin"));
+        var y = (float)(v.N("depth") / 2 - v.N("margin"));
+        var number = 1;
+        foreach (var sx in new[] { -1f, 1f })
+        foreach (var sy in new[] { -1f, 1f })
+            tree.Add(top, Shape("cylinder", $"Hole {number++}", new Vector3(sx * x, sy * y, -1), ("diameter", v.Calc("holeDiameter")), ("height", v.Calc("thickness + 2")), ("segments", "64")));
+        return tree.Take(top);
+    }
+
+    /// <summary>A shape whose parameters are given as text (numbers or formulas).</summary>
+    private static PrimitiveNode Shape(string generator, string name, Vector3 position, params (string Key, string Value)[] values)
+    {
+        var node = new PrimitiveNode(generator, name) { Transform = Transform.FromPosition(position) };
+        foreach (var (key, value) in values) node.Parameters[key] = value;
+        return node;
+    }
 
     private static string Fmt(double value) => value.ToString("0.##", CultureInfo.InvariantCulture);
 

@@ -5,8 +5,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Formwerk.App.Resources;
 using Formwerk.Core.Commands;
+using Formwerk.Core.Expressions;
 using Formwerk.Core.Model;
 using Formwerk.Features.Evaluation;
+using Formwerk.Features.Shapes;
 using Formwerk.IO;
 using Formwerk.Library;
 using Formwerk.Viewport;
@@ -198,11 +200,63 @@ public sealed partial class MainViewModel
             return;
         }
 
-        var node = item.CreateNode();
+        ElementValues? values = null;
+        if (item.IsParametric && !AskElementValues(item, out values)) return;
+
+        var node = values is null ? item.CreateNode() : item.CreateNode(values);
         node.Name = UniqueName(item.Name);
-        node.Transform = Transform.FromPosition(FreeSpot(item.Footprint));
+        node.Transform = Transform.FromPosition(FreeSpot(values is null || item.FootprintFor is null ? item.Footprint : item.FootprintFor(values)));
         _history.Execute(new AddNodeCommand(_document, _document.Root, node));
         SelectOnly([node.Id]);
+    }
+
+    /// <summary>
+    /// The form of an element with parameters (F-PAR-05): one field per parameter, preset with the default; a number, a formula or a
+    /// project variable is accepted (it stays linked). False when the form was cancelled or a value does not work: nothing is inserted then.
+    /// </summary>
+    private bool AskElementValues(LibraryItem item, out ElementValues? values)
+    {
+        values = null;
+        var variables = _document.ResolveVariables(out _);
+        var fields = new List<FieldViewModel>();
+        foreach (var parameter in item.Parameters!)
+        {
+            var definition = new ParameterDefinition(parameter.Name, parameter.Label, parameter.Default, parameter.Min, parameter.Max);
+            var saved = parameter.Default.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+            var field = new FieldViewModel(parameter.Label, parameter.Unit,
+                text => TemplateParametersViewModel.Check(text, definition, parameter.Label, saved, variables, out _));
+            field.SetFromModel(saved);
+            fields.Add(field);
+        }
+
+        var form = new TemplateParametersViewModel(item.Name, fields);
+        if (!_dialogs.ShowTemplateParameters(form)) return false;
+        if (!form.IsValid)
+        {
+            SetNotice(Texts.Get("Msg.ElementParametersInvalid"));
+            return false;
+        }
+
+        var expressions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var numbers = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        for (var i = 0; i < fields.Count; i++)
+        {
+            var parameter = item.Parameters[i];
+            var definition = new ParameterDefinition(parameter.Name, parameter.Label, parameter.Default, parameter.Min, parameter.Max);
+            var saved = parameter.Default.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+            if (TemplateParametersViewModel.Check(fields[i].Text, definition, parameter.Label, saved, variables, out var expression) is not null
+                || ExpressionParser.Evaluate(expression, variables) is not { IsSuccess: true } result)
+            {
+                SetNotice(Texts.Get("Msg.ElementParametersInvalid"));
+                return false;
+            }
+
+            expressions[parameter.Name] = expression;
+            numbers[parameter.Name] = result.Value;
+        }
+
+        values = new ElementValues(expressions, numbers);
+        return true;
     }
 
     /// <summary>Where a drop puts the element: on the point of a face along its normal; on the plate on the grid when grid snap is on.</summary>
@@ -254,7 +308,10 @@ public sealed partial class MainViewModel
             return;
         }
 
-        var node = item!.CreateNode();
+        ElementValues? values = null;
+        if (item!.IsParametric && !AskElementValues(item, out values)) return;
+
+        var node = values is null ? item.CreateNode() : item.CreateNode(values);
         node.Name = UniqueName(item.Name);
         node.Transform = placement;
         _history.Execute(new AddNodeCommand(_document, parent, node));

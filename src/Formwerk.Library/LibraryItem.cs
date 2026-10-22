@@ -1,5 +1,7 @@
 using System.Globalization;
 using System.Numerics;
+using System.Text.RegularExpressions;
+using Formwerk.Core.Expressions;
 using Formwerk.Core.Model;
 using Formwerk.Features.Shapes;
 
@@ -33,6 +35,43 @@ public static class LibraryCategoryNames
     };
 }
 
+/// <summary>A parameter of a library element that is asked when the element is inserted (F-PAR-05).</summary>
+public sealed record ElementParameter(string Name, string Label, double Default, double Min, double Max, string Unit = "mm");
+
+/// <summary>
+/// The values for a library element with parameters: for every parameter what the user typed (<see cref="Expressions"/>: a number, a formula
+/// or a project variable) and the number it comes to (<see cref="Numbers"/>, for positions that cannot be formulas).
+/// </summary>
+public sealed record ElementValues(IReadOnlyDictionary<string, string> Expressions, IReadOnlyDictionary<string, double> Numbers)
+{
+    /// <summary>The default values of the parameters.</summary>
+    public static ElementValues Defaults(IReadOnlyList<ElementParameter> parameters) => new(
+        parameters.ToDictionary(p => p.Name, p => p.Default.ToString("R", CultureInfo.InvariantCulture), StringComparer.OrdinalIgnoreCase),
+        parameters.ToDictionary(p => p.Name, p => p.Default, StringComparer.OrdinalIgnoreCase));
+
+    public double N(string name) => Numbers[name];
+
+    /// <summary>
+    /// A formula in the names of the parameters ("innerWidth + 2*wall") as the text of a node parameter. When every parameter in it is a
+    /// plain number the result is the number itself; otherwise the names are replaced by what was typed (in brackets), so a project
+    /// variable in a value stays linked.
+    /// </summary>
+    public string Calc(string formula)
+    {
+        var plain = true;
+        var text = Regex.Replace(formula, @"[A-Za-z_]\w*", match =>
+        {
+            if (!Expressions.TryGetValue(match.Value, out var expression)) return match.Value;
+            if (!double.TryParse(expression, NumberStyles.Float, CultureInfo.InvariantCulture, out _)) plain = false;
+            return "(" + expression + ")";
+        });
+
+        if (plain && ExpressionParser.Evaluate(text) is { IsSuccess: true } result)
+            return Math.Round(result.Value, 6).ToString("R", CultureInfo.InvariantCulture);
+        return text;
+    }
+}
+
 /// <summary>
 /// One element of the library: a basic shape, or a ready-made parametric element (a tree of shapes and booleans that is inserted as
 /// normal nodes, so every dimension stays editable). <see cref="Keywords"/> hold the other names of the element (also German ones), so
@@ -41,7 +80,10 @@ public static class LibraryCategoryNames
 /// <param name="Id">Stable id (saved for the favorites).</param>
 /// <param name="Footprint">The size in mm of the element as it is inserted (it rests on the plate, centered); used to find a free place for it.</param>
 /// <param name="ShapeId">The generator of a basic shape; null for a recipe.</param>
-/// <param name="Recipe">Builds a new, loose node tree of a ready-made element; null for a basic shape.</param>
+/// <param name="Recipe">Builds a new, loose node tree of a ready-made element; null for a basic shape. An element with parameters has one as well (made from the defaults).</param>
+/// <param name="Parameters">The parameters that are asked when an element with parameters is inserted (F-PAR-05); null for the others.</param>
+/// <param name="ParametricRecipe">Builds the tree for the given values; null for an element without parameters.</param>
+/// <param name="FootprintFor">The size the element has with the given values, for finding a place.</param>
 public sealed record LibraryItem(
     string Id,
     string Name,
@@ -50,9 +92,18 @@ public sealed record LibraryItem(
     string Description,
     Vector3 Footprint,
     string? ShapeId = null,
-    Func<Node>? Recipe = null)
+    Func<Node>? Recipe = null,
+    IReadOnlyList<ElementParameter>? Parameters = null,
+    Func<ElementValues, Node>? ParametricRecipe = null,
+    Func<ElementValues, Vector3>? FootprintFor = null)
 {
     public bool IsShape => ShapeId is not null;
+
+    /// <summary>The element asks for its parameters when it is inserted.</summary>
+    public bool IsParametric => Parameters is { Count: > 0 } && ParametricRecipe is not null;
+
+    /// <summary>A new loose tree of an element with parameters for the given values.</summary>
+    public Node CreateNode(ElementValues values) => ParametricRecipe is null ? CreateNode() : ParametricRecipe(values);
 
     /// <summary>A new loose node (tree) of this element with new ids, named like the element; the caller makes the name unique and adds it.</summary>
     public Node CreateNode()
