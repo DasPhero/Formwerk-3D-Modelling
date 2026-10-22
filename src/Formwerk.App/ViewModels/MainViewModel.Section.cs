@@ -263,6 +263,7 @@ public sealed partial class MainViewModel
             IsPlacingHole = false;
             IsPlacingEdgeCut = false;
             IsMeasuring = false;
+            IsPickingPivot = false;
             IsPickingMirrorFace = false;
             EndFaceToFaceMode();
         }

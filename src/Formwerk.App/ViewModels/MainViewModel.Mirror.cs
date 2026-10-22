@@ -53,6 +53,7 @@ public sealed partial class MainViewModel
         IsPlacingEdgeCut = false;
         IsPickingSectionFace = false;
         IsMeasuring = false;
+        IsPickingPivot = false;
         EndFaceToFaceMode();
         _mirrorFaceCopy = copy;
         IsPickingMirrorFace = true;

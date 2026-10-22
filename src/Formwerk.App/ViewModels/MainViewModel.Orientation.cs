@@ -61,6 +61,7 @@ public sealed partial class MainViewModel
             IsPlacingEdgeCut = false;
             IsPickingSectionFace = false;
             IsMeasuring = false;
+            IsPickingPivot = false;
             IsPickingMirrorFace = false;
             EndFaceToFaceMode();
         }
@@ -79,6 +80,7 @@ public sealed partial class MainViewModel
             IsPlacingEdgeCut = false;
             IsPickingSectionFace = false;
             IsMeasuring = false;
+            IsPickingPivot = false;
             EndFaceToFaceMode();
             IsPickingMirrorFace = false;
             RefreshScaleHint();
@@ -88,6 +90,7 @@ public sealed partial class MainViewModel
         if (IsPlacingHole) PlaceHole(pick);
         else if (IsPlacingEdgeCut) PlaceEdgeCut(pick);
         else if (IsPickingSectionFace) SectionFacePicked(pick);
+        else if (IsPickingPivot) PivotPicked(pick);
         else if (IsMeasuring) MeasureClick(pick);
         else if (IsPickingMirrorFace) MirrorAtFace(pick);
         else if (IsPickingFaceToFace) FaceToFaceClick(pick);

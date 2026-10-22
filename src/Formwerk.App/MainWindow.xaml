@@ -709,6 +709,27 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Pivot of the Rotate tool (F-ROT-03) -->
+                <Border HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12" Padding="10,6" CornerRadius="4"
+                        BorderThickness="1" BorderBrush="{DynamicResource PanelBorderBrush}" Background="{DynamicResource PanelBrush}"
+                        Visibility="{Binding IsPivotVisible, Converter={StaticResource BoolToVisibility}}"
+                        AutomationProperties.AutomationId="PivotPanel">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{res:Loc Pivot.Label}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <ComboBox ItemsSource="{Binding PivotModes}" DisplayMemberPath="Label" SelectedValuePath="Index"
+                                  SelectedValue="{Binding PivotMode}" MinWidth="190" AutomationProperties.AutomationId="PivotMode" />
+                        <ComboBox ItemsSource="{Binding PivotCorners}" DisplayMemberPath="Label" SelectedValuePath="Index"
+                                  SelectedValue="{Binding PivotCorner}" MinWidth="150" Margin="8,0,0,0" AutomationProperties.AutomationId="PivotCorner"
+                                  Visibility="{Binding IsPivotCornerVisible, Converter={StaticResource BoolToVisibility}}" />
+                        <StackPanel Orientation="Horizontal" Margin="8,0,0,0"
+                                    Visibility="{Binding IsPivotPointVisible, Converter={StaticResource BoolToVisibility}}">
+                            <ToggleButton Content="{res:Loc Pivot.Pick}" ToolTip="{res:Loc Pivot.Pick.Tip}" Command="{Binding PivotPickCommand}"
+                                          IsChecked="{Binding IsPickingPivot, Mode=OneWay}" AutomationProperties.AutomationId="PivotPick" />
+                            <TextBlock Text="{Binding CustomPivotText}" Foreground="{DynamicResource MutedTextBrush}" VerticalAlignment="Center" Margin="8,0,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
                 <!-- Measuring tool (E-07): mode, results -->
                 <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="12" Padding="10" Width="300" CornerRadius="4"
                         BorderThickness="1" BorderBrush="{DynamicResource PanelBorderBrush}" Background="{DynamicResource PanelBrush}"

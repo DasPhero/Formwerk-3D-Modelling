@@ -377,6 +377,21 @@ Try a different location or file name.</value></data>
   <data name="Msg.ExportedObj" xml:space="preserve"><value>Exported {0} object(s) to {1}.</value></data>
   <data name="Hint.GroupOpen" xml:space="preserve"><value>Editing inside {0}: click parts to select and move them. Double-click empty space or press Esc to leave.</value></data>
   <data name="Menu.View.ShowHoles" xml:space="preserve"><value>Show _Holes</value></data>
+  <data name="Pivot.Label" xml:space="preserve"><value>Pivot</value></data>
+  <data name="Pivot.Center" xml:space="preserve"><value>Center of the selection</value></data>
+  <data name="Pivot.Corner" xml:space="preserve"><value>Corner of the bounding box</value></data>
+  <data name="Pivot.Point" xml:space="preserve"><value>A point I pick</value></data>
+  <data name="Pivot.World" xml:space="preserve"><value>World origin</value></data>
+  <data name="Pivot.Left" xml:space="preserve"><value>Left</value></data>
+  <data name="Pivot.Right" xml:space="preserve"><value>Right</value></data>
+  <data name="Pivot.Front" xml:space="preserve"><value>front</value></data>
+  <data name="Pivot.Back" xml:space="preserve"><value>back</value></data>
+  <data name="Pivot.Bottom" xml:space="preserve"><value>bottom</value></data>
+  <data name="Pivot.Top" xml:space="preserve"><value>top</value></data>
+  <data name="Pivot.Pick" xml:space="preserve"><value>Pick point</value></data>
+  <data name="Pivot.Pick.Tip" xml:space="preserve"><value>Click a point of an object: corners, edge middles and face centers snap (Alt or Shift: exactly where you click). Esc ends</value></data>
+  <data name="Hint.PivotPick" xml:space="preserve"><value>Click the point the selection should turn around (corners, edge middles and face centers snap; Alt or Shift: as clicked). Esc cancels.</value></data>
+  <data name="Msg.PivotSet" xml:space="preserve"><value>Pivot point: {0}.</value></data>
   <data name="Panel.Library" xml:space="preserve"><value>Library</value></data>
   <data name="Library.Search" xml:space="preserve"><value>Search...</value></data>
   <data name="Library.Search.Tip" xml:space="preserve"><value>Search the library by name or keyword, for example screw, nut, box. All words must match</value></data>

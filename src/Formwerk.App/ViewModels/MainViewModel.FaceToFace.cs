@@ -57,6 +57,7 @@ public sealed partial class MainViewModel
         IsPlacingEdgeCut = false;
         IsPickingSectionFace = false;
         IsMeasuring = false;
+        IsPickingPivot = false;
         IsPickingMirrorFace = false;
         _faceToFaceFirst = null;
         FaceGap.SetFromModel(_faceGapText);

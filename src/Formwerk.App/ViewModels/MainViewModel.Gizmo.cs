@@ -106,6 +106,8 @@ public sealed partial class MainViewModel : IGizmoTarget
         OnPropertyChanged(nameof(IsMoveTool));
         OnPropertyChanged(nameof(IsRotateTool));
         OnPropertyChanged(nameof(IsScaleTool));
+        OnPropertyChanged(nameof(IsPivotVisible));
+        if (value != ViewportTool.Rotate) IsPickingPivot = false;
         UpdatePivot();
         RefreshScaleHint();
     }
@@ -116,6 +118,7 @@ public sealed partial class MainViewModel : IGizmoTarget
         if (IsPlacingHole) HintText = Texts.Get("Hint.HolePlace");
         else if (IsPlacingEdgeCut) HintText = Texts.Get("Hint.EdgeCutPlace");
         else if (IsPickingSectionFace) HintText = IsPickingSectionPoints ? Texts.Format("Hint.SectionPoints", _sectionPoints.Count + 1) : Texts.Get("Hint.SectionFace");
+        else if (IsPickingPivot) HintText = Texts.Get("Hint.PivotPick");
         else if (IsMeasuring) HintText = MeasureHint();
         else if (IsPickingMirrorFace) HintText = Texts.Get("Hint.MirrorFace");
         else if (IsPickingFaceToFace) HintText = Texts.Get(FaceToFaceHasFirst ? "Hint.FaceToFaceSecond" : "Hint.FaceToFaceFirst");
@@ -139,12 +142,12 @@ public sealed partial class MainViewModel : IGizmoTarget
         ViewportDimensions = ComputeDimensions();
     }
 
-    /// <summary>Center of the bounding box of everything the selected objects show (solids and hole ghosts).</summary>
+    /// <summary>The pivot of the handles: the center of the bounding box of everything the selected objects show (solids and hole ghosts), or what the Rotate tool was told to turn around (F-ROT-03).</summary>
     private Vector3? ComputePivot()
     {
         if (_lastResult is null || _selected.Count == 0) return null;
         var bounds = BoundsOfSelection(_lastResult, includeGhosts: true);
-        return bounds is null ? null : (bounds.Value.Min + bounds.Value.Max) * 0.5f;
+        return bounds is null ? null : ChosenPivot(bounds.Value.Min, bounds.Value.Max);
     }
 
     private (Vector3 Min, Vector3 Max)? BoundsOfSelection(EvaluationResult result, bool includeGhosts)
