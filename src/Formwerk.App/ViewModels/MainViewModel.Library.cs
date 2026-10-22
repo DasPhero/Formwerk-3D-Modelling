@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Numerics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Formwerk.App.Resources;
@@ -6,6 +7,7 @@ using Formwerk.Core.Commands;
 using Formwerk.Core.Model;
 using Formwerk.IO;
 using Formwerk.Library;
+using Formwerk.Viewport;
 
 namespace Formwerk.App.ViewModels;
 
@@ -19,7 +21,7 @@ public sealed partial class LibraryEntryViewModel(LibraryItem item, Action<Libra
     public string Name => Item.Name;
 
     /// <summary>The tooltip: what the element is.</summary>
-    public string Tip => Item.Description;
+    public string Tip => Item.Description + "\n" + Texts.Get("Library.Item.Tip");
 
     [ObservableProperty]
     public partial bool IsFavorite { get; set; }
@@ -136,6 +138,31 @@ public sealed partial class MainViewModel
         var node = item.CreateNode();
         node.Name = UniqueName(item.Name);
         node.Transform = Transform.FromPosition(FreeSpot(item.Footprint));
+        _history.Execute(new AddNodeCommand(_document, _document.Root, node));
+        SelectOnly([node.Id]);
+    }
+
+    /// <summary>
+    /// An element dropped into the view (F-LIB-04): on a face it stands on the point with its up axis along the normal of the face (a
+    /// cylinder dropped on a slanted face stands perpendicular on it); on the plate it stands upright at the mouse position, on the grid
+    /// when grid snap is on (Alt or Shift: exactly where the mouse is). One undo step; the new element is selected.
+    /// </summary>
+    [RelayCommand]
+    private void DropLibraryItem(LibraryDropRequest? request)
+    {
+        if (request is null || LibraryCatalog.Find(request.ItemId) is not { } item) return;
+
+        var pick = request.Pick;
+        var point = pick.Point;
+        if (pick.NodeId == Guid.Empty && SnapToGrid && GridStep > 0 && !pick.NoSnap)
+        {
+            var step = (float)GridStep;
+            point = new Vector3(MathF.Round(point.X / step) * step, MathF.Round(point.Y / step) * step, point.Z);
+        }
+
+        var node = item.CreateNode();
+        node.Name = UniqueName(item.Name);
+        node.Transform = FacePlacement.OnFace(point, pick.Normal);
         _history.Execute(new AddNodeCommand(_document, _document.Root, node));
         SelectOnly([node.Id]);
     }

@@ -57,6 +57,7 @@ public sealed partial class ViewportControl : Grid
     public ViewportControl()
     {
         Focusable = true;
+        AllowDrop = true; // elements of the library can be dropped into the view (F-LIB-04)
         FocusVisualStyle = null;
         ClipToBounds = true;
         Background = BackgroundFor(false);
