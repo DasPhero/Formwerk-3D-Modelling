@@ -455,16 +455,20 @@
                                 </TextBlock.Style>
                             </TextBlock>
                         </Grid>
-                        <ComboBox ItemsSource="{Binding LibraryCategoryChoices}" DisplayMemberPath="Label" SelectedValuePath="Index"
-                                  SelectedValue="{Binding LibraryCategoryIndex}" Margin="0,0,0,6" AutomationProperties.AutomationId="LibraryCategory" />
-                        <TextBlock Text="{res:Loc Library.Empty}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,8"
+                        <DockPanel Margin="0,0,0,6">
+                            <Button DockPanel.Dock="Right" Content="{res:Loc Tpl.Import}" Padding="8,2" Margin="6,0,0,0"
+                                    Command="{Binding ImportTemplateCommand}" ToolTip="{res:Loc Tpl.ImportTip}" AutomationProperties.AutomationId="ImportTemplate" />
+                            <ComboBox ItemsSource="{Binding LibraryCategoryChoices}" DisplayMemberPath="Label" SelectedValuePath="Index"
+                                      SelectedValue="{Binding LibraryCategoryIndex}" AutomationProperties.AutomationId="LibraryCategory" />
+                        </DockPanel>
+                        <TextBlock Text="{Binding LibraryEmptyText}" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,8"
                                    Visibility="{Binding IsLibraryEmpty, Converter={StaticResource BoolToVisibility}}" />
                         <ScrollViewer MaxHeight="250" VerticalScrollBarVisibility="Auto" Margin="0,0,0,12">
                             <ItemsControl ItemsSource="{Binding LibraryEntries}" AutomationProperties.AutomationId="LibraryList">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
-                                <ItemsControl.ItemTemplate>
+                                <ItemsControl.Resources>
                                     <DataTemplate DataType="{x:Type vm:LibraryEntryViewModel}">
                                         <Grid Margin="0,0,4,4" Width="64">
                                             <Button Padding="2" ToolTip="{Binding Tip}" views:LibraryDragBehavior.ItemId="{Binding Item.Id}"
@@ -494,52 +498,45 @@
                                             </ToggleButton>
                                         </Grid>
                                     </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
-                        <DockPanel LastChildFill="True">
-                            <Button DockPanel.Dock="Right" Content="{res:Loc Tpl.Import}" Padding="8,2" Margin="0,8,0,0" VerticalAlignment="Bottom"
-                                    Command="{Binding ImportTemplateCommand}" ToolTip="{res:Loc Tpl.ImportTip}" AutomationProperties.AutomationId="ImportTemplate" />
-                            <TextBlock Text="{res:Loc Panel.Templates}" Style="{StaticResource PanelHeader}" />
-                        </DockPanel>
-                        <TextBlock Text="{res:Loc Panel.Templates.Empty}" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,10">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Templates.Count}" Value="0">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
-                        <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto" Margin="0,0,0,12">
-                            <ItemsControl ItemsSource="{Binding Templates}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate DataType="{x:Type vm:TemplateItemViewModel}">
-                                        <Button Margin="0,0,0,4" HorizontalContentAlignment="Stretch" ToolTip="{Binding Tooltip}"
-                                                Command="{Binding DataContext.InsertTemplateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                CommandParameter="{Binding}">
-                                            <Button.ContextMenu>
-                                                <ContextMenu>
-                                                    <MenuItem Header="{res:Loc Tpl.Edit}" Command="{Binding EditCommand}" />
-                                                    <MenuItem Header="{res:Loc Tpl.Duplicate}" Command="{Binding DuplicateCommand}" />
-                                                    <MenuItem Header="{res:Loc Tpl.Export}" Command="{Binding ExportCommand}" />
-                                                    <Separator />
-                                                    <MenuItem Header="{res:Loc Tpl.Delete}" Command="{Binding DeleteCommand}" />
-                                                </ContextMenu>
-                                            </Button.ContextMenu>
-                                            <DockPanel LastChildFill="True">
-                                                <Image DockPanel.Dock="Left" Source="{Binding PreviewPng}" Width="40" Height="40" Margin="0,0,8,0" />
-                                                <StackPanel VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock Text="{Binding Category}" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" TextTrimming="CharacterEllipsis" />
+                                    <DataTemplate DataType="{x:Type vm:TemplateEntryViewModel}">
+                                        <Grid Margin="0,0,4,4" Width="64">
+                                            <Button Padding="2" ToolTip="{Binding Tip}" views:LibraryDragBehavior.ItemId="{Binding Item.Id}"
+                                                    AutomationProperties.Name="{Binding Name}"
+                                                    Command="{Binding DataContext.AddLibraryItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}">
+                                                <Button.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="{res:Loc Tpl.Edit}" Command="{Binding Template.EditCommand}" />
+                                                        <MenuItem Header="{res:Loc Tpl.Duplicate}" Command="{Binding Template.DuplicateCommand}" />
+                                                        <MenuItem Header="{res:Loc Tpl.Export}" Command="{Binding Template.ExportCommand}" />
+                                                        <Separator />
+                                                        <MenuItem Header="{res:Loc Tpl.Delete}" Command="{Binding Template.DeleteCommand}" />
+                                                    </ContextMenu>
+                                                </Button.ContextMenu>
+                                                <StackPanel>
+                                                    <Image Source="{Binding Thumbnail}" Width="44" Height="44" HorizontalAlignment="Center" />
+                                                    <TextBlock Text="{Binding Name}" FontSize="10" TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
                                                 </StackPanel>
-                                            </DockPanel>
-                                        </Button>
+                                            </Button>
+                                            <ToggleButton IsChecked="{Binding IsFavorite, Mode=TwoWay}" Content="&#x2605;" Padding="3,0" MinWidth="0"
+                                                          HorizontalAlignment="Right" VerticalAlignment="Top" ToolTip="{res:Loc Library.Star.Tip}"
+                                                          AutomationProperties.Name="{res:Loc Library.Star.Tip}">
+                                                <ToggleButton.Style>
+                                                    <Style TargetType="ToggleButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
+                                                        <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
+                                                        <Setter Property="Background" Value="Transparent" />
+                                                        <Setter Property="BorderThickness" Value="0" />
+                                                        <Style.Triggers>
+                                                            <Trigger Property="IsChecked" Value="True">
+                                                                <Setter Property="Foreground" Value="#F2C94C" />
+                                                            </Trigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </ToggleButton.Style>
+                                            </ToggleButton>
+                                        </Grid>
                                     </DataTemplate>
-                                </ItemsControl.ItemTemplate>
+                                </ItemsControl.Resources>
                             </ItemsControl>
                         </ScrollViewer>
                     </StackPanel>

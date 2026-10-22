@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Numerics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -12,7 +13,7 @@ using Formwerk.Viewport;
 namespace Formwerk.App.ViewModels;
 
 /// <summary>One element in the library list: the catalog item and whether it is a favorite.</summary>
-public sealed partial class LibraryEntryViewModel(LibraryItem item, Action<LibraryEntryViewModel> favoriteChanged) : ObservableObject
+public partial class LibraryEntryViewModel(LibraryItem item, Action<LibraryEntryViewModel> favoriteChanged) : ObservableObject
 {
     private bool _silent;
 
@@ -21,7 +22,7 @@ public sealed partial class LibraryEntryViewModel(LibraryItem item, Action<Libra
     public string Name => Item.Name;
 
     /// <summary>The tooltip: what the element is.</summary>
-    public string Tip => Item.Description + "\n" + Texts.Get("Library.Item.Tip");
+    public virtual string Tip => Item.Description + "\n" + Texts.Get("Library.Item.Tip");
 
     [ObservableProperty]
     public partial bool IsFavorite { get; set; }
@@ -50,14 +51,40 @@ public sealed partial class LibraryEntryViewModel(LibraryItem item, Action<Libra
     }
 }
 
+/// <summary>A saved template as a tile of the library (F-LIB-03): it has the actions of the old "My Templates" list in its context menu.</summary>
+public sealed class TemplateEntryViewModel : LibraryEntryViewModel
+{
+    public TemplateEntryViewModel(TemplateItemViewModel template, Action<LibraryEntryViewModel> favoriteChanged)
+        : base(ItemOf(template), favoriteChanged)
+    {
+        Template = template;
+        Thumbnail = template.PreviewPng;
+    }
+
+    public TemplateItemViewModel Template { get; }
+
+    public override string Tip => Template.Tooltip + "\n" + Texts.Get("Library.Item.Tip");
+
+    /// <summary>The library item that stands for the template: found by name, category, tags and description.</summary>
+    private static LibraryItem ItemOf(TemplateItemViewModel template)
+    {
+        var keywords = new List<string>(template.Info.Tags);
+        if (template.Category.Length > 0) keywords.Add(template.Category);
+        if (template.Description.Length > 0) keywords.Add(template.Description);
+        return new LibraryItem(template.Id, template.Name, LibraryCategory.MyTemplates, keywords, template.Description, template.Size);
+    }
+}
+
 /// <summary>
-/// The library (F-LIB-02): the left panel lists the basic shapes and the ready-made elements of <see cref="LibraryCatalog"/>. A search
-/// and a category choice (all, favorites, one category) narrow the list; a star marks favorites, which are remembered between sessions.
-/// A click inserts the element at the first free place; a ready-made element comes as a normal tree of shapes, so it stays editable.
+/// The library (F-LIB-02, F-LIB-03): the left panel lists the basic shapes and the ready-made elements of <see cref="LibraryCatalog"/> and
+/// the saved templates. A search and a category choice (all, favorites, one category, "My Templates") narrow the list; a star marks
+/// favorites, which are remembered between sessions. A click inserts the element at the first free place; a ready-made element comes as a
+/// normal tree of shapes, so it stays editable.
 /// </summary>
 public sealed partial class MainViewModel
 {
-    private readonly List<LibraryEntryViewModel> _libraryAll = [];
+    private readonly List<LibraryEntryViewModel> _libraryAll = []; // the elements of the catalog
+    private readonly List<TemplateEntryViewModel> _templateEntries = [];
     private readonly List<string> _favoriteIds = [];
 
     /// <summary>The elements that match the search and the category choice.</summary>
@@ -81,6 +108,10 @@ public sealed partial class MainViewModel
     [ObservableProperty]
     public partial bool IsLibraryEmpty { get; set; }
 
+    /// <summary>What the empty list says: that there are no templates yet (the hint of the old section), or that nothing was found.</summary>
+    [ObservableProperty]
+    public partial string LibraryEmptyText { get; set; } = Texts.Get("Library.Empty");
+
     partial void OnLibraryCategoryIndexChanged(int value) => RefreshLibrary();
 
     partial void OnLibrarySearchTextChanged(string value) => RefreshLibrary();
@@ -96,8 +127,24 @@ public sealed partial class MainViewModel
     {
         _favoriteIds.Clear();
         _favoriteIds.AddRange(ids);
-        foreach (var entry in _libraryAll)
-            entry.SetFavoriteSilently(_favoriteIds.Contains(entry.Item.Id, StringComparer.OrdinalIgnoreCase));
+        foreach (var entry in _libraryAll.Concat(_templateEntries))
+            entry.SetFavoriteSilently(IsFavoriteId(entry.Item.Id));
+        RefreshLibrary();
+    }
+
+    private bool IsFavoriteId(string id) => _favoriteIds.Contains(id, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The templates changed (saved, renamed, deleted, imported): their tiles are made again.</summary>
+    private void RebuildTemplateEntries()
+    {
+        _templateEntries.Clear();
+        foreach (var template in Templates)
+        {
+            var entry = new TemplateEntryViewModel(template, OnFavoriteChanged);
+            entry.SetFavoriteSilently(IsFavoriteId(entry.Item.Id));
+            _templateEntries.Add(entry);
+        }
+
         RefreshLibrary();
     }
 
@@ -113,10 +160,13 @@ public sealed partial class MainViewModel
     {
         if (_libraryAll.Count == 0) return;
 
+        var entries = new Dictionary<LibraryItem, LibraryEntryViewModel>(ReferenceEqualityComparer.Instance);
+        foreach (var entry in _libraryAll.Concat(_templateEntries)) entries[entry.Item] = entry;
+
         LibraryCategory? category = LibraryCategoryIndex >= 2 ? (LibraryCategory)(LibraryCategoryIndex - 2) : null;
         IReadOnlySet<string>? only = LibraryCategoryIndex == 1 ? new HashSet<string>(_favoriteIds, StringComparer.OrdinalIgnoreCase) : null;
-        var found = LibrarySearch.Filter(LibraryCatalog.Items, LibrarySearchText, category, only);
-        var wanted = found.Select(item => _libraryAll.First(e => e.Item == item)).ToList();
+        var found = LibrarySearch.Filter(entries.Keys.OrderBy(i => i.Category == LibraryCategory.MyTemplates ? 1 : 0), LibrarySearchText, category, only);
+        var wanted = found.Select(item => entries[item]).ToList();
 
         if (!wanted.SequenceEqual(LibraryEntries))
         {
@@ -125,13 +175,21 @@ public sealed partial class MainViewModel
         }
 
         IsLibraryEmpty = wanted.Count == 0;
+        var noTemplatesYet = LibraryCategoryIndex == 2 + (int)LibraryCategory.MyTemplates && LibrarySearchText.Trim().Length == 0 && _templateEntries.Count == 0;
+        LibraryEmptyText = Texts.Get(noTemplatesYet ? "Panel.Templates.Empty" : "Library.Empty");
     }
 
-    /// <summary>The click on an element of the library: a basic shape like the old shape button, a ready-made element as a new tree.</summary>
+    /// <summary>The click on an element of the library: a basic shape like the old shape button, a ready-made element as a new tree, a template as before.</summary>
     [RelayCommand]
     private void AddLibraryItem(LibraryEntryViewModel? entry)
     {
         if (entry is null) return;
+        if (entry is TemplateEntryViewModel template)
+        {
+            InsertTemplateAt(template.Template, null);
+            return;
+        }
+
         var item = entry.Item;
         if (item.IsShape)
         {
@@ -149,12 +207,16 @@ public sealed partial class MainViewModel
     /// <summary>
     /// An element dropped into the view (F-LIB-04): on a face it stands on the point with its up axis along the normal of the face (a
     /// cylinder dropped on a slanted face stands perpendicular on it); on the plate it stands upright at the mouse position, on the grid
-    /// when grid snap is on (Alt or Shift: exactly where the mouse is). One undo step; the new element is selected.
+    /// when grid snap is on (Alt or Shift: exactly where the mouse is). One undo step; the new element is selected. A template is
+    /// placed the same way (F-LIB-03).
     /// </summary>
     [RelayCommand]
     private void DropLibraryItem(LibraryDropRequest? request)
     {
-        if (request is null || LibraryCatalog.Find(request.ItemId) is not { } item) return;
+        if (request is null) return;
+        var template = _templateEntries.FirstOrDefault(e => string.Equals(e.Item.Id, request.ItemId, StringComparison.OrdinalIgnoreCase));
+        var item = template is null ? LibraryCatalog.Find(request.ItemId) : null;
+        if (template is null && item is null) return;
 
         var pick = request.Pick;
         var point = pick.Point;
@@ -164,9 +226,16 @@ public sealed partial class MainViewModel
             point = new Vector3(MathF.Round(point.X / step) * step, MathF.Round(point.Y / step) * step, point.Z);
         }
 
-        var node = item.CreateNode();
+        var placement = FacePlacement.OnFace(point, pick.Normal);
+        if (template is not null)
+        {
+            InsertTemplateAt(template.Template, placement);
+            return;
+        }
+
+        var node = item!.CreateNode();
         node.Name = UniqueName(item.Name);
-        node.Transform = FacePlacement.OnFace(point, pick.Normal);
+        node.Transform = placement;
         _history.Execute(new AddNodeCommand(_document, _document.Root, node));
         SelectOnly([node.Id]);
     }

@@ -46,7 +46,10 @@ public class LibraryCatalogTests
     [Fact]
     public void Every_category_has_elements_and_the_basic_shapes_are_all_twelve()
     {
-        foreach (var category in Enum.GetValues<LibraryCategory>()) Assert.Contains(Items, i => i.Category == category);
+        // the templates of the user are not part of the catalog
+        foreach (var category in Enum.GetValues<LibraryCategory>().Where(c => c != LibraryCategory.MyTemplates)) Assert.Contains(Items, i => i.Category == category);
+        Assert.DoesNotContain(Items, i => i.Category == LibraryCategory.MyTemplates);
+        Assert.Equal("My Templates", LibraryCategory.MyTemplates.DisplayName());
 
         var basic = Items.Where(i => i.Category == LibraryCategory.BasicShapes).ToList();
         Assert.Equal(ShapeLibrary.All.Select(g => g.Id).Order().ToArray(), basic.Select(i => i.ShapeId!).Order().ToArray());

@@ -13,6 +13,9 @@ public enum LibraryCategory
     Brackets,
     Enclosures,
     Mechanics,
+
+    /// <summary>The templates the user saved (F-LIB-03); they are not part of the catalog but of the list in the program.</summary>
+    MyTemplates,
 }
 
 public static class LibraryCategoryNames
@@ -25,6 +28,7 @@ public static class LibraryCategoryNames
         LibraryCategory.Brackets => "Brackets",
         LibraryCategory.Enclosures => "Enclosures",
         LibraryCategory.Mechanics => "Mechanics",
+        LibraryCategory.MyTemplates => "My Templates",
         _ => category.ToString(),
     };
 }

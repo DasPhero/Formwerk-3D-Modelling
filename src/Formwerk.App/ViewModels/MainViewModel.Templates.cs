@@ -42,6 +42,9 @@ public sealed class TemplateItemViewModel
 
     public string Path { get; }
 
+    /// <summary>The id of the template in the library (also what the favorites remember): the file name.</summary>
+    public string Id => "template:" + System.IO.Path.GetFileName(Path);
+
     public TemplateInfo Info { get; }
 
     public string Name => Info.Name;
@@ -87,6 +90,7 @@ public sealed partial class MainViewModel
 
         Templates.Clear();
         foreach (var entry in entries) Templates.Add(new TemplateItemViewModel(entry, EditTemplate, DuplicateTemplate, ExportTemplate, DeleteTemplate));
+        RebuildTemplateEntries();
     }
 
     /// <summary>Reads the template folder again: files that came or went while the program ran (called when the window is activated).</summary>
@@ -370,7 +374,13 @@ public sealed partial class MainViewModel
     /// editable. One undo step.
     /// </summary>
     [RelayCommand]
-    private void InsertTemplate(TemplateItemViewModel? item)
+    private void InsertTemplate(TemplateItemViewModel? item) => InsertTemplateAt(item, null);
+
+    /// <summary>
+    /// Inserts a template; without a <paramref name="placement"/> at the first free spot, with one (a drop into the view, F-LIB-04) with its
+    /// origin on the point and its up axis along the normal.
+    /// </summary>
+    private void InsertTemplateAt(TemplateItemViewModel? item, Transform? placement)
     {
         if (item is null) return;
 
@@ -431,7 +441,7 @@ public sealed partial class MainViewModel
             }
         }
 
-        var spot = FreeSpot(item.Size);
+        var spot = placement is null ? FreeSpot(item.Size) : Vector3.Zero;
         var commands = new List<IDocumentCommand>();
         if (added.Count > 0) commands.Add(new SetVariablesCommand(_document, [.. _document.Variables, .. added], "Add variables"));
         Guid inserted;
@@ -440,13 +450,13 @@ public sealed partial class MainViewModel
             var copy = copies[0];
             copy.Name = UniqueName(item.Name);
             var t = copy.Transform;
-            copy.Transform = new Transform(t.Position + spot, t.Rotation, t.Scale);
+            copy.Transform = placement is { } p ? Transform.Compose(p, t) : new Transform(t.Position + spot, t.Rotation, t.Scale);
             commands.Add(new AddNodeCommand(_document, _document.Root, copy));
             inserted = copy.Id;
         }
         else
         {
-            var group = new GroupNode(UniqueName(item.Name)) { Transform = Transform.FromPosition(spot) };
+            var group = new GroupNode(UniqueName(item.Name)) { Transform = placement ?? Transform.FromPosition(spot) };
             commands.Add(new AddNodeCommand(_document, _document.Root, group));
             foreach (var copy in copies) commands.Add(new AddNodeCommand(_document, group, copy));
             inserted = group.Id;
