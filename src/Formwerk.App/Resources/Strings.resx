@@ -224,6 +224,10 @@ Try a different location or file name.</value></data>
   <data name="Msg.NothingCut" xml:space="preserve"><value>Nothing was cut: the knife ({0}, the last selected object in the list) does not go through any of the other selected objects.</value></data>
   <data name="Msg.CutKnifeLocked" xml:space="preserve"><value>The knife ({0}) is locked and cannot be used to cut.</value></data>
   <data name="Msg.CutFailed" xml:space="preserve"><value>The cut failed: {0}. Nothing was changed.</value></data>
+  <data name="Menu.Edit.Split" xml:space="preserve"><value>Split into _Parts</value></data>
+  <data name="Menu.Edit.Split.Tip" xml:space="preserve"><value>Turns an object that consists of several separate bodies (for example an import with 5 parts) into one object per body</value></data>
+  <data name="Msg.Split" xml:space="preserve"><value>Split {0} into {1} parts. Undo brings the original back.</value></data>
+  <data name="Msg.NothingToSplit" xml:space="preserve"><value>Nothing to split: the selected objects are already one piece each (or locked).</value></data>
   <data name="Msg.NothingToFlatten" xml:space="preserve"><value>There is nothing to flatten: select a group, a boolean or a shape that is not locked and has a visible solid part.</value></data>
   <data name="Menu.Edit.Copy" xml:space="preserve"><value>_Copy</value></data>
   <data name="Menu.Edit.Paste" xml:space="preserve"><value>_Paste</value></data>
