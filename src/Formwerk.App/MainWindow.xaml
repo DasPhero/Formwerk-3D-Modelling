@@ -459,19 +459,26 @@
                                   SelectedValue="{Binding LibraryCategoryIndex}" Margin="0,0,0,6" AutomationProperties.AutomationId="LibraryCategory" />
                         <TextBlock Text="{res:Loc Library.Empty}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,8"
                                    Visibility="{Binding IsLibraryEmpty, Converter={StaticResource BoolToVisibility}}" />
-                        <ScrollViewer MaxHeight="210" VerticalScrollBarVisibility="Auto" Margin="0,0,0,12">
+                        <ScrollViewer MaxHeight="250" VerticalScrollBarVisibility="Auto" Margin="0,0,0,12">
                             <ItemsControl ItemsSource="{Binding LibraryEntries}" AutomationProperties.AutomationId="LibraryList">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate DataType="{x:Type vm:LibraryEntryViewModel}">
-                                        <StackPanel Orientation="Horizontal" Margin="0,0,6,6">
-                                            <Button Content="{Binding Name}" MinWidth="40" ToolTip="{Binding Tip}" views:LibraryDragBehavior.ItemId="{Binding Item.Id}"
+                                        <Grid Margin="0,0,4,4" Width="64">
+                                            <Button Padding="2" ToolTip="{Binding Tip}" views:LibraryDragBehavior.ItemId="{Binding Item.Id}"
+                                                    AutomationProperties.Name="{Binding Name}"
                                                     Command="{Binding DataContext.AddLibraryItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}" />
-                                            <ToggleButton IsChecked="{Binding IsFavorite, Mode=TwoWay}" Content="&#x2605;" Padding="4,0" MinWidth="0"
-                                                          ToolTip="{res:Loc Library.Star.Tip}" AutomationProperties.Name="{res:Loc Library.Star.Tip}">
+                                                    CommandParameter="{Binding}">
+                                                <StackPanel>
+                                                    <Image Source="{Binding Thumbnail}" Width="44" Height="44" HorizontalAlignment="Center" />
+                                                    <TextBlock Text="{Binding Name}" FontSize="10" TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                                                </StackPanel>
+                                            </Button>
+                                            <ToggleButton IsChecked="{Binding IsFavorite, Mode=TwoWay}" Content="&#x2605;" Padding="3,0" MinWidth="0"
+                                                          HorizontalAlignment="Right" VerticalAlignment="Top" ToolTip="{res:Loc Library.Star.Tip}"
+                                                          AutomationProperties.Name="{res:Loc Library.Star.Tip}">
                                                 <ToggleButton.Style>
                                                     <Style TargetType="ToggleButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
                                                         <Setter Property="Foreground" Value="{DynamicResource MutedTextBrush}" />
@@ -485,7 +492,7 @@
                                                     </Style>
                                                 </ToggleButton.Style>
                                             </ToggleButton>
-                                        </StackPanel>
+                                        </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>

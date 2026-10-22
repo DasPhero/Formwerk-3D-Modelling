@@ -46,13 +46,15 @@ public sealed partial class MainViewModel : ObservableObject
     /// <param name="autosave">Where autosaves go; null disables autosave and recovery (used by tests).</param>
     /// <param name="meshes">Imported meshes; a new empty store when null.</param>
     /// <param name="userSettings">Where the program settings are remembered; null keeps them for this session only (used by tests).</param>
+    /// <param name="libraryThumbnailFolder">Where the pictures of the library elements are kept; null keeps none (used by tests).</param>
     /// <param name="slicerLauncher">Starts the slicer program; null means starting programs is not possible (used by tests).</param>
     public MainViewModel(IGeometryKernel kernel, IDialogService dialogs, AutosaveStore? autosave = null, MeshStore? meshes = null,
         UserSettingsStore? userSettings = null, ISlicerLauncher? slicerLauncher = null, TemplateStore? templates = null,
-        ITemplatePreview? templatePreview = null)
+        ITemplatePreview? templatePreview = null, string? libraryThumbnailFolder = null)
     {
         _templateStore = templates;
         _templatePreview = templatePreview;
+        _thumbnailFolder = libraryThumbnailFolder;
         _slicer = slicerLauncher ?? new NoSlicerLauncher();
         Meshes = meshes ?? new MeshStore();
         _kernel = kernel;

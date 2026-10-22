@@ -26,6 +26,10 @@ public sealed partial class LibraryEntryViewModel(LibraryItem item, Action<Libra
     [ObservableProperty]
     public partial bool IsFavorite { get; set; }
 
+    /// <summary>The picture (PNG) of the element; null while it is not made or when it could not be made.</summary>
+    [ObservableProperty]
+    public partial byte[]? Thumbnail { get; set; }
+
     partial void OnIsFavoriteChanged(bool value)
     {
         if (!_silent) favoriteChanged(this);

@@ -16,6 +16,9 @@ public static class LibraryCatalog
     // The corner circle of a hexagon with the given width across the flats.
     private const double Corner3 = 6.35, Corner4 = 8.08, Corner5 = 9.24;
 
+    /// <summary>Part of the name of the saved pictures: raise it when an element changes, so that its picture is made again.</summary>
+    public const int ThumbnailVersion = 1;
+
     public static IReadOnlyList<LibraryItem> Items { get; } = Build();
 
     /// <summary>The item with this id (any case), or null.</summary>

@@ -17,7 +17,9 @@ public partial class App : Application
         base.OnStartup(e);
         var viewModel = new MainViewModel(new ManifoldKernel(), new DialogService(), new AutosaveStore(AutosaveStore.DefaultDirectory),
             userSettings: new UserSettingsStore(UserSettingsStore.DefaultPath), slicerLauncher: new SlicerLauncher(),
-            templates: new Formwerk.IO.TemplateStore(Formwerk.IO.TemplateStore.DefaultFolder), templatePreview: new TemplatePreviewRenderer());
+            templates: new Formwerk.IO.TemplateStore(Formwerk.IO.TemplateStore.DefaultFolder), templatePreview: new TemplatePreviewRenderer(),
+            libraryThumbnailFolder: System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Formwerk", "library-thumbnails"));
+        _ = viewModel.GenerateLibraryThumbnailsAsync(); // the pictures of the library, one at a time in the background
         ThemeManager.Apply(this, viewModel.LightTheme);
         viewModel.PropertyChanged += (_, args) =>
         {
