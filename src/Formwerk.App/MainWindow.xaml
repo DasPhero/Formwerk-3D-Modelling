@@ -365,6 +365,8 @@
                 <MenuItem Header="{res:Loc Menu.View.Orthographic}" IsCheckable="True" IsChecked="{Binding IsOrthographic, Mode=TwoWay}" InputGestureText="P" />
                 <MenuItem Header="{res:Loc Menu.View.ShowHoles}" IsCheckable="True" IsChecked="{Binding ShowHoles, Mode=TwoWay}" />
                 <MenuItem Header="{res:Loc Menu.View.Section}" IsCheckable="True" IsChecked="{Binding IsSectionActive, Mode=TwoWay}" />
+                <MenuItem Header="{res:Loc Menu.View.RepairBefore}" ToolTip="{res:Loc Menu.View.RepairBefore.Tip}" IsCheckable="True"
+                          IsChecked="{Binding ShowRepairBefore, Mode=TwoWay}" IsEnabled="{Binding HasRepairComparison}" />
                 <MenuItem Header="{res:Loc Menu.View.LightTheme}" IsCheckable="True" IsChecked="{Binding LightTheme, Mode=TwoWay}" />
                 <MenuItem Header="{res:Loc Menu.View.Display}" InputGestureText="Z">
                     <MenuItem Header="{res:Loc Display.Shaded}" IsCheckable="True" IsChecked="{Binding IsShadedMode, Mode=TwoWay}" />

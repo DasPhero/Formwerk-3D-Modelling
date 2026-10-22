@@ -197,6 +197,8 @@ Try a different location or file name.</value></data>
   <data name="Repair.Problem.InvertedParts" xml:space="preserve"><value>Inside-out parts</value></data>
   <data name="Repair.Problem.Tip" xml:space="preserve"><value>Click to show the places of this problem in the view; click again to hide them</value></data>
   <data name="Msg.ProblemPlacesTruncated" xml:space="preserve"><value>Only the first {0} places of this problem are shown.</value></data>
+  <data name="Menu.View.RepairBefore" xml:space="preserve"><value>Show Version _Before Repair</value></data>
+  <data name="Menu.View.RepairBefore.Tip" xml:space="preserve"><value>Lays the old version of a repaired mesh over the repaired one, so you can see what the repair changed</value></data>
   <data name="Repair.Button" xml:space="preserve"><value>Repair</value></data>
   <data name="Repair.Tip" xml:space="preserve"><value>Fix holes, wrongly turned triangles and other mesh errors in the selected objects (can be undone)</value></data>
   <data name="Repair.Holes" xml:space="preserve"><value>{0} hole(s)</value></data>

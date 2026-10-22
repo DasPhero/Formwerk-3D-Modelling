@@ -163,6 +163,7 @@ public sealed partial class MainViewModel
                 _reports[newId] = result.After;
                 summary.Add(result);
                 commands.AddRange(targets.Where(n => n.MeshId == oldId).Select(n => new SetMeshCommand(_document, n, newId, $"Repair {n.Name}")));
+                foreach (var n in targets.Where(n => n.MeshId == oldId)) NoteRepair(n.Id, oldId, newId);
             }
 
             if (commands.Count == 0)

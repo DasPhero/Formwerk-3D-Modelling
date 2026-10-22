@@ -452,6 +452,7 @@ public sealed partial class MainViewModel : ObservableObject
         _outside = FindOutside(result);
         BuildViewportItems(result);
         KeepLibraryGhost(); // an evaluation while an element is dragged over the view must not take its ghost away
+        KeepRepairOverlay(); // nor the old version of a repaired mesh
 
         _errors.Clear();
         foreach (var error in result.Errors) _errors[error.Node.Id] = error.Message;
@@ -521,6 +522,7 @@ public sealed partial class MainViewModel : ObservableObject
         Properties?.Refresh();
         RefreshColor();
         if (!_dragging) QueueRepairCheck(); // a repair, its undo or opening a project changes the mesh of an object
+        RefreshRepairCompare(); // an undo of a repair ends the comparison, a redo brings it back
         if (!_dragging && _shownProblem is { } shown) _repairCheck = Task.WhenAll(_repairCheck, ShowProblemAsync(shown, _problemVersion)); // the marks stay on the object that moved
         _ = RequestEvaluation();
     }
