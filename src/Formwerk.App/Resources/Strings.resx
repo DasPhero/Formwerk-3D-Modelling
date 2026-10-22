@@ -377,6 +377,8 @@ Try a different location or file name.</value></data>
   <data name="Msg.ExportedObj" xml:space="preserve"><value>Exported {0} object(s) to {1}.</value></data>
   <data name="Hint.GroupOpen" xml:space="preserve"><value>Editing inside {0}: click parts to select and move them. Double-click empty space or press Esc to leave.</value></data>
   <data name="Menu.View.ShowHoles" xml:space="preserve"><value>Show _Holes</value></data>
+  <data name="Scale.KeepDetails" xml:space="preserve"><value>Keep holes and chamfers</value></data>
+  <data name="Scale.KeepDetails.Tip" xml:space="preserve"><value>When on, scaling does not change the size of holes, chamfers and wall thickness; a group is scaled evenly (corner handle or proportional mode) with its holes keeping their size</value></data>
   <data name="Pivot.Label" xml:space="preserve"><value>Pivot</value></data>
   <data name="Pivot.Center" xml:space="preserve"><value>Center of the selection</value></data>
   <data name="Pivot.Corner" xml:space="preserve"><value>Corner of the bounding box</value></data>

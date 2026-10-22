@@ -619,6 +619,7 @@ public sealed partial class MainViewModel : ObservableObject
         SelectedIds = new HashSet<Guid>(_selected);
         RefreshColor();
         OnPropertyChanged(nameof(IsPivotVisible));
+        OnPropertyChanged(nameof(IsScaleOptionsVisible));
         OnPropertyChanged(nameof(IsAlignVisible));
         UpdatePivot();
 

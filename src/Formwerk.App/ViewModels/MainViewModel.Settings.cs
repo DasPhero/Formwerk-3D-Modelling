@@ -61,6 +61,7 @@ public sealed partial class MainViewModel
         EdgeAngleDegrees = EdgeAngle,
         AlwaysOnFloor = AlwaysOnFloor,
         LightTheme = LightTheme,
+        KeepDetailsWhenScaling = KeepDetailsWhenScaling,
         FavoriteLibraryItems = new IdList([.. _favoriteIds]),
     };
 
@@ -87,6 +88,7 @@ public sealed partial class MainViewModel
             EdgeAngle = _user.EdgeAngleDegrees;
             AlwaysOnFloor = _user.AlwaysOnFloor;
             LightTheme = _user.LightTheme;
+            KeepDetailsWhenScaling = _user.KeepDetailsWhenScaling;
         }
         finally
         {

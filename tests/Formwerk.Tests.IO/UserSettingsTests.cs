@@ -63,6 +63,20 @@ public sealed class UserSettingsTests : IDisposable
     }
 
     [Fact]
+    public void Keeping_details_when_scaling_is_on_by_default_and_saved()
+    {
+        Directory.CreateDirectory(_folder);
+        var store = Store();
+        Assert.True(store.Load().KeepDetailsWhenScaling);
+
+        store.Save(new UserSettings { KeepDetailsWhenScaling = false });
+        Assert.False(Store().Load().KeepDetailsWhenScaling);
+
+        File.WriteAllText(store.Path, "{ \"keepDetailsWhenScaling\": \"no\" }");
+        Assert.True(store.Load().KeepDetailsWhenScaling);
+    }
+
+    [Fact]
     public void The_library_favorites_are_kept_in_order_and_cleaned()
     {
         var store = Store();

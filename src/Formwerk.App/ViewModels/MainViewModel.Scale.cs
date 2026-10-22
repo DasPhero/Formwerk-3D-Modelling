@@ -38,7 +38,16 @@ public sealed partial class MainViewModel
         public Dictionary<string, double> StartValues { get; } = new(StringComparer.OrdinalIgnoreCase);
 
         public Bounds OldLocalBounds { get; set; }
+
+        /// <summary>The parameters of the shape that this drag writes: the ones a scale binding drives and, with the option off, the details (F-SCL-05).</summary>
+        public List<string> ScaledParameters { get; } = [];
+
+        /// <summary>A container whose children are scaled one by one so that holes keep their size (F-SCL-05): what every descendant looked like at the start.</summary>
+        public Dictionary<Node, NodeSnapshot>? Snapshot { get; set; }
     }
+
+    /// <summary>The state of a node before a scale drag: transform, parameters and the evaluated numbers of the bound parameters.</summary>
+    private sealed record NodeSnapshot(Transform Transform, Dictionary<string, string> Parameters, Dictionary<string, double> Numbers);
 
     private ScaleSession? _scale;
 
@@ -101,10 +110,18 @@ public sealed partial class MainViewModel
                 session.StartValues[definition.Name] = values.TryGetValue(definition.Name, out var v) ? v : definition.Default;
             foreach (var (name, expression) in primitive.Parameters) session.StartExpressions[name] = expression;
             session.OldLocalBounds = generator.Generate(session.StartValues).ComputeBounds();
+            foreach (var binding in generator.ScaleBindings) session.ScaledParameters.Add(binding.Parameter);
+            if (!KeepDetailsWhenScaling)
+            {
+                // a detail that is not zero scales with the shape (the wall of a tube, the size of a chamfer)
+                foreach (var definition in generator.Parameters.Where(d => d.IsDetail && !session.ScaledParameters.Contains(d.Name) && session.StartValues[d.Name] != 0))
+                    session.ScaledParameters.Add(definition.Name);
+            }
         }
         else
         {
             session = new ScaleSession { Node = node, StartTransform = node.Transform, Box = box, Frame = TransformOps.FrameOf(node) };
+            if (KeepDetailsWhenScaling) session.Snapshot = SnapshotForKeepingDetails(node);
         }
 
         _scale = session;
@@ -177,6 +194,18 @@ public sealed partial class MainViewModel
         var primitive = s.Primitive!;
         var values = new Dictionary<string, double>(s.StartValues, StringComparer.OrdinalIgnoreCase);
 
+        foreach (var name in s.ScaledParameters.Where(n => !generator.ScaleBindings.Any(b => b.Parameter == n)))
+        {
+            // a detail follows the factor of the dragged axes (all of them carry the same factor)
+            var detailFactor = requested.X != 1 ? requested.X : requested.Y != 1 ? requested.Y : requested.Z;
+            var detail = generator.Parameters.First(p => p.Name == name);
+            var detailValue = Math.Clamp(Math.Round(s.StartValues[name] * detailFactor, 3), detail.Min, detail.Max);
+            values[name] = detailValue;
+            primitive.Parameters[name] = detailFactor == 1 && s.StartExpressions.TryGetValue(name, out var originalDetail)
+                ? originalDetail
+                : detailValue.ToString("R", CultureInfo.InvariantCulture);
+        }
+
         foreach (var binding in generator.ScaleBindings)
         {
             var definition = generator.Parameters.First(p => string.Equals(p.Name, binding.Parameter, StringComparison.OrdinalIgnoreCase));
@@ -214,8 +243,16 @@ public sealed partial class MainViewModel
     }
 
     /// <summary>Resizes a group, boolean, merge or mesh through its scale and moves it so that the fixed point stays where it was.</summary>
-    private static Vector3 ScaleContainer(ScaleSession s, Vector3 requested, Vector3 fixedPoint)
+    private Vector3 ScaleContainer(ScaleSession s, Vector3 requested, Vector3 fixedPoint)
     {
+        if (s.Snapshot is not null && requested.X == requested.Y && requested.Y == requested.Z && requested.X != 1)
+        {
+            BakeUniformScale(s, requested.X);
+            s.Node.Transform = TransformOps.MovedBy(s.Node, s.StartTransform, Vector3.Transform(fixedPoint * (Vector3.One - requested), s.Frame.Rotation));
+            return s.Box.Size * requested;
+        }
+
+        if (s.Snapshot is not null) RestoreSnapshot(s); // a drag that went back to "not uniform": the children are as they were
         var start = s.StartTransform;
         var scaled = start with { Scale = start.Scale * requested };
         var shift = fixedPoint * (Vector3.One - requested);
@@ -232,14 +269,21 @@ public sealed partial class MainViewModel
         var finalTransform = s.Node.Transform;
         var commands = new List<IDocumentCommand>();
 
+        if (s.Snapshot is not null && s.Snapshot.Count > 0 && ChangedByBake(s))
+        {
+            CommitBakedScale(s, finalTransform, commands);
+            _history.Execute(new CompositeCommand($"Scale {s.Node.Name}", commands));
+            return;
+        }
+
         if (s.Primitive is not null && s.Generator is not null)
         {
             var changed = new List<(string Name, string Expression)>();
-            foreach (var binding in s.Generator.ScaleBindings)
+            foreach (var name in s.ScaledParameters)
             {
-                var now = s.Primitive.Parameters.GetValueOrDefault(binding.Parameter);
-                var before = s.StartExpressions.GetValueOrDefault(binding.Parameter);
-                if (now is not null && now != before) changed.Add((binding.Parameter, now));
+                var now = s.Primitive.Parameters.GetValueOrDefault(name);
+                var before = s.StartExpressions.GetValueOrDefault(name);
+                if (now is not null && now != before) changed.Add((name, now));
             }
 
             RestoreScaleStart(s);
@@ -274,11 +318,12 @@ public sealed partial class MainViewModel
     private static void RestoreScaleStart(ScaleSession s)
     {
         s.Node.Transform = s.StartTransform;
+        if (s.Snapshot is not null) RestoreSnapshot(s);
         if (s.Primitive is null || s.Generator is null) return;
-        foreach (var binding in s.Generator.ScaleBindings)
+        foreach (var name in s.ScaledParameters)
         {
-            if (s.StartExpressions.TryGetValue(binding.Parameter, out var expression)) s.Primitive.Parameters[binding.Parameter] = expression;
-            else s.Primitive.Parameters.Remove(binding.Parameter);
+            if (s.StartExpressions.TryGetValue(name, out var expression)) s.Primitive.Parameters[name] = expression;
+            else s.Primitive.Parameters.Remove(name);
         }
     }
 

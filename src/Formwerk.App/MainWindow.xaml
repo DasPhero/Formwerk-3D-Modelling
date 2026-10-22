@@ -730,6 +730,15 @@
                     </StackPanel>
                 </Border>
 
+                <!-- Options of the Scale tool (F-SCL-05) -->
+                <Border HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="12" Padding="10,6" CornerRadius="4"
+                        BorderThickness="1" BorderBrush="{DynamicResource PanelBorderBrush}" Background="{DynamicResource PanelBrush}"
+                        Visibility="{Binding IsScaleOptionsVisible, Converter={StaticResource BoolToVisibility}}"
+                        AutomationProperties.AutomationId="ScaleOptionsPanel">
+                    <CheckBox Content="{res:Loc Scale.KeepDetails}" ToolTip="{res:Loc Scale.KeepDetails.Tip}" IsChecked="{Binding KeepDetailsWhenScaling}"
+                              AutomationProperties.AutomationId="KeepDetails" />
+                </Border>
+
                 <!-- Measuring tool (E-07): mode, results -->
                 <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="12" Padding="10" Width="300" CornerRadius="4"
                         BorderThickness="1" BorderBrush="{DynamicResource PanelBorderBrush}" Background="{DynamicResource PanelBrush}"

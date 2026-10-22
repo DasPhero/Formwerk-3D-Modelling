@@ -107,6 +107,7 @@ public sealed partial class MainViewModel : IGizmoTarget
         OnPropertyChanged(nameof(IsRotateTool));
         OnPropertyChanged(nameof(IsScaleTool));
         OnPropertyChanged(nameof(IsPivotVisible));
+        OnPropertyChanged(nameof(IsScaleOptionsVisible));
         if (value != ViewportTool.Rotate) IsPickingPivot = false;
         UpdatePivot();
         RefreshScaleHint();

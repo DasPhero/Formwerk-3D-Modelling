@@ -45,6 +45,9 @@ public sealed record UserSettings
     /// <summary>The light theme instead of the dark one (F-VIS-07).</summary>
     public bool LightTheme { get; init; }
 
+    /// <summary>Scaling keeps the sizes of holes, chamfers and other details (F-SCL-05).</summary>
+    public bool KeepDetailsWhenScaling { get; init; } = true;
+
     /// <summary>Program that "Open in Slicer" starts; null when not set.</summary>
     public string? SlicerPath { get; init; }
 
@@ -112,6 +115,7 @@ public sealed class UserSettingsStore(string path)
                 EdgeAngleDegrees = ReadNumber(root, "edgeAngleDegrees") ?? defaults.EdgeAngleDegrees,
                 AlwaysOnFloor = ReadBool(root, "alwaysOnFloor") ?? defaults.AlwaysOnFloor,
                 LightTheme = ReadBool(root, "lightTheme") ?? defaults.LightTheme,
+                KeepDetailsWhenScaling = ReadBool(root, "keepDetailsWhenScaling") ?? defaults.KeepDetailsWhenScaling,
                 SlicerPath = ReadText(root, "slicerPath"),
                 FavoriteLibraryItems = ReadIds(root, "favoriteLibraryItems"),
             }.Normalized();
@@ -150,6 +154,7 @@ public sealed class UserSettingsStore(string path)
             json.WriteNumber("edgeAngleDegrees", s.EdgeAngleDegrees);
             json.WriteBoolean("alwaysOnFloor", s.AlwaysOnFloor);
             json.WriteBoolean("lightTheme", s.LightTheme);
+            json.WriteBoolean("keepDetailsWhenScaling", s.KeepDetailsWhenScaling);
             if (s.SlicerPath is not null) json.WriteString("slicerPath", s.SlicerPath);
             if (s.FavoriteLibraryItems.Ids.Count > 0)
             {
