@@ -27,6 +27,7 @@ public sealed partial class MainViewModel
     private bool _sectionStarted; // the position was set once: it is kept when the view is switched off and on again
     private Vector3 _sectionFaceNormal = Vector3.UnitZ;
     private FieldViewModel? _sectionField;
+    private readonly List<Vector3> _sectionPoints = []; // the points clicked so far in the three-point mode
 
     /// <summary>The section view is on.</summary>
     [ObservableProperty]
@@ -55,6 +56,13 @@ public sealed partial class MainViewModel
     [ObservableProperty]
     public partial bool IsPickingSectionFace { get; set; }
 
+    /// <summary>The face mode of the section view takes three points instead of one face (F-SPL-01).</summary>
+    [ObservableProperty]
+    public partial bool IsPickingSectionPoints { get; set; }
+
+    /// <summary>The "Pick a face" mode (not the three-point one) is on; for the toggle button.</summary>
+    public bool IsPickingSectionPlaneFace => IsPickingSectionFace && !IsPickingSectionPoints;
+
     public IReadOnlyList<AxisChoice> SectionAxes { get; } =
         [new(0, Texts.Get("Section.Axis.X")), new(1, Texts.Get("Section.Axis.Y")), new(2, Texts.Get("Section.Axis.Z")), new(3, Texts.Get("Section.Axis.Face"))];
 
@@ -79,6 +87,7 @@ public sealed partial class MainViewModel
 
     partial void OnIsSectionActiveChanged(bool value)
     {
+        SplitAtPlaneCommand.NotifyCanExecuteChanged();
         if (value)
         {
             UpdateSectionRange(recenter: !_sectionStarted);
@@ -90,6 +99,7 @@ public sealed partial class MainViewModel
         _sectionCts?.Cancel();
         _sectionVersion++;
         IsPickingSectionFace = false;
+        SplitAtPlaneCommand.NotifyCanExecuteChanged();
         if (_lastResult is not null) BuildViewportItems(_lastResult); // the whole model again
     }
 
@@ -109,9 +119,18 @@ public sealed partial class MainViewModel
 
     partial void OnIsPickingSectionFaceChanged(bool value)
     {
+        if (!value)
+        {
+            IsPickingSectionPoints = false;
+            _sectionPoints.Clear();
+        }
+
+        OnPropertyChanged(nameof(IsPickingSectionPlaneFace));
         OnPropertyChanged(nameof(IsFacePickActive));
         RefreshScaleHint();
     }
+
+    partial void OnIsPickingSectionPointsChanged(bool value) => OnPropertyChanged(nameof(IsPickingSectionPlaneFace));
 
     private Vector3 SectionNormal() => SectionAxis switch
     {
@@ -226,11 +245,20 @@ public sealed partial class MainViewModel
 
     /// <summary>Starts or ends the mode in which a click on a face puts the plane on that face (switching the section view on).</summary>
     [RelayCommand(CanExecute = nameof(CanShowSection))]
-    private void SectionAtFace()
+    private void SectionAtFace() => ToggleSectionPick(points: false);
+
+    /// <summary>Starts or ends the mode in which three clicked points make the plane (F-SPL-01).</summary>
+    [RelayCommand(CanExecute = nameof(CanShowSection))]
+    private void SectionAtPoints() => ToggleSectionPick(points: true);
+
+    private void ToggleSectionPick(bool points)
     {
-        IsPickingSectionFace = !IsPickingSectionFace;
-        if (IsPickingSectionFace)
+        var turnOff = IsPickingSectionFace && IsPickingSectionPoints == points;
+        IsPickingSectionFace = !turnOff;
+        if (!turnOff)
         {
+            _sectionPoints.Clear();
+            IsPickingSectionPoints = points;
             IsPickingFace = false;
             IsPlacingHole = false;
             IsPlacingEdgeCut = false;
@@ -249,6 +277,12 @@ public sealed partial class MainViewModel
     /// <summary>The click of the face mode: the plane goes onto the clicked face, with its normal, and is moved along it from there.</summary>
     private void SectionFacePicked(FacePick pick)
     {
+        if (IsPickingSectionPoints)
+        {
+            SectionPointPicked(pick);
+            return;
+        }
+
         if (_document.FindNode(pick.NodeId) is null || pick.Normal.LengthSquared() < 1e-12f) return;
 
         IsPickingSectionFace = false;
@@ -257,6 +291,40 @@ public sealed partial class MainViewModel
         IsSectionActive = true;
         SectionAxis = 3;
         SectionPosition = Math.Round(Vector3.Dot(_sectionFaceNormal, pick.Point), 3);
+        RefreshScaleHint();
+    }
+
+    /// <summary>
+    /// The click of the three-point mode: the third point makes the plane through the three (normal from the cross product, the side it
+    /// points to is cut away, "flip" changes that). Points in one line make no plane: a notice, and the clicking starts again.
+    /// </summary>
+    private void SectionPointPicked(FacePick pick)
+    {
+        if (_document.FindNode(pick.NodeId) is null) return;
+
+        _sectionPoints.Add(pick.Point);
+        if (_sectionPoints.Count < 3)
+        {
+            RefreshScaleHint();
+            return;
+        }
+
+        var (a, b, c) = (_sectionPoints[0], _sectionPoints[1], _sectionPoints[2]);
+        _sectionPoints.Clear();
+        var normal = Vector3.Cross(b - a, c - a);
+        if (normal.Length() < 1e-3f * (b - a).Length() * (c - a).Length() || normal.LengthSquared() < 1e-12f)
+        {
+            SetNotice(Texts.Get("Msg.SectionPointsLine"));
+            RefreshScaleHint();
+            return;
+        }
+
+        IsPickingSectionFace = false;
+        _sectionFaceNormal = Vector3.Normalize(normal);
+        SectionFlip = false;
+        IsSectionActive = true;
+        SectionAxis = 3;
+        SectionPosition = Math.Round(Vector3.Dot(_sectionFaceNormal, a), 3);
         RefreshScaleHint();
     }
 }

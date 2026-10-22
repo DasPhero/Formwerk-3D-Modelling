@@ -68,7 +68,7 @@ public static class SectionBuilder
         MeshData cut;
         try
         {
-            cut = kernel.Boolean(BooleanOperation.Intersection, [mesh, Plate(plane, bounds)], cancellationToken);
+            cut = kernel.Boolean(BooleanOperation.Intersection, [mesh, Slab(plane, bounds, CapThickness, 0)], cancellationToken);
         }
         catch (GeometryException)
         {
@@ -104,8 +104,11 @@ public static class SectionBuilder
         return capIndices.Count == 0 ? null : new MeshData([.. capVertices], [.. capIndices]);
     }
 
-    /// <summary>A flat box that is much bigger than the mesh across the plane and <see cref="CapThickness"/> thick, just behind the plane.</summary>
-    private static MeshData Plate(SectionPlane plane, Bounds bounds)
+    /// <summary>
+    /// A flat box that is much bigger than the mesh across the plane: <paramref name="behind"/> mm behind the plane and <paramref name="front"/>
+    /// mm in front of it (the plate for the cut surface of the section view, the half spaces of a split).
+    /// </summary>
+    internal static MeshData Slab(SectionPlane plane, Bounds bounds, float behind, float front)
     {
         var n = plane.Normal;
         var helper = MathF.Abs(n.Z) < 0.9f ? Vector3.UnitZ : Vector3.UnitX;
@@ -117,8 +120,8 @@ public static class SectionBuilder
         Vector3 P(float sx, float sy, float t) => center + u * (sx * half) + v * (sy * half) + n * t;
         Vector3[] corners =
         [
-            P(-1, -1, -CapThickness), P(1, -1, -CapThickness), P(1, 1, -CapThickness), P(-1, 1, -CapThickness),
-            P(-1, -1, 0), P(1, -1, 0), P(1, 1, 0), P(-1, 1, 0),
+            P(-1, -1, -behind), P(1, -1, -behind), P(1, 1, -behind), P(-1, 1, -behind),
+            P(-1, -1, front), P(1, -1, front), P(1, 1, front), P(-1, 1, front),
         ];
         int[] triangles =
         [

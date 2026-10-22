@@ -648,9 +648,16 @@
                                 Margin="0,0,0,4" AutomationProperties.AutomationId="SectionSlider" />
                         <ContentControl Content="{Binding SectionPositionField}" />
                         <CheckBox Content="{res:Loc Section.Flip}" IsChecked="{Binding SectionFlip}" Margin="0,6,0,0" AutomationProperties.AutomationId="SectionFlip" />
-                        <ToggleButton Content="{res:Loc Section.PickFace}" ToolTip="{res:Loc Section.PickFace.Tip}" Command="{Binding SectionAtFaceCommand}"
-                                      IsChecked="{Binding IsPickingSectionFace, Mode=OneWay}" Margin="0,8,0,0" HorizontalAlignment="Left"
-                                      AutomationProperties.AutomationId="SectionPickFace" />
+                        <WrapPanel Margin="0,8,0,0">
+                            <ToggleButton Content="{res:Loc Section.PickFace}" ToolTip="{res:Loc Section.PickFace.Tip}" Command="{Binding SectionAtFaceCommand}"
+                                          IsChecked="{Binding IsPickingSectionPlaneFace, Mode=OneWay}" Margin="0,0,6,0"
+                                          AutomationProperties.AutomationId="SectionPickFace" />
+                            <ToggleButton Content="{res:Loc Section.PickPoints}" ToolTip="{res:Loc Section.PickPoints.Tip}" Command="{Binding SectionAtPointsCommand}"
+                                          IsChecked="{Binding IsPickingSectionPoints, Mode=OneWay}"
+                                          AutomationProperties.AutomationId="SectionPickPoints" />
+                        </WrapPanel>
+                        <Button Content="{res:Loc Section.Split}" ToolTip="{res:Loc Section.Split.Tip}" Command="{Binding SplitAtPlaneCommand}"
+                                Margin="0,8,0,0" HorizontalAlignment="Left" AutomationProperties.AutomationId="SectionSplit" />
                     </StackPanel>
                 </Border>
 

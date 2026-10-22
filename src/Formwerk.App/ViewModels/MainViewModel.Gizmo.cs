@@ -115,7 +115,7 @@ public sealed partial class MainViewModel : IGizmoTarget
     {
         if (IsPlacingHole) HintText = Texts.Get("Hint.HolePlace");
         else if (IsPlacingEdgeCut) HintText = Texts.Get("Hint.EdgeCutPlace");
-        else if (IsPickingSectionFace) HintText = Texts.Get("Hint.SectionFace");
+        else if (IsPickingSectionFace) HintText = IsPickingSectionPoints ? Texts.Format("Hint.SectionPoints", _sectionPoints.Count + 1) : Texts.Get("Hint.SectionFace");
         else if (IsMeasuring) HintText = MeasureHint();
         else if (IsPickingMirrorFace) HintText = Texts.Get("Hint.MirrorFace");
         else if (IsPickingFaceToFace) HintText = Texts.Get(FaceToFaceHasFirst ? "Hint.FaceToFaceSecond" : "Hint.FaceToFaceFirst");
