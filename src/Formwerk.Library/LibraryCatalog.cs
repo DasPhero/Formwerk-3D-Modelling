@@ -138,6 +138,7 @@ public static partial class LibraryCatalog
             v => new Vector3((float)v.N("width"), (float)v.N("depth"), (float)v.N("thickness"))));
 
         AddMoreElements(items);
+        AddMoreElements2(items);
         return items;
     }
 

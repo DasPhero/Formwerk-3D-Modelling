@@ -187,6 +187,44 @@ public class LibraryCatalogTests
     }
 
     [Fact]
+    public void The_second_batch_adds_21_elements_and_the_catalog_has_at_least_75()
+    {
+        Assert.True(Items.Count >= 75, Items.Count.ToString());
+        foreach (var id in new[] { "screw-boss-m3", "standoff-m3-20", "hex-standoff-m3-15", "rod-m5x40", "fender-washer-m5",
+                     "wall-hook", "rod-holder-8", "rod-holder-12", "mounting-strip", "hanging-tab",
+                     "rect-plug", "round-plug", "flat-cover", "battery-holder-2aa", "vent-plate",
+                     "wheel-40", "link-arm-40", "bearing-housing-608", "spacer-block", "shaft-collar", "plain-bushing" })
+            Assert.NotNull(LibraryCatalog.Find(id));
+    }
+
+    [Fact]
+    public void The_wall_hook_is_a_plate_an_arm_and_a_tip_in_one_body()
+    {
+        var (solids, _, volume) = Evaluate(LibraryCatalog.Find("wall-hook")!);
+
+        Assert.Single(solids);
+        Assert.Equal(20 * 3 * 40 + 20 * 28 * 3 + 20 * 3 * 12 - 2 * 20 * 3 * 3.0, volume, 1);
+    }
+
+    [Fact]
+    public void The_battery_holder_has_two_pockets_for_AA_cells()
+    {
+        var (_, _, volume) = Evaluate(LibraryCatalog.Find("battery-holder-2aa")!);
+
+        Assert.Equal(36 * 56 * 16 - 2 * 15 * 52 * 14.0, volume, 1);
+    }
+
+    [Fact]
+    public void The_wheel_is_a_dished_disc_with_a_hub_and_a_bore()
+    {
+        var (solids, _, volume) = Evaluate(LibraryCatalog.Find("wheel-40")!);
+
+        Assert.Single(solids);
+        var expected = Math.PI * ((400 - 256) * 10 + 256 * 2 + 36 * 8 - 6.25 * 10);
+        Assert.Equal(expected, volume, expected * 0.02);
+    }
+
+    [Fact]
     public void The_open_box_is_hollow()
     {
         var (_, _, volume) = Evaluate(LibraryCatalog.Find("open-box")!);
