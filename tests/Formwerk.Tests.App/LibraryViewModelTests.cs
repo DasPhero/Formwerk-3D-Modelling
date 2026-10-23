@@ -63,7 +63,7 @@ public sealed class LibraryViewModelTests : IDisposable
         vm.LibrarySearchText = "Schraube";
         var screws = Ids(vm);
         Assert.NotEmpty(screws);
-        Assert.All(vm.LibraryEntries, e => Assert.StartsWith("Hex Bolt", e.Item.Name));
+        Assert.All(vm.LibraryEntries, e => Assert.True(e.Item.Name.StartsWith("Hex Bolt") || e.Item.Name.StartsWith("Cap Screw"), e.Item.Name));
 
         vm.LibrarySearchText = "screw";
         Assert.Equal(screws, Ids(vm));
@@ -94,7 +94,7 @@ public sealed class LibraryViewModelTests : IDisposable
 
         vm.LibrarySearchText = "nut";
         Assert.NotEmpty(vm.LibraryEntries);
-        Assert.All(vm.LibraryEntries, e => Assert.StartsWith("Hex Nut", e.Item.Name));
+        Assert.All(vm.LibraryEntries, e => Assert.True(e.Item.Name.StartsWith("Hex Nut") || e.Item.Name.StartsWith("Square Nut"), e.Item.Name));
 
         vm.LibraryCategoryIndex = 2 + (int)LibraryCategory.Enclosures;
         Assert.Empty(vm.LibraryEntries);

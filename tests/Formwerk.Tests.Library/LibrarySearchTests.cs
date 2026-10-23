@@ -17,8 +17,8 @@ public class LibrarySearchTests
 
         Assert.NotEmpty(german);
         Assert.Equal(Names(english), Names(german));
-        Assert.All(german, i => Assert.StartsWith("Hex Bolt", i.Name));
-        Assert.Equal(Items.Count(i => i.Name.StartsWith("Hex Bolt")), german.Count);
+        Assert.All(german, i => Assert.True(i.Name.StartsWith("Hex Bolt") || i.Name.StartsWith("Cap Screw"), i.Name));
+        Assert.Equal(Items.Count(i => i.Name.StartsWith("Hex Bolt") || i.Name.StartsWith("Cap Screw")), german.Count);
     }
 
     [Fact]

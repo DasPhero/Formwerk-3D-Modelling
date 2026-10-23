@@ -11,7 +11,7 @@ namespace Formwerk.Library;
 /// the basic shapes, merges and differences, so after inserting every dimension can be changed in the properties of its part.
 /// All of them stand on the plate (Z = 0) and are centered on X and Y.
 /// </summary>
-public static class LibraryCatalog
+public static partial class LibraryCatalog
 {
     // The corner circle of a hexagon with the given width across the flats.
     private const double Corner3 = 6.35, Corner4 = 8.08, Corner5 = 9.24;
@@ -137,6 +137,7 @@ public static class LibraryCatalog
             "Flat plate with four screw holes near the corners; asks for the size, the hole and the margin.", plateParameters, MountingPlate,
             v => new Vector3((float)v.N("width"), (float)v.N("depth"), (float)v.N("thickness"))));
 
+        AddMoreElements(items);
         return items;
     }
 

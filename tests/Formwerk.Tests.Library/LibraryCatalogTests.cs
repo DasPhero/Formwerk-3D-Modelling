@@ -138,6 +138,55 @@ public class LibraryCatalogTests
     }
 
     [Fact]
+    public void The_catalog_has_grown_to_at_least_55_elements_and_the_screw_search_finds_the_cap_screws()
+    {
+        Assert.True(Items.Count >= 55, Items.Count.ToString());
+        foreach (var id in new[] { "hex-nut-m6", "hex-bolt-m6x25", "washer-m6", "cap-screw-m3x10", "cap-screw-m4x16", "cap-screw-m5x20", "square-nut-m3", "square-nut-m4", "insert-boss-m3",
+                     "u-bracket", "t-bracket", "flat-l-brace", "cable-clip", "round-box", "round-lid", "divided-tray", "cable-grommet", "round-foot",
+                     "pulley", "bearing-608", "bearing-seat-608", "shaft-coupler", "knob", "flanged-bushing", "dowel-pin" })
+            Assert.NotNull(LibraryCatalog.Find(id));
+
+        Assert.Contains(LibrarySearch.Filter(Items, "Schraube"), i => i.Id == "cap-screw-m4x16");
+    }
+
+    [Fact]
+    public void A_cap_screw_is_one_body_of_a_round_head_and_a_shaft()
+    {
+        var (solids, bounds, volume) = Evaluate(LibraryCatalog.Find("cap-screw-m3x10")!);
+
+        Assert.Single(solids);
+        var expected = Math.PI * 2.75 * 2.75 * 3 + Math.PI * 1.5 * 1.5 * 10;
+        Assert.Equal(expected, volume, expected * 0.02);
+        Assert.Equal(13, bounds.Size.Z, 2);
+    }
+
+    [Fact]
+    public void A_square_nut_is_a_block_with_a_round_hole()
+    {
+        var (_, _, volume) = Evaluate(LibraryCatalog.Find("square-nut-m3")!);
+
+        var expected = (5.5 * 5.5 - Math.PI * 1.6 * 1.6) * 1.8;
+        Assert.Equal(expected, volume, expected * 0.02);
+    }
+
+    [Fact]
+    public void A_flanged_bushing_is_a_sleeve_with_a_collar()
+    {
+        var (_, _, volume) = Evaluate(LibraryCatalog.Find("flanged-bushing")!);
+
+        var expected = Math.PI * (7 * 7 * 6 + 10 * 10 * 2 - 4 * 4 * 8);
+        Assert.Equal(expected, volume, expected * 0.02);
+    }
+
+    [Fact]
+    public void The_divided_tray_has_two_pockets_with_a_wall_between_them()
+    {
+        var (_, _, volume) = Evaluate(LibraryCatalog.Find("divided-tray")!);
+
+        Assert.Equal(60 * 40 * 20 - 2 * 27 * 36 * 18.0, volume, 1);
+    }
+
+    [Fact]
     public void The_open_box_is_hollow()
     {
         var (_, _, volume) = Evaluate(LibraryCatalog.Find("open-box")!);
