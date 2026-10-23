@@ -225,6 +225,47 @@ public class LibraryCatalogTests
     }
 
     [Fact]
+    public void The_catalog_has_100_elements_with_the_third_batch()
+    {
+        Assert.True(Items.Count >= 100, Items.Count.ToString());
+        foreach (var id in new[] { "countersunk-screw-m3x12", "countersunk-screw-m4x16", "headed-pin-4x20", "thumb-screw-m4",
+                     "cable-ramp", "door-stop", "spool-holder-pin", "peg-rail", "hook-peg",
+                     "dome-cover", "conical-cup", "hex-box", "hex-lid", "plant-pot",
+                     "cone-pulley", "stepped-shaft", "hex-shaft-8", "hex-coupler", "centering-cone", "dome-knob", "roller", "taper-pin" })
+            Assert.NotNull(LibraryCatalog.Find(id));
+    }
+
+    [Fact]
+    public void The_hex_box_is_a_hexagonal_tray()
+    {
+        var (_, _, volume) = Evaluate(LibraryCatalog.Find("hex-box")!);
+
+        var k = 3 * Math.Sqrt(3) / 2;
+        var expected = k * (25 * 25 * 20 - 23 * 23 * 18.0);
+        Assert.Equal(expected, volume, expected * 0.01);
+    }
+
+    [Fact]
+    public void The_cone_pulley_is_a_frustum_with_a_bore()
+    {
+        var (_, _, volume) = Evaluate(LibraryCatalog.Find("cone-pulley")!);
+
+        var expected = Math.PI * (15.0 / 3 * (400 + 200 + 100) - 6.25 * 15);
+        Assert.Equal(expected, volume, expected * 0.02);
+    }
+
+    [Fact]
+    public void A_countersunk_screw_is_one_body_of_a_cone_shaped_head_and_a_shaft()
+    {
+        var (solids, bounds, volume) = Evaluate(LibraryCatalog.Find("countersunk-screw-m3x12")!);
+
+        Assert.Single(solids);
+        var expected = Math.PI * (1.7 / 3 * (9 + 4.5 + 2.25) + 2.25 * 12);
+        Assert.Equal(expected, volume, expected * 0.03);
+        Assert.Equal(13.7, bounds.Size.Z, 1);
+    }
+
+    [Fact]
     public void The_open_box_is_hollow()
     {
         var (_, _, volume) = Evaluate(LibraryCatalog.Find("open-box")!);

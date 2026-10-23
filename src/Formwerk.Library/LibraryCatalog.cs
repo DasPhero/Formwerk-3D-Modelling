@@ -139,6 +139,7 @@ public static partial class LibraryCatalog
 
         AddMoreElements(items);
         AddMoreElements2(items);
+        AddMoreElements3(items);
         return items;
     }
 
