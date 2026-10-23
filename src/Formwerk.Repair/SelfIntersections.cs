@@ -10,8 +10,9 @@ public static partial class MeshAnalyzer
     private const float HitEpsilon = 1e-6f;
 
     /// <summary>
-    /// Pairs of triangles that cut through each other, with the line where they do (<see cref="Segment"/>). Triangles that share a vertex,
-    /// that only touch and coplanar triangles are not counted: a hit of an edge must lie strictly inside the other triangle. At most
+    /// Pairs of triangles that cut through each other, with the line where they do. Triangles that share a vertex and triangles that only
+    /// touch are not counted: a hit of an edge must lie strictly inside the other triangle. Coplanar triangles count when they overlap with
+    /// an area and face the same way (two bodies that share a plane of their surfaces; back to back they only touch). At most
     /// <paramref name="limit"/> pairs are returned; <paramref name="more"/> says there were more.
     /// </summary>
     internal static List<(int A, int B, Vector3 From, Vector3 To)> FindSelfIntersections(Vector3[] vertices, int[] indices, bool[] repeated, int limit, out bool more)
@@ -66,6 +67,7 @@ public static partial class MeshAnalyzer
             }
         }
 
+        var planeTolerance = (float)(1e-5 * diagonal);
         var tested = new HashSet<long>();
         var hits = new List<Vector3>(6);
         foreach (var list in grid.Values)
@@ -76,7 +78,7 @@ public static partial class MeshAnalyzer
                 int a = list[i], b = list[j];
                 if (!tested.Add((long)a * triangleCount + b)) continue;
                 if (!Overlap(min[a], max[a], min[b], max[b]) || SharesVertex(indices, a, b)) continue;
-                if (!Intersect(vertices, indices, a, b, hits, out var from, out var to)) continue;
+                if (!Intersect(vertices, indices, a, b, hits, planeTolerance, out var from, out var to)) continue;
 
                 if (result.Count >= limit)
                 {
@@ -106,7 +108,7 @@ public static partial class MeshAnalyzer
     }
 
     /// <summary>Do the two triangles pierce each other, and where (the two hits that are farthest apart)?</summary>
-    private static bool Intersect(Vector3[] vertices, int[] indices, int a, int b, List<Vector3> hits, out Vector3 from, out Vector3 to)
+    private static bool Intersect(Vector3[] vertices, int[] indices, int a, int b, List<Vector3> hits, float planeTolerance, out Vector3 from, out Vector3 to)
     {
         hits.Clear();
         Vector3 a0 = vertices[indices[a * 3]], a1 = vertices[indices[a * 3 + 1]], a2 = vertices[indices[a * 3 + 2]];
@@ -114,7 +116,7 @@ public static partial class MeshAnalyzer
         EdgeHits(a0, a1, a2, b0, b1, b2, hits);
         EdgeHits(b0, b1, b2, a0, a1, a2, hits);
         from = to = default;
-        if (hits.Count == 0) return false;
+        if (hits.Count == 0) return CoplanarOverlap(a0, a1, a2, b0, b1, b2, planeTolerance, out from, out to);
 
         from = hits[0];
         to = hits[0];
@@ -163,5 +165,58 @@ public static partial class MeshAnalyzer
 
         hit = p + d * t;
         return true;
+    }
+
+    /// <summary>
+    /// Two triangles in the same plane that face the same way and cover a common area (not just an edge or a corner). The line that is
+    /// returned joins their centers.
+    /// </summary>
+    private static bool CoplanarOverlap(Vector3 a0, Vector3 a1, Vector3 a2, Vector3 b0, Vector3 b1, Vector3 b2, float tolerance, out Vector3 from, out Vector3 to)
+    {
+        from = to = default;
+        var normal = Vector3.Cross(a1 - a0, a2 - a0);
+        var length = normal.Length();
+        if (length < 1e-12f) return false;
+        normal /= length;
+
+        // in one plane, and facing the same way
+        if (MathF.Abs(Vector3.Dot(normal, b0 - a0)) > tolerance || MathF.Abs(Vector3.Dot(normal, b1 - a0)) > tolerance || MathF.Abs(Vector3.Dot(normal, b2 - a0)) > tolerance) return false;
+        if (Vector3.Dot(normal, Vector3.Cross(b1 - b0, b2 - b0)) <= 0) return false;
+
+        // the plane in two dimensions: drop the axis along which the normal is longest
+        var drop = MathF.Abs(normal.X) >= MathF.Abs(normal.Y) && MathF.Abs(normal.X) >= MathF.Abs(normal.Z) ? 0 : MathF.Abs(normal.Y) >= MathF.Abs(normal.Z) ? 1 : 2;
+        Vector2 P(Vector3 v) => drop switch { 0 => new Vector2(v.Y, v.Z), 1 => new Vector2(v.X, v.Z), _ => new Vector2(v.X, v.Y) };
+        Vector2[] ta = [P(a0), P(a1), P(a2)];
+        Vector2[] tb = [P(b0), P(b1), P(b2)];
+
+        // separating axis test over the six edge normals; a gap or just a touch separates them
+        foreach (var triangle in new[] { ta, tb })
+        {
+            for (var i = 0; i < 3; i++)
+            {
+                var edge = triangle[(i + 1) % 3] - triangle[i];
+                var axis = new Vector2(-edge.Y, edge.X);
+                if (axis.LengthSquared() < 1e-24f) return false;
+                axis = Vector2.Normalize(axis);
+                Range(ta, axis, out var minA, out var maxA);
+                Range(tb, axis, out var minB, out var maxB);
+                if (maxA <= minB + tolerance || maxB <= minA + tolerance) return false;
+            }
+        }
+
+        from = (a0 + a1 + a2) / 3;
+        to = (b0 + b1 + b2) / 3;
+        return true;
+    }
+
+    private static void Range(Vector2[] triangle, Vector2 axis, out float min, out float max)
+    {
+        min = max = Vector2.Dot(triangle[0], axis);
+        for (var i = 1; i < 3; i++)
+        {
+            var d = Vector2.Dot(triangle[i], axis);
+            min = Math.Min(min, d);
+            max = Math.Max(max, d);
+        }
     }
 }

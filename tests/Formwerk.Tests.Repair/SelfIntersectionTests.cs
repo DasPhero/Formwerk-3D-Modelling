@@ -145,4 +145,56 @@ public class SelfIntersectionTests
         // the hole is closed first, so the bodies are closed and the overlap can be united
         Assert.True(result.After.IsHealthy);
     }
+
+    // ---- bodies that share a plane of their surfaces ----------------------------------------------
+
+    [Fact]
+    public void Two_bodies_pushed_along_one_axis_overlap_although_their_faces_lie_in_the_same_planes()
+    {
+        var mesh = Combine(Box(10, 10, 10), Move(Box(10, 10, 10), 6, 0, 0));
+
+        var report = MeshAnalyzer.Analyze(mesh);
+
+        Assert.True(report.SelfIntersections > 0, $"{report}");
+        Assert.NotEmpty(MeshAnalyzer.Locate(mesh, ProblemKind.SelfIntersections).Segments);
+    }
+
+    [Fact]
+    public void Such_bodies_are_united_by_the_repair()
+    {
+        var mesh = Combine(Box(10, 10, 10), Move(Box(10, 10, 10), 6, 0, 0));
+
+        var result = MeshRepair.Repair(mesh, kernel: Kernel);
+
+        Assert.True(result.After.IsHealthy, $"{result.After}");
+        Assert.Equal(16 * 10 * 10, result.Mesh.ComputeVolume(), 1);
+    }
+
+    [Fact]
+    public void A_body_inside_another_that_shares_its_floor_overlaps_and_is_absorbed()
+    {
+        var mesh = Combine(Box(40, 40, 40), Box(10, 10, 10)); // both start at z = 0: the floors lie in one plane, facing the same way
+
+        Assert.True(MeshAnalyzer.Analyze(mesh).SelfIntersections > 0);
+
+        var result = MeshRepair.Repair(mesh, kernel: Kernel);
+
+        Assert.True(result.After.IsHealthy, $"{result.After}");
+        Assert.Equal(40.0 * 40 * 40, result.Mesh.ComputeVolume(), 1);
+    }
+
+    [Fact]
+    public void Bodies_that_touch_back_to_back_in_a_shared_wall_still_do_not_count()
+    {
+        var mesh = Combine(Box(10, 10, 10), Move(Box(10, 10, 10), 10, 0, 0)); // the walls at x = 5 face each other
+
+        Assert.Equal(0, MeshAnalyzer.Analyze(mesh).SelfIntersections);
+    }
+
+    [Fact]
+    public void A_flat_neighbour_in_the_same_surface_is_no_overlap_even_when_unwelded()
+    {
+        Assert.Equal(0, MeshAnalyzer.Analyze(Unwelded(Box(10, 10, 10))).SelfIntersections);
+        Assert.Equal(0, MeshAnalyzer.Analyze(Unwelded(Cylinder())).SelfIntersections);
+    }
 }
