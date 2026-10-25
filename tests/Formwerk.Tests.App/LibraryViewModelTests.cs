@@ -253,7 +253,7 @@ public sealed class LibraryViewModelTests : IDisposable
     public async Task A_ready_made_element_survives_saving_and_loading_the_project()
     {
         var vm = NewViewModel();
-        await Insert(vm, "l-bracket");
+        await Insert(vm, "flat-l-brace");
         using var stream = new MemoryStream();
 
         ProjectFile.Write(stream, vm.Document, vm.Meshes);
@@ -270,7 +270,7 @@ public sealed class LibraryViewModelTests : IDisposable
     public async Task A_part_of_an_element_can_be_changed_afterwards()
     {
         var vm = NewViewModel();
-        await Insert(vm, "open-box");
+        await Insert(vm, "hub-disc");
         var outside = (PrimitiveNode)vm.Document.Root.Children[0].Children[0];
 
         outside.Parameters["height"] = "40";

@@ -628,7 +628,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         if (_selected.Count == 1 && _document.FindNode(_selected.First()) is { } node)
         {
-            if (Properties?.NodeId != node.Id) Properties = new PropertiesViewModel(_document, _history, node, SizeOf, RememberOffset, ReferenceOf);
+            if (Properties?.NodeId != node.Id) Properties = new PropertiesViewModel(_document, _history, node, SizeOf, RememberOffset, ReferenceOf, ApplyElementValue);
             else Properties.Refresh();
             PropertiesMessage = "";
             HintText = Texts.Get("Hint.Selected");

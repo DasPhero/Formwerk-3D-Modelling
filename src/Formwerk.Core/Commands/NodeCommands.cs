@@ -423,3 +423,76 @@ public sealed class UnwrapNodeCommand(FormwerkDocument document, Node container)
         document.NotifyChanged();
     }
 }
+
+/// <summary>
+/// Rebuilds an object made from a library element with parameters (F-PAR-05) after a value changed: the parts (children, or the
+/// parameters of a single shape) are swapped for those of <paramref name="fresh"/>, a freshly made tree of the same kind. The node
+/// itself stays (id, name, color, position, rotation, lock); its scale goes back to 1, because the size now comes from the parameters.
+/// </summary>
+public sealed class RebuildElementCommand : IDocumentCommand
+{
+    private readonly FormwerkDocument _document;
+    private readonly Node _node;
+    private readonly Node _fresh;
+    private readonly ElementLink _link;
+    private List<Node>? _oldChildren;
+    private List<Node>? _newChildren;
+    private Dictionary<string, string>? _oldParameters;
+    private Dictionary<string, string>? _newParameters;
+    private ElementLink? _oldLink;
+    private Transform _oldTransform;
+
+    public RebuildElementCommand(FormwerkDocument document, Node node, Node fresh, ElementLink link)
+    {
+        if (node.GetType() != fresh.GetType()) throw new ArgumentException("The new parts are a different kind of object.", nameof(fresh));
+        _document = document;
+        _node = node;
+        _fresh = fresh;
+        _link = link;
+    }
+
+    public string Name => $"Change {_node.Name}";
+
+    public void Do()
+    {
+        _oldChildren = [.. _node.Children];
+        foreach (var child in _oldChildren) _node.RemoveChild(child);
+        if (_newChildren is null)
+        {
+            _newChildren = [.. _fresh.Children];
+            foreach (var child in _newChildren) _fresh.RemoveChild(child);
+        }
+
+        for (var i = 0; i < _newChildren.Count; i++) _node.InsertChild(i, _newChildren[i]);
+
+        if (_node is ParametricNode parametric)
+        {
+            _oldParameters = new Dictionary<string, string>(parametric.Parameters, StringComparer.OrdinalIgnoreCase);
+            _newParameters ??= _fresh is ParametricNode other ? new Dictionary<string, string>(other.Parameters, StringComparer.OrdinalIgnoreCase) : [];
+            parametric.Parameters.Clear();
+            foreach (var (key, value) in _newParameters) parametric.Parameters[key] = value;
+        }
+
+        _oldLink = _node.Element;
+        _oldTransform = _node.Transform;
+        _node.Element = _link;
+        _node.Transform = new Transform(_oldTransform.Position, _oldTransform.Rotation, System.Numerics.Vector3.One);
+        _document.NotifyChanged();
+    }
+
+    public void Undo()
+    {
+        foreach (var child in _node.Children.ToList()) _node.RemoveChild(child);
+        for (var i = 0; i < _oldChildren!.Count; i++) _node.InsertChild(i, _oldChildren[i]);
+
+        if (_node is ParametricNode parametric)
+        {
+            parametric.Parameters.Clear();
+            foreach (var (key, value) in _oldParameters!) parametric.Parameters[key] = value;
+        }
+
+        _node.Element = _oldLink;
+        _node.Transform = _oldTransform;
+        _document.NotifyChanged();
+    }
+}

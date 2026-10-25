@@ -419,6 +419,9 @@ Try a different location or file name.</value></data>
   <data name="Library.Empty" xml:space="preserve"><value>Nothing found.</value></data>
   <data name="Library.Item.Tip" xml:space="preserve"><value>Click to insert it; drag it into the view to put it on a face or on the build plate.</value></data>
   <data name="Msg.ElementParametersInvalid" xml:space="preserve"><value>A value of the element does not work, so nothing was inserted.</value></data>
+  <data name="Element.Title" xml:space="preserve"><value>Element: {0}</value></data>
+  <data name="Element.Hint" xml:space="preserve"><value>Changing a value rebuilds the parts of this element. The scale goes back to 1 (the size comes from the values) and changes made to single parts are lost.</value></data>
+  <data name="Err.ElementUnknown" xml:space="preserve"><value>This element is not known to this version of Formwerk, so its values cannot be changed.</value></data>
   <data name="Folder.New" xml:space="preserve"><value>New Folder</value></data>
   <data name="Folder.New.Tip" xml:space="preserve"><value>Make your own folder in the library</value></data>
   <data name="Folder.Rename" xml:space="preserve"><value>Rename</value></data>

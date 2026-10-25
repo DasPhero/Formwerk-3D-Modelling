@@ -232,6 +232,35 @@ public class ProjectFileTests
         Assert.Single(Open(ZipJson(json)).Root.Children);
     }
 
+    [Fact]
+    public void The_element_an_object_was_made_from_is_saved_and_loaded()
+    {
+        var doc = new FormwerkDocument();
+        var node = new GroupNode("Clip") { Element = new ElementLink("cable-clip", new Dictionary<string, string> { ["cable"] = "Kabel*2", ["wall"] = "2" }) };
+        new UndoHistory().Execute(new AddNodeCommand(doc, doc.Root, node));
+        using var stream = new MemoryStream();
+        ProjectFile.Write(stream, doc);
+        stream.Position = 0;
+
+        var loaded = ProjectFile.Read(stream);
+
+        var element = Assert.Single(loaded.Root.Children).Element!;
+        Assert.Equal("cable-clip", element.ElementId);
+        Assert.Equal("Kabel*2", element.Values["cable"]);
+        Assert.Equal("2", element.Values["wall"]);
+    }
+
+    [Fact]
+    public void A_file_without_an_element_loads_as_before_and_a_damaged_element_is_refused()
+    {
+        Assert.Null(Open(ZipJson(V1Json)).Root.Children[0].Element);
+
+        var withElement = V1Json.Replace("\"children\": [", "\"element\": { \"id\": \"cable-clip\", \"values\": { \"a\": \"1\" } }, \"children\": [");
+        Assert.Equal("1", Open(ZipJson(withElement)).Root.Children[0].Element!.Values["a"]);
+
+        Fails(ZipJson(V1Json.Replace("\"children\": [", "\"element\": { \"values\": { \"a\": \"1\" } }, \"children\": ["))); // no id
+    }
+
     // ---- damaged and hostile files -------------------------------------------------------------
 
     private static ProjectFormatException Fails(byte[] bytes) => Assert.Throws<ProjectFormatException>(() => Open(bytes));

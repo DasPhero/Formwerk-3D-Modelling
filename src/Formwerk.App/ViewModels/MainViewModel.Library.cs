@@ -232,11 +232,45 @@ public sealed partial class MainViewModel
         ElementValues? values = null;
         if (item.IsParametric && !AskElementValues(item, out values)) return;
 
-        var node = values is null ? item.CreateNode() : item.CreateNode(values);
+        var node = MakeElementNode(item, values);
         node.Name = UniqueName(item.Name);
         node.Transform = Transform.FromPosition(FreeSpot(values is null || item.FootprintFor is null ? item.Footprint : item.FootprintFor(values)));
         _history.Execute(new AddNodeCommand(_document, _document.Root, node));
         SelectOnly([node.Id]);
+    }
+
+    /// <summary>A new loose node of the element; one with parameters remembers the values it was made with (F-PAR-05).</summary>
+    private static Node MakeElementNode(LibraryItem item, ElementValues? values)
+    {
+        if (values is null) return item.CreateNode();
+        var node = item.CreateNode(values);
+        node.Element = new ElementLink(item.Id, new Dictionary<string, string>(values.Expressions, StringComparer.OrdinalIgnoreCase));
+        return node;
+    }
+
+    /// <summary>
+    /// A value of the element section of the properties was typed (F-PAR-05): the parts of the object are rebuilt for the new values, as
+    /// one undo step. Returns the error to show in the field, or null.
+    /// </summary>
+    private string? ApplyElementValue(Node node, ElementParameter parameter, string text)
+    {
+        if (node.Element is not { } link || LibraryCatalog.Find(link.ElementId) is not { IsParametric: true } item) return Texts.Get("Err.ElementUnknown");
+
+        var variables = _document.ResolveVariables(out _);
+        var definition = new ParameterDefinition(parameter.Name, parameter.Label, parameter.Default, parameter.Min, parameter.Max);
+        var current = link.Values.TryGetValue(parameter.Name, out var saved) ? saved : parameter.Default.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+        var error = TemplateParametersViewModel.Check(text, definition, parameter.Label, current, variables, out var expression);
+        if (error is not null) return error;
+        if (expression == current) return null;
+
+        var all = new Dictionary<string, string>(link.Values, StringComparer.OrdinalIgnoreCase) { [parameter.Name] = expression };
+        var values = ElementValues.Resolve(item.Parameters!, all, variables, out var problem);
+        if (values is null) return problem;
+
+        var fresh = item.CreateNode(values);
+        if (fresh.GetType() != node.GetType()) return Texts.Get("Err.ElementUnknown");
+        _history.Execute(new RebuildElementCommand(_document, node, fresh, new ElementLink(item.Id, new Dictionary<string, string>(values.Expressions, StringComparer.OrdinalIgnoreCase))));
+        return null;
     }
 
     /// <summary>
@@ -340,7 +374,7 @@ public sealed partial class MainViewModel
         ElementValues? values = null;
         if (item!.IsParametric && !AskElementValues(item, out values)) return;
 
-        var node = values is null ? item.CreateNode() : item.CreateNode(values);
+        var node = MakeElementNode(item, values);
         node.Name = UniqueName(item.Name);
         node.Transform = placement;
         _history.Execute(new AddNodeCommand(_document, parent, node));

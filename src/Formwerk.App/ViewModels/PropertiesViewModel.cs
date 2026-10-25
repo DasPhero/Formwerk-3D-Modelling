@@ -7,6 +7,7 @@ using Formwerk.Core.Expressions;
 using Formwerk.Core.Model;
 using Formwerk.Features.Evaluation;
 using Formwerk.Features.Shapes;
+using Formwerk.Library;
 
 namespace Formwerk.App.ViewModels;
 
@@ -24,7 +25,8 @@ public sealed partial class PropertiesViewModel : ObservableObject
 
     /// <param name="positionMoved">Told by how much (in world space) a typed position moved the object, for "Ctrl+D repeats the last offset".</param>
     public PropertiesViewModel(FormwerkDocument document, UndoHistory history, Node node, Func<Guid, string> sizeProvider,
-        Action<Vector3>? positionMoved = null, Func<PatternNode, PatternReference?>? patternReference = null)
+        Action<Vector3>? positionMoved = null, Func<PatternNode, PatternReference?>? patternReference = null,
+        Func<Node, ElementParameter, string, string?>? applyElement = null)
     {
         _positionMoved = positionMoved;
         _patternReference = patternReference;
@@ -55,8 +57,25 @@ public sealed partial class PropertiesViewModel : ObservableObject
             }
         }
 
+        if (applyElement is not null && node.Element is { } link && LibraryCatalog.Find(link.ElementId) is { IsParametric: true } element)
+        {
+            _element = element;
+            ElementFields = [.. element.Parameters!.Select(parameter => new FieldViewModel(parameter.Label, parameter.Unit, text => applyElement(node, parameter, text)))];
+        }
+
         Refresh();
     }
+
+    // ---- an object made from a library element with parameters (F-PAR-05) -------------------------------
+
+    private readonly LibraryItem? _element;
+
+    /// <summary>One field per parameter of the library element the object was made from; empty for other objects.</summary>
+    public IReadOnlyList<FieldViewModel> ElementFields { get; } = [];
+
+    public bool HasElementFields => ElementFields.Count > 0;
+
+    public string ElementTitle => _element is null ? "" : Texts.Format("Element.Title", _element.Name);
 
     // ---- patterns (F-PAT-01..03) ---------------------------------------------------------------
 
@@ -365,6 +384,17 @@ public sealed partial class PropertiesViewModel : ObservableObject
     /// <summary>Re-reads all values from the node (after any document change).</summary>
     public void Refresh()
     {
+        if (_element is not null && _node.Element is { } link)
+        {
+            for (var i = 0; i < ElementFields.Count; i++)
+            {
+                var parameter = _element.Parameters![i];
+                var stored = link.Values.TryGetValue(parameter.Name, out var text) ? text : parameter.Default.ToString("R", CultureInfo.InvariantCulture);
+                ElementFields[i].SetFromModel(stored);
+                ElementFields[i].ShowLinks(ExpressionParser.UsedNames(stored));
+            }
+        }
+
         _name.SetFromModel(_node.Name);
         var position = _node.Transform.Position;
         float[] p = [position.X, position.Y, position.Z];

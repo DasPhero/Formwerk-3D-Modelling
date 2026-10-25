@@ -52,6 +52,41 @@ public sealed record ElementValues(IReadOnlyDictionary<string, string> Expressio
     public double N(string name) => Numbers[name];
 
     /// <summary>
+    /// The values again from the text that was saved with an object (a number, a formula or a project variable per parameter); a
+    /// parameter that is not there gets its default. Null with the error when a text does not work or is out of range.
+    /// </summary>
+    public static ElementValues? Resolve(
+        IReadOnlyList<ElementParameter> parameters, IReadOnlyDictionary<string, string> saved, IReadOnlyDictionary<string, double> variables, out string? error)
+    {
+        var expressions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var numbers = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+        error = null;
+        foreach (var parameter in parameters)
+        {
+            var text = saved.TryGetValue(parameter.Name, out var s) && !string.IsNullOrWhiteSpace(s)
+                ? s.Trim()
+                : parameter.Default.ToString("R", CultureInfo.InvariantCulture);
+            var result = ExpressionParser.Evaluate(text, variables);
+            if (!result.IsSuccess)
+            {
+                error = parameter.Label + ": " + result.Error;
+                return null;
+            }
+
+            if (result.Value < parameter.Min || result.Value > parameter.Max)
+            {
+                error = parameter.Label + ": " + parameter.Min.ToString("0.###", CultureInfo.InvariantCulture) + " to " + parameter.Max.ToString("0.###", CultureInfo.InvariantCulture);
+                return null;
+            }
+
+            expressions[parameter.Name] = text;
+            numbers[parameter.Name] = result.Value;
+        }
+
+        return new ElementValues(expressions, numbers);
+    }
+
+    /// <summary>
     /// A formula in the names of the parameters ("innerWidth + 2*wall") as the text of a node parameter. When every parameter in it is a
     /// plain number the result is the number itself; otherwise the names are replaced by what was typed (in brackets), so a project
     /// variable in a value stays linked.

@@ -170,6 +170,12 @@
                 <TextBlock Text="{res:Loc Props.Rotation}" Style="{StaticResource PanelHeader}" Margin="0,14,0,6" />
                 <ItemsControl ItemsSource="{Binding Rotation}" />
 
+                <StackPanel Visibility="{Binding HasElementFields, Converter={StaticResource BoolToVisibility}}" AutomationProperties.AutomationId="ElementSection">
+                    <TextBlock Text="{Binding ElementTitle}" Style="{StaticResource PanelHeader}" Margin="0,14,0,2" />
+                    <TextBlock Text="{res:Loc Element.Hint}" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" FontSize="11" Margin="0,0,0,6" />
+                    <ItemsControl ItemsSource="{Binding ElementFields}" />
+                </StackPanel>
+
                 <StackPanel Visibility="{Binding HasParameters, Converter={StaticResource BoolToVisibility}}">
                     <TextBlock Text="{res:Loc Props.Parameters}" Style="{StaticResource PanelHeader}" Margin="0,14,0,6" />
                     <StackPanel Visibility="{Binding IsHoleShape, Converter={StaticResource BoolToVisibility}}">

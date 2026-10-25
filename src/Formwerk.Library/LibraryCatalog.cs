@@ -83,17 +83,11 @@ public static partial class LibraryCatalog
             "Round spacer sleeve, 10 mm long, for M3 screws.", new Vector3(6, 6, 10), () => Tube("Standoff M3 10 mm", 6, 1.4, 10)));
 
         // Brackets
-        items.Add(Recipe("l-bracket", "L-Bracket", LibraryCategory.Brackets,
-            ["angle", "winkel", "halterung", "corner", "holder"], "Angle bracket 40 mm wide with two screw holes in its foot.",
-            new Vector3(40, 25, 30), LBracket));
         items.Add(Recipe("wall-plate", "Wall Plate", LibraryCategory.Brackets,
             ["plate", "platte", "mounting", "halterung", "holder"], "Flat mounting plate 60 x 40 mm with four screw holes.",
             new Vector3(60, 40, 3), WallPlate));
 
         // Enclosures
-        items.Add(Recipe("open-box", "Open Box", LibraryCategory.Enclosures,
-            ["case", "housing", "gehaeuse", "schale", "container", "tray"], "Open box 60 x 40 x 25 mm with 2 mm walls and floor.",
-            new Vector3(60, 40, 25), OpenBox));
         items.Add(Recipe("lid", "Lid", LibraryCategory.Enclosures,
             ["cover", "deckel", "cap", "housing", "gehaeuse"], "Lid with a lip that fits the open box (0.2 mm play on each side).",
             new Vector3(60, 40, 5), Lid));
@@ -138,6 +132,7 @@ public static partial class LibraryCatalog
             v => new Vector3((float)v.N("width"), (float)v.N("depth"), (float)v.N("thickness"))));
 
         AddMoreElements(items);
+        AddParametricElements(items);
         AddMoreElements2(items);
         AddMoreElements3(items);
         return items;
@@ -175,18 +170,6 @@ public static partial class LibraryCatalog
         return tree.Take(top);
     }
 
-    private static Node LBracket()
-    {
-        var tree = new Tree();
-        var top = tree.Add(tree.Root, new BooleanNode("L-Bracket", BooleanOperation.Difference));
-        var body = tree.Add(top, new MergeNode("Body"));
-        tree.Add(body, Box("Foot", 40, 25, 3, Vector3.Zero));
-        tree.Add(body, Box("Wall", 40, 3, 30, new Vector3(0, -11, 0)));
-        tree.Add(top, Cylinder("Hole 1", 4, 5, new Vector3(-12, 4, -1)));
-        tree.Add(top, Cylinder("Hole 2", 4, 5, new Vector3(12, 4, -1)));
-        return tree.Take(top);
-    }
-
     private static Node WallPlate()
     {
         var tree = new Tree();
@@ -196,15 +179,6 @@ public static partial class LibraryCatalog
         foreach (var x in new[] { -25f, 25f })
         foreach (var y in new[] { -15f, 15f })
             tree.Add(top, Cylinder($"Hole {number++}", 4, 5, new Vector3(x, y, -1)));
-        return tree.Take(top);
-    }
-
-    private static Node OpenBox()
-    {
-        var tree = new Tree();
-        var top = tree.Add(tree.Root, new BooleanNode("Open Box", BooleanOperation.Difference));
-        tree.Add(top, Box("Outside", 60, 40, 25, Vector3.Zero));
-        tree.Add(top, Box("Inside", 56, 36, 25, new Vector3(0, 0, 2)));
         return tree.Take(top);
     }
 

@@ -154,6 +154,15 @@ public static class ProjectFile
         json.WriteNumberValue(node.Transform.Rotation.W);
         json.WriteEndArray();
         WriteVector(json, "scale", node.Transform.Scale);
+        if (node.Element is { } element)
+        {
+            json.WriteStartObject("element");
+            json.WriteString("id", element.ElementId);
+            json.WriteStartObject("values");
+            foreach (var (name, expression) in element.Values.OrderBy(v => v.Key, StringComparer.Ordinal)) json.WriteString(name, expression);
+            json.WriteEndObject();
+            json.WriteEndObject();
+        }
 
         switch (node)
         {
@@ -396,6 +405,25 @@ public static class ProjectFile
         return document;
     }
 
+    private static ElementLink ReadElement(JsonObject element)
+    {
+        var id = ReadText(element, "id", required: true);
+        var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (element["values"] is JsonObject saved)
+        {
+            if (saved.Count > Limits.MaxParametersPerNode) throw new ProjectFormatException("The file is damaged: an element has too many values.");
+            foreach (var (key, value) in saved)
+            {
+                if (key.Length is 0 or > 100) throw new ProjectFormatException("The file is damaged: a value name of an element is invalid.");
+                var text = value?.GetValue<string>() ?? throw new ProjectFormatException("The file is damaged: a value of an element is missing.");
+                if (text.Length > Limits.MaxTextLength) throw new ProjectFormatException("The file is damaged: a value of an element is too long.");
+                values[key] = text;
+            }
+        }
+
+        return new ElementLink(id, values);
+    }
+
     private static Node ReadNode(JsonNode? json, int depth, ReadContext context)
     {
         if (depth > Limits.MaxDepth) throw new ProjectFormatException("The file is damaged: objects are nested too deeply.");
@@ -441,6 +469,7 @@ public static class ProjectFile
         }
 
         node.Transform = new Transform(position, rotation, scale);
+        if (o["element"] is JsonObject element) node.Element = ReadElement(element);
 
         if (node is ParametricNode parametric && o["parameters"] is JsonObject parameters)
         {

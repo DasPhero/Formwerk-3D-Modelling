@@ -42,23 +42,14 @@ public static partial class LibraryCatalog
             "Small sleeve with a 4 mm bore for a heat-set M3 insert, 6 mm high.", new Vector3(5.6f, 5.6f, 6), () => Tube("Insert Boss M3", 5.6, 0.8, 6)));
 
         // Brackets
-        items.Add(Recipe("u-bracket", "U-Bracket", LibraryCategory.Brackets,
-            ["u", "channel", "halterung", "holder", "clamp", "buegel", "winkel"], "U-shaped holder 30 x 20 x 20 mm with 3 mm walls and floor, open at both ends.",
-            new Vector3(30, 20, 20), UBracket));
         items.Add(Recipe("t-bracket", "T-Bracket", LibraryCategory.Brackets,
             ["t", "plate", "platte", "halterung", "holder", "mounting", "verbinder"], "Flat T-shaped connector, 3 mm thick, with three screw holes.",
             new Vector3(60, 40, 3), TBracket));
         items.Add(Recipe("flat-l-brace", "Flat L-Brace", LibraryCategory.Brackets,
             ["l", "angle", "winkel", "corner", "ecke", "verbinder", "mounting"], "Flat L-shaped corner brace, 3 mm thick, with two screw holes.",
             new Vector3(40, 40, 3), FlatLBrace));
-        items.Add(Recipe("cable-clip", "Cable Clip", LibraryCategory.Brackets,
-            ["cable", "kabel", "clip", "ring", "halterung", "holder", "guide"], "Ring for a cable (8 mm hole) on a base plate with two screw holes.",
-            new Vector3(20, 14, 8), CableClip));
 
         // Enclosures
-        items.Add(Recipe("round-box", "Round Box", LibraryCategory.Enclosures,
-            ["case", "housing", "gehaeuse", "dose", "container", "tray", "round", "rund"], "Open round box 40 mm across and 20 mm high with 2 mm walls and floor.",
-            new Vector3(40, 40, 20), RoundBox));
         items.Add(Recipe("round-lid", "Round Lid", LibraryCategory.Enclosures,
             ["cover", "deckel", "cap", "round", "rund", "housing", "gehaeuse"], "Round lid with a lip that fits the round box (0.2 mm play).",
             new Vector3(40, 40, 5), RoundLid));
@@ -117,15 +108,6 @@ public static partial class LibraryCatalog
         return tree.Take(top);
     }
 
-    private static Node UBracket()
-    {
-        var tree = new Tree();
-        var top = tree.Add(tree.Root, new BooleanNode("U-Bracket", BooleanOperation.Difference));
-        tree.Add(top, Box("Outside", 30, 20, 20, Vector3.Zero));
-        tree.Add(top, Box("Inside", 24, 22, 20, new Vector3(0, 0, 3)));
-        return tree.Take(top);
-    }
-
     private static Node TBracket()
     {
         var tree = new Tree();
@@ -148,28 +130,6 @@ public static partial class LibraryCatalog
         tree.Add(body, Box("Arm 2", 10, 40, 3, new Vector3(-15, 0, 0)));
         tree.Add(top, Cylinder("Hole 1", 4, 5, new Vector3(5, -15, -1)));
         tree.Add(top, Cylinder("Hole 2", 4, 5, new Vector3(-15, 5, -1)));
-        return tree.Take(top);
-    }
-
-    private static Node CableClip()
-    {
-        var tree = new Tree();
-        var top = tree.Add(tree.Root, new BooleanNode("Cable Clip", BooleanOperation.Difference));
-        var body = tree.Add(top, new MergeNode("Body"));
-        tree.Add(body, Box("Base", 20, 14, 2, Vector3.Zero));
-        tree.Add(body, Cylinder("Ring", 12, 8, Vector3.Zero));
-        tree.Add(top, Cylinder("Cable Hole", 8, 10, new Vector3(0, 0, -1)));
-        tree.Add(top, Cylinder("Screw Hole 1", 3, 4, new Vector3(-8, 0, -1)));
-        tree.Add(top, Cylinder("Screw Hole 2", 3, 4, new Vector3(8, 0, -1)));
-        return tree.Take(top);
-    }
-
-    private static Node RoundBox()
-    {
-        var tree = new Tree();
-        var top = tree.Add(tree.Root, new BooleanNode("Round Box", BooleanOperation.Difference));
-        tree.Add(top, Cylinder("Outside", 40, 20, Vector3.Zero));
-        tree.Add(top, Cylinder("Inside", 36, 20, new Vector3(0, 0, 2)));
         return tree.Take(top);
     }
 

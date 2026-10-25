@@ -18,6 +18,12 @@ public enum BooleanOperation
 }
 
 /// <summary>
+/// Where an object came from: the library element (by its id) and the values of its parameters as the user typed them (a number, a
+/// formula or a project variable). It lets the properties show the parameters again and rebuild the object when one changes (F-PAR-05).
+/// </summary>
+public sealed record ElementLink(string ElementId, IReadOnlyDictionary<string, string> Values);
+
+/// <summary>
 /// Base of all document nodes (spec section 6). Structural changes go through
 /// <c>Formwerk.Core.Commands</c> so that they can be undone.
 /// </summary>
@@ -44,6 +50,9 @@ public abstract class Node
     public bool Visible { get; set; } = true;
 
     public bool Locked { get; set; }
+
+    /// <summary>The library element with parameters this object was made from, or null. Not part of the geometry, so not in the hash.</summary>
+    public ElementLink? Element { get; set; }
 
     public Node? Parent { get; private set; }
 
@@ -84,6 +93,7 @@ public abstract class Node
         copy.Color = Color;
         copy.Visible = Visible;
         copy.Locked = Locked;
+        copy.Element = Element;
         foreach (var child in _children) copy.InsertChild(copy._children.Count, child.Clone(newIds));
         return copy;
     }
