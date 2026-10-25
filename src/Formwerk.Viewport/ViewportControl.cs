@@ -52,6 +52,7 @@ public sealed partial class ViewportControl : Grid
     private Point _downMouse;
     private bool _leftDown;
     private bool _dragged;
+    private bool _pickedOnDown;
 
     private sealed record ModelInfo(GeometryModel3D Model, ViewportItem Item, int Hatch = 0);
 
@@ -429,10 +430,13 @@ public sealed partial class ViewportControl : Grid
         }
 
         _lastMouse = _downMouse = e.GetPosition(this);
+        _freeDragPending = false;
+        _pickedOnDown = false;
         if (e.ChangedButton == MouseButton.Left)
         {
             _leftDown = true;
             _dragged = false;
+            if (!FacePickMode) PrepareFreeDrag(e.GetPosition(_viewport));
         }
 
         CaptureMouse();
@@ -467,8 +471,12 @@ public sealed partial class ViewportControl : Grid
         var dy = p.Y - _lastMouse.Y;
         _lastMouse = p;
 
-        if (e.MiddleButton == MouseButtonState.Pressed || (e.RightButton == MouseButtonState.Pressed && Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)))
+        var gesture = MouseRules.CameraGestureFor(_leftDown, e.MiddleButton == MouseButtonState.Pressed, e.RightButton == MouseButtonState.Pressed,
+            Keyboard.Modifiers.HasFlag(ModifierKeys.Shift), Keyboard.IsKeyDown(Key.Space));
+        if (gesture == CameraGesture.Pan)
         {
+            if (_leftDown) _dragged = true; // Space + left drag: a pan, not a click
+            _freeDragPending = false;
             _orbit.Pan(dx, dy, ActualWidth);
         }
         else if (e.RightButton == MouseButtonState.Pressed)
@@ -477,7 +485,16 @@ public sealed partial class ViewportControl : Grid
         }
         else if (_leftDown)
         {
-            if (!_dragged && (Math.Abs(p.X - _downMouse.X) > 4 || Math.Abs(p.Y - _downMouse.Y) > 4)) _dragged = true;
+            if (!_dragged && (Math.Abs(p.X - _downMouse.X) > 4 || Math.Abs(p.Y - _downMouse.Y) > 4))
+            {
+                _dragged = true;
+                if (_freeDragPending && TryBeginFreeDrag())
+                {
+                    UpdateGizmoDrag(p); // the object follows the mouse from the first moment
+                    return;
+                }
+            }
+
             if (_dragged && IsMarqueeTool)
             {
                 UpdateMarquee(p);
@@ -500,6 +517,7 @@ public sealed partial class ViewportControl : Grid
         base.OnMouseUp(e);
         if (_gizmoDragging && e.ChangedButton == MouseButton.Left)
         {
+            _leftDown = false;
             EndGizmoDrag(commit: true);
             e.Handled = true;
             return;
@@ -509,7 +527,7 @@ public sealed partial class ViewportControl : Grid
         {
             _leftDown = false;
             if (_marqueeActive) EndMarquee(e.GetPosition(this));
-            else if (!_dragged) Pick(e.GetPosition(_viewport));
+            else if (!_dragged && !_pickedOnDown) Pick(e.GetPosition(_viewport));
         }
 
         if (e.LeftButton == MouseButtonState.Released && e.RightButton == MouseButtonState.Released && e.MiddleButton == MouseButtonState.Released)

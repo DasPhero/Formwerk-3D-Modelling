@@ -35,6 +35,8 @@ public sealed partial class ViewportControl
     private Guid? _hoverNode;
     private IReadOnlyList<Vector3> _hoverPoints = [];
     private int _hoverNearest = -1;
+    private Point _hoverMouse;
+    private Point _hoverShownAt;
 
     /// <summary>World positions of snap points to show as markers (the point a drag has snapped to).</summary>
     public IReadOnlyList<Vector3>? SnapMarkers
@@ -56,6 +58,7 @@ public sealed partial class ViewportControl
 
         if (_hoverClock.ElapsedMilliseconds < 40) return;
         _hoverClock.Restart();
+        _hoverMouse = position;
 
         var hit = ItemAt(position);
         if (hit is null || hit.Item.Dimmed)
@@ -84,8 +87,11 @@ public sealed partial class ViewportControl
             }
         }
 
-        if (nearest == _hoverNearest && _markerVisual.Content is not null) return;
+        // only the points near the mouse are drawn, so the set changes when the mouse has moved a little, too
+        var moved = Math.Abs(position.X - _hoverShownAt.X) + Math.Abs(position.Y - _hoverShownAt.Y) > 14;
+        if (nearest == _hoverNearest && _markerVisual.Content is not null && !moved) return;
         _hoverNearest = nearest;
+        _hoverShownAt = position;
         UpdateGizmoTransform();
     }
 
@@ -139,8 +145,15 @@ public sealed partial class ViewportControl
         var hot = new MeshGeometry3D();
         var size = _orbit.Distance * 0.0045;
 
+        // Only the snap points near the mouse: 27 cubes all over the object looked like handles that do nothing.
         for (var i = 0; i < _hoverPoints.Count; i++)
+        {
+            if (_orbit.Project(_hoverPoints[i], Math.Max(ActualWidth, 1), Math.Max(ActualHeight, 1)) is not { } shown) continue;
+            var distance = Math.Sqrt((shown.X - _hoverMouse.X) * (shown.X - _hoverMouse.X) + (shown.Y - _hoverMouse.Y) * (shown.Y - _hoverMouse.Y));
+            if (!MouseRules.ShowHoverMarker(distance, i == _hoverNearest)) continue;
             AddMarker(i == _hoverNearest ? hot : plain, _hoverPoints[i], i == _hoverNearest ? size * 1.9 : size);
+        }
+
         foreach (var point in SnapMarkers ?? []) AddMarker(hot, point, size * 1.9);
 
         var group = new Model3DGroup();

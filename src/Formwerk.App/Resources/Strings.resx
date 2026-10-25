@@ -83,8 +83,8 @@
   <data name="Tip.Visible" xml:space="preserve"><value>Show or hide</value></data>
   <data name="Tip.Hole" xml:space="preserve"><value>Hole: this object cuts the solids in its group</value></data>
 
-  <data name="Hint.Default" xml:space="preserve"><value>Add a shape on the left, then click it. Drag to orbit, middle-drag to pan, wheel to zoom to the mouse, P switches orthographic, F frames the selection, 1-7 change the view.</value></data>
-  <data name="Hint.Selected" xml:space="preserve"><value>Drag handles to move, rotate or scale. Alt/Shift: no snap. Ctrl: scale from center. Esc cancels. Keys: Q W E R tools, B floor, H hole.</value></data>
+  <data name="Hint.Default" xml:space="preserve"><value>Add a shape on the left, then click it. Drag an object to move it, drag empty space to orbit, middle-drag or Space + drag to pan, wheel to zoom to the mouse, P switches orthographic, F frames the selection, 1-7 change the view.</value></data>
+  <data name="Hint.Selected" xml:space="preserve"><value>Drag the object or its handles to move, rotate or scale. Space + drag pans. Alt/Shift: no snap. Ctrl: scale from center. Esc cancels. Keys: Q W E R tools, B floor, H hole.</value></data>
 
   <data name="Hint.ScaleSingle" xml:space="preserve"><value>Scaling works on one object at a time. Select a single object, or group the objects first (Ctrl+G).</value></data>
 
@@ -379,7 +379,7 @@ Try a different location or file name.</value></data>
   <data name="Msg.FaceToFaceGap" xml:space="preserve"><value>The gap is not a number: {0}</value></data>
   <data name="Msg.FaceAlready" xml:space="preserve"><value>That face already lies on the floor.</value></data>
   <data name="Msg.FaceLocked" xml:space="preserve"><value>{0} is locked and cannot be turned.</value></data>
-  <data name="Hint.SelectTool" xml:space="preserve"><value>Drag a rectangle: to the right takes what lies completely inside, to the left everything it touches. Ctrl/Shift adds. Esc cancels. Right-drag orbits, middle-drag pans.</value></data>
+  <data name="Hint.SelectTool" xml:space="preserve"><value>Drag a rectangle: to the right takes what lies completely inside, to the left everything it touches. Ctrl/Shift adds. Esc cancels. Right-drag orbits, middle-drag or Space + drag pans.</value></data>
   <data name="Floor.Keep" xml:space="preserve"><value>Keep on floor</value></data>
   <data name="Floor.Keep.Tip" xml:space="preserve"><value>After every change, put the lowest point of each object back on the build plate. Switch off to stack or lift objects.</value></data>
   <data name="ViewCube.Front" xml:space="preserve"><value>Front</value></data>
