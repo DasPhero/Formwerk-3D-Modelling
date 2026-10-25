@@ -26,6 +26,9 @@ public interface IDialogService
     /// <summary>A yes/no question in the style of the program (for example before a template is deleted); true for yes.</summary>
     bool Confirm(string message);
 
+    /// <summary>A small question with one line of text to type (the name of a folder); null when cancelled.</summary>
+    string? AskText(string title, string prompt, string initial);
+
     /// <summary>Lets the user choose model files to import; empty when cancelled.</summary>
     IReadOnlyList<string> PickImportFiles(string title, string filter);
 

@@ -96,6 +96,36 @@ public sealed class UserSettingsTests : IDisposable
     }
 
     [Fact]
+    public void The_own_library_folders_are_saved_with_their_elements_and_cleaned()
+    {
+        Directory.CreateDirectory(_folder);
+        var store = Store();
+        Assert.Empty(store.Load().LibraryFolders.Folders);
+
+        var folders = new FolderList([new UserLibraryFolder("Printer parts", new IdList(["hex-nut-m3", "box"])), new UserLibraryFolder("Empty", IdList.None)]);
+        store.Save(new UserSettings { LibraryFolders = folders });
+        var loaded = Store().Load().LibraryFolders;
+
+        Assert.Equal(folders, loaded);
+        Assert.Equal(["Printer parts", "Empty"], loaded.Folders.Select(f => f.Name).ToArray());
+        Assert.Equal(["hex-nut-m3", "box"], loaded.Folders[0].Items.Ids);
+
+        // blank names, doubles (any case) and ids twice are cleaned
+        var messy = new FolderList([
+            new UserLibraryFolder("  A  ", new IdList(["x", "X", "y"])), new UserLibraryFolder("a", IdList.None),
+            new UserLibraryFolder("   ", IdList.None), new UserLibraryFolder("B", IdList.None)]);
+        store.Save(new UserSettings { LibraryFolders = messy });
+        var cleaned = store.Load().LibraryFolders;
+        Assert.Equal(["A", "B"], cleaned.Folders.Select(f => f.Name).ToArray());
+        Assert.Equal(["x", "y"], cleaned.Folders[0].Items.Ids);
+
+        File.WriteAllText(store.Path, "{ \"libraryFolders\": [ 5, { \"name\": 7 }, { \"name\": \"Good\", \"items\": [ \"a\", 3 ] } ] }");
+        var damaged = store.Load().LibraryFolders;
+        Assert.Equal(["Good"], damaged.Folders.Select(f => f.Name).ToArray());
+        Assert.Equal(["a"], damaged.Folders[0].Items.Ids);
+    }
+
+    [Fact]
     public void The_library_favorites_are_kept_in_order_and_cleaned()
     {
         var store = Store();

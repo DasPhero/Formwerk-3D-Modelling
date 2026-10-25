@@ -463,6 +463,19 @@
                             <ComboBox ItemsSource="{Binding LibraryCategoryChoices}" DisplayMemberPath="Label" SelectedValuePath="Index"
                                       SelectedValue="{Binding LibraryCategoryIndex}" AutomationProperties.AutomationId="LibraryCategory" />
                         </DockPanel>
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="{res:Loc Folder.New}" Margin="0,0,3,0" Padding="4,2" Command="{Binding NewLibraryFolderCommand}"
+                                    ToolTip="{res:Loc Folder.New.Tip}" AutomationProperties.AutomationId="NewLibraryFolder" />
+                            <Button Grid.Column="1" Content="{res:Loc Folder.Rename}" Margin="3,0" Padding="4,2" Command="{Binding RenameLibraryFolderCommand}"
+                                    ToolTip="{res:Loc Folder.Rename.Tip}" AutomationProperties.AutomationId="RenameLibraryFolder" />
+                            <Button Grid.Column="2" Content="{res:Loc Folder.Delete}" Margin="3,0,0,0" Padding="4,2" Command="{Binding DeleteLibraryFolderCommand}"
+                                    ToolTip="{res:Loc Folder.Delete.Tip}" AutomationProperties.AutomationId="DeleteLibraryFolder" />
+                        </Grid>
                         <DockPanel Margin="0,0,0,6" ToolTip="{res:Loc Library.Size.Tip}">
                             <TextBlock DockPanel.Dock="Left" Text="{res:Loc Library.Size}" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource MutedTextBrush}" />
                             <Slider Minimum="28" Maximum="110" SmallChange="4" LargeChange="16" TickFrequency="4" IsSnapToTickEnabled="True"
@@ -483,6 +496,19 @@
                                                     AutomationProperties.Name="{Binding Name}"
                                                     Command="{Binding DataContext.AddLibraryItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}">
+                                                <Button.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="{res:Loc Folder.Menu}" ItemsSource="{Binding FolderMemberships}" IsEnabled="{Binding HasFolders}">
+                                                            <MenuItem.ItemContainerStyle>
+                                                                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                                                    <Setter Property="Header" Value="{Binding Name}" />
+                                                                    <Setter Property="IsCheckable" Value="True" />
+                                                                    <Setter Property="IsChecked" Value="{Binding IsMember, Mode=TwoWay}" />
+                                                                </Style>
+                                                            </MenuItem.ItemContainerStyle>
+                                                        </MenuItem>
+                                                    </ContextMenu>
+                                                </Button.ContextMenu>
                                                 <StackPanel>
                                                     <Image Source="{Binding Thumbnail}" Width="{Binding DataContext.LibraryThumbnailSize, RelativeSource={RelativeSource AncestorType=Window}}" Height="{Binding DataContext.LibraryThumbnailSize, RelativeSource={RelativeSource AncestorType=Window}}" HorizontalAlignment="Center" />
                                                     <TextBlock Text="{Binding Name}" FontSize="10" TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
@@ -519,6 +545,16 @@
                                                         <MenuItem Header="{res:Loc Tpl.Export}" Command="{Binding Template.ExportCommand}" />
                                                         <Separator />
                                                         <MenuItem Header="{res:Loc Tpl.Delete}" Command="{Binding Template.DeleteCommand}" />
+                                                        <Separator />
+                                                        <MenuItem Header="{res:Loc Folder.Menu}" ItemsSource="{Binding FolderMemberships}" IsEnabled="{Binding HasFolders}">
+                                                            <MenuItem.ItemContainerStyle>
+                                                                <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                                                                    <Setter Property="Header" Value="{Binding Name}" />
+                                                                    <Setter Property="IsCheckable" Value="True" />
+                                                                    <Setter Property="IsChecked" Value="{Binding IsMember, Mode=TwoWay}" />
+                                                                </Style>
+                                                            </MenuItem.ItemContainerStyle>
+                                                        </MenuItem>
                                                     </ContextMenu>
                                                 </Button.ContextMenu>
                                                 <StackPanel>

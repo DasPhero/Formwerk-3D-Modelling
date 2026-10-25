@@ -45,6 +45,12 @@ public sealed class DialogService : IDialogService
         return MessageWindow.Ask(MessageViewModel.Question(text)) == MessageViewModel.YesId;
     }
 
+    public string? AskText(string title, string prompt, string initial)
+    {
+        var window = new TextPromptWindow(title, prompt, initial) { Owner = Application.Current?.MainWindow };
+        return window.ShowDialog() == true ? window.Answer : null;
+    }
+
     public IReadOnlyList<string> PickImportFiles(string title, string filter)
     {
         var dialog = new OpenFileDialog { Title = title, Filter = filter, CheckFileExists = true, Multiselect = true };

@@ -64,6 +64,7 @@ public sealed partial class MainViewModel
         KeepDetailsWhenScaling = KeepDetailsWhenScaling,
         LibraryThumbnailSize = LibraryThumbnailSize,
         FavoriteLibraryItems = new IdList([.. _favoriteIds]),
+        LibraryFolders = CurrentFolderList(),
     };
 
     /// <summary>Number of objects that reach outside the build volume (F-VIS-05).</summary>
@@ -98,6 +99,7 @@ public sealed partial class MainViewModel
         }
 
         ApplyFavorites(_user.FavoriteLibraryItems.Ids);
+        ApplyUserFolders(_user.LibraryFolders);
         OnPropertyChanged(nameof(SlicerPath));
     }
 

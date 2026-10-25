@@ -338,6 +338,8 @@ public sealed class ThreeMfExportTests : IDisposable
 
         public string? PickOpenFile(string title, string filter) => inner.PickOpenFile(title, filter);
 
+        public string? AskText(string title, string prompt, string initial) => inner.AskText(title, prompt, initial);
+
         public bool ShowSaveTemplate(SaveTemplateViewModel viewModel) => inner.ShowSaveTemplate(viewModel);
 
         public UnsavedChoice ConfirmUnsavedChanges(string documentName) => inner.ConfirmUnsavedChanges(documentName);

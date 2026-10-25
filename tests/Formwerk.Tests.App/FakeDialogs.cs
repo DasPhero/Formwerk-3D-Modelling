@@ -81,6 +81,17 @@ public sealed class FakeDialogs : IDialogService
         return ConfirmAnswer;
     }
 
+    /// <summary>What the small text question (the name of a folder) answers; null cancels it.</summary>
+    public string? TextAnswer { get; set; }
+
+    public List<(string Title, string Prompt, string Initial)> TextPrompts { get; } = [];
+
+    public string? AskText(string title, string prompt, string initial)
+    {
+        TextPrompts.Add((title, prompt, initial));
+        return TextAnswer;
+    }
+
     /// <summary>What the file picker returns for Import.</summary>
     public List<string> FilesToImport { get; } = [];
 

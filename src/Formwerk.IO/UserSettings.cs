@@ -13,6 +13,9 @@ public sealed record UserSettings
     /// <summary>The ids of the library elements marked as favorites (F-LIB-02).</summary>
     public IdList FavoriteLibraryItems { get; init; } = IdList.None;
 
+    /// <summary>The folders the user made in the library, each with the ids of its elements and templates (F-LIB-02).</summary>
+    public FolderList LibraryFolders { get; init; } = FolderList.None;
+
     public Vector3 DefaultBuildVolume { get; init; } = new(256, 256, 256);
 
     public double DefaultNozzleDiameter { get; init; } = 0.4;
@@ -76,6 +79,7 @@ public sealed record UserSettings
         LibraryThumbnailSize = Clamp(LibraryThumbnailSize, MinThumbnailSize, MaxThumbnailSize, 44),
         SlicerPath = string.IsNullOrWhiteSpace(SlicerPath) ? null : SlicerPath.Trim(),
         FavoriteLibraryItems = (FavoriteLibraryItems ?? IdList.None).Cleaned(),
+        LibraryFolders = (LibraryFolders ?? FolderList.None).Cleaned(),
     };
 
     private static float Clamp(float value, float min, float max, float fallback) =>
@@ -125,6 +129,7 @@ public sealed class UserSettingsStore(string path)
                 LibraryThumbnailSize = ReadNumber(root, "libraryThumbnailSize") ?? defaults.LibraryThumbnailSize,
                 SlicerPath = ReadText(root, "slicerPath"),
                 FavoriteLibraryItems = ReadIds(root, "favoriteLibraryItems"),
+                LibraryFolders = ReadFolders(root, "libraryFolders"),
             }.Normalized();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException)
@@ -171,8 +176,44 @@ public sealed class UserSettingsStore(string path)
                 json.WriteEndArray();
             }
 
+            if (s.LibraryFolders.Folders.Count > 0)
+            {
+                json.WriteStartArray("libraryFolders");
+                foreach (var folder in s.LibraryFolders.Folders)
+                {
+                    json.WriteStartObject();
+                    json.WriteString("name", folder.Name);
+                    json.WriteStartArray("items");
+                    foreach (var id in folder.Items.Ids) json.WriteStringValue(id);
+                    json.WriteEndArray();
+                    json.WriteEndObject();
+                }
+
+                json.WriteEndArray();
+            }
+
             json.WriteEndObject();
         });
+    }
+
+    private static FolderList ReadFolders(JsonObject o, string key)
+    {
+        if (o[key] is not JsonArray array) return FolderList.None;
+        var folders = new List<UserLibraryFolder>();
+        foreach (var node in array)
+        {
+            try
+            {
+                if (node is not JsonObject folder || folder["name"]?.GetValue<string>() is not { } name) continue;
+                folders.Add(new UserLibraryFolder(name, ReadIds(folder, "items")));
+            }
+            catch (Exception ex) when (ex is InvalidOperationException or FormatException)
+            {
+                // a folder that cannot be read is skipped
+            }
+        }
+
+        return new FolderList(folders);
     }
 
     private static double? ReadNumber(JsonObject o, string key)
@@ -217,6 +258,38 @@ public sealed class UserSettingsStore(string path)
         if (o[key] is not JsonArray { Count: 3 } array) return null;
         try { return new Vector3(array[0]!.GetValue<float>(), array[1]!.GetValue<float>(), array[2]!.GetValue<float>()); }
         catch (Exception ex) when (ex is InvalidOperationException or FormatException) { return null; }
+    }
+}
+
+/// <summary>A folder the user made in the library: a name and the ids of the elements and templates in it.</summary>
+public sealed record UserLibraryFolder(string Name, IdList Items);
+
+/// <summary>The folders of the user, compared by content, in the order they were made.</summary>
+public sealed record FolderList(IReadOnlyList<UserLibraryFolder> Folders)
+{
+    public const int MaxCount = 100;
+    public const int MaxNameLength = 40;
+
+    public static FolderList None { get; } = new([]);
+
+    public bool Equals(FolderList? other) => other is not null && Folders.SequenceEqual(other.Folders);
+
+    public override int GetHashCode() => Folders.Count;
+
+    /// <summary>Names trimmed and shortened, blank names and doubles (any case) removed, the ids of every folder cleaned.</summary>
+    public FolderList Cleaned()
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var cleaned = new List<UserLibraryFolder>();
+        foreach (var folder in Folders)
+        {
+            var name = (folder.Name ?? "").Trim();
+            if (name.Length > MaxNameLength) name = name[..MaxNameLength].TrimEnd();
+            if (name.Length == 0 || !seen.Add(name) || cleaned.Count >= MaxCount) continue;
+            cleaned.Add(new UserLibraryFolder(name, (folder.Items ?? IdList.None).Cleaned()));
+        }
+
+        return cleaned.Count == 0 ? None : new FolderList(cleaned);
     }
 }
 

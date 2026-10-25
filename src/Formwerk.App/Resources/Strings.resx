@@ -419,6 +419,22 @@ Try a different location or file name.</value></data>
   <data name="Library.Empty" xml:space="preserve"><value>Nothing found.</value></data>
   <data name="Library.Item.Tip" xml:space="preserve"><value>Click to insert it; drag it into the view to put it on a face or on the build plate.</value></data>
   <data name="Msg.ElementParametersInvalid" xml:space="preserve"><value>A value of the element does not work, so nothing was inserted.</value></data>
+  <data name="Folder.New" xml:space="preserve"><value>New Folder</value></data>
+  <data name="Folder.New.Tip" xml:space="preserve"><value>Make your own folder in the library</value></data>
+  <data name="Folder.Rename" xml:space="preserve"><value>Rename</value></data>
+  <data name="Folder.Rename.Tip" xml:space="preserve"><value>Rename the folder that is shown</value></data>
+  <data name="Folder.Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Folder.Delete.Tip" xml:space="preserve"><value>Delete the folder that is shown (the elements in it stay in the library)</value></data>
+  <data name="Folder.NewTitle" xml:space="preserve"><value>New Folder</value></data>
+  <data name="Folder.RenameTitle" xml:space="preserve"><value>Rename Folder</value></data>
+  <data name="Folder.NamePrompt" xml:space="preserve"><value>Name of the folder:</value></data>
+  <data name="Folder.NameEmpty" xml:space="preserve"><value>A folder needs a name.</value></data>
+  <data name="Folder.NameTaken" xml:space="preserve"><value>There is already a folder with this name.</value></data>
+  <data name="Folder.NameTooLong" xml:space="preserve"><value>The name can have at most {0} characters.</value></data>
+  <data name="Folder.TooMany" xml:space="preserve"><value>That is enough folders; delete one first.</value></data>
+  <data name="Folder.DeleteConfirm" xml:space="preserve"><value>Delete the folder "{0}"? The elements in it stay in the library.</value></data>
+  <data name="Folder.Empty" xml:space="preserve"><value>This folder is empty. Right-click an element and choose Folders to put it here.</value></data>
+  <data name="Folder.Menu" xml:space="preserve"><value>Folders</value></data>
   <data name="Library.Size" xml:space="preserve"><value>Size</value></data>
   <data name="Library.Size.Tip" xml:space="preserve"><value>Size of the pictures in the library</value></data>
   <data name="Library.Star.Tip" xml:space="preserve"><value>Mark as favorite</value></data>

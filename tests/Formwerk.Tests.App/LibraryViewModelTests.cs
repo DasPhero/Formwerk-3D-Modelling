@@ -47,8 +47,8 @@ public sealed class LibraryViewModelTests : IDisposable
     {
         var vm = NewViewModel();
 
-        Assert.Equal(LibraryCatalog.Items.Select(i => i.Id).ToArray(), Ids(vm));
-        Assert.Equal(2 + Enum.GetValues<LibraryCategory>().Length, vm.LibraryCategoryChoices.Count);
+        Assert.Equal(LibraryFolders.Order(LibraryCatalog.Items).Select(i => i.Id).ToArray(), Ids(vm)); // sorted by category, sub folder and name
+        Assert.True(vm.LibraryCategoryChoices.Count >= 2 + Enum.GetValues<LibraryCategory>().Length); // the categories and their sub folders
         Assert.Equal(0, vm.LibraryCategoryIndex);
         Assert.Equal("", vm.LibrarySearchText);
         Assert.False(vm.IsLibraryEmpty);

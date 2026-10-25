@@ -30,6 +30,14 @@ public partial class LibraryEntryViewModel(LibraryItem item, Action<LibraryEntry
     [ObservableProperty]
     public partial bool IsFavorite { get; set; }
 
+    /// <summary>One check mark per own folder of the user (the "Folders" menu of the tile): whether the element is in that folder.</summary>
+    public ObservableCollection<FolderMembershipViewModel> FolderMemberships { get; } = [];
+
+    /// <summary>There is at least one own folder, so the "Folders" menu has something to offer.</summary>
+    public bool HasFolders => FolderMemberships.Count > 0;
+
+    internal void NotifyFoldersChanged() => OnPropertyChanged(nameof(HasFolders));
+
     /// <summary>The picture (PNG) of the element; null while it is not made or when it could not be made.</summary>
     [ObservableProperty]
     public partial byte[]? Thumbnail { get; set; }
@@ -113,14 +121,6 @@ public sealed partial class MainViewModel
         PersistUserSettings();
     }
 
-    /// <summary>0 = all, 1 = favorites, then one entry per <see cref="LibraryCategory"/> (index = 2 + the category).</summary>
-    public IReadOnlyList<AxisChoice> LibraryCategoryChoices { get; } =
-    [
-        new(0, Texts.Get("Library.All")),
-        new(1, Texts.Get("Library.Favorites")),
-        .. Enum.GetValues<LibraryCategory>().Select(c => new AxisChoice(2 + (int)c, c.DisplayName())),
-    ];
-
     [ObservableProperty]
     public partial int LibraryCategoryIndex { get; set; }
 
@@ -135,13 +135,12 @@ public sealed partial class MainViewModel
     [ObservableProperty]
     public partial string LibraryEmptyText { get; set; } = Texts.Get("Library.Empty");
 
-    partial void OnLibraryCategoryIndexChanged(int value) => RefreshLibrary();
-
     partial void OnLibrarySearchTextChanged(string value) => RefreshLibrary();
 
     private void InitializeLibrary()
     {
         _libraryAll.AddRange(LibraryCatalog.Items.Select(item => new LibraryEntryViewModel(item, OnFavoriteChanged)));
+        RebuildFolderMemberships();
         RefreshLibrary();
     }
 
@@ -166,6 +165,7 @@ public sealed partial class MainViewModel
             var entry = new TemplateEntryViewModel(template, OnFavoriteChanged);
             entry.SetFavoriteSilently(IsFavoriteId(entry.Item.Id));
             _templateEntries.Add(entry);
+            RebuildFolderMemberships(entry);
         }
 
         RefreshLibrary();
@@ -186,10 +186,18 @@ public sealed partial class MainViewModel
         var entries = new Dictionary<LibraryItem, LibraryEntryViewModel>(ReferenceEqualityComparer.Instance);
         foreach (var entry in _libraryAll.Concat(_templateEntries)) entries[entry.Item] = entry;
 
-        LibraryCategory? category = LibraryCategoryIndex >= 2 ? (LibraryCategory)(LibraryCategoryIndex - 2) : null;
-        IReadOnlySet<string>? only = LibraryCategoryIndex == 1 ? new HashSet<string>(_favoriteIds, StringComparer.OrdinalIgnoreCase) : null;
-        var found = LibrarySearch.Filter(entries.Keys.OrderBy(i => i.Category == LibraryCategory.MyTemplates ? 1 : 0), LibrarySearchText, category, only);
-        var wanted = found.Select(item => entries[item]).ToList();
+        var index = LibraryCategoryIndex;
+        LibraryCategory? category = null;
+        string? subFolder = null;
+        IReadOnlySet<string>? only = null;
+        if (index == 1) only = new HashSet<string>(_favoriteIds, StringComparer.OrdinalIgnoreCase);
+        else if (index is >= 2 and < SubFolderBase) category = (LibraryCategory)(index - 2);
+        else if (index >= SubFolderBase && index < UserFolderBase && index - SubFolderBase < SubFolderList.Count)
+            (category, subFolder) = SubFolderList[index - SubFolderBase];
+        else if (index >= UserFolderBase) only = new HashSet<string>(FolderOfChoice(index)?.Ids ?? [], StringComparer.OrdinalIgnoreCase);
+
+        var found = LibrarySearch.Filter(LibraryFolders.Order(entries.Keys), LibrarySearchText, category, only);
+        var wanted = found.Where(item => subFolder is null || LibraryFolders.SubFolderOf(item) == subFolder).Select(item => entries[item]).ToList();
 
         if (!wanted.SequenceEqual(LibraryEntries))
         {
@@ -199,7 +207,8 @@ public sealed partial class MainViewModel
 
         IsLibraryEmpty = wanted.Count == 0;
         var noTemplatesYet = LibraryCategoryIndex == 2 + (int)LibraryCategory.MyTemplates && LibrarySearchText.Trim().Length == 0 && _templateEntries.Count == 0;
-        LibraryEmptyText = Texts.Get(noTemplatesYet ? "Panel.Templates.Empty" : "Library.Empty");
+        var emptyFolder = index >= UserFolderBase && LibrarySearchText.Trim().Length == 0;
+        LibraryEmptyText = Texts.Get(noTemplatesYet ? "Panel.Templates.Empty" : emptyFolder ? "Folder.Empty" : "Library.Empty");
     }
 
     /// <summary>The click on an element of the library: a basic shape like the old shape button, a ready-made element as a new tree, a template as before.</summary>
