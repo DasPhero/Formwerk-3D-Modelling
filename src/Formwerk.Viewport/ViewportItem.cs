@@ -18,8 +18,12 @@ public enum ViewportItemKind
 /// </summary>
 public sealed record ViewportItem(Guid NodeId, MeshData Mesh, ViewportItemKind Kind, uint ColorArgb, bool Outside = false, bool Dimmed = false);
 
-/// <summary>Result of a click in the viewport. <see cref="NodeId"/> is null when empty space was clicked.</summary>
-public sealed record PickRequest(Guid? NodeId, bool Additive);
+/// <summary>
+/// Result of a click in the viewport. <see cref="NodeId"/> is null when empty space was clicked. <see cref="ForDrag"/> says that the
+/// press may turn into a drag of the object: what is already selected and covers the part stays selected, so that it is the selection
+/// that moves.
+/// </summary>
+public sealed record PickRequest(Guid? NodeId, bool Additive, bool ForDrag = false);
 
 public enum ViewPreset
 {

@@ -10,7 +10,7 @@ public enum CameraGesture
 
 /// <summary>
 /// The rules of the mouse in the viewport, free of any window so that they can be tested: which drag turns or pans the camera, when
-/// a left drag on an object moves it, and which snap point markers are shown while hovering.
+/// a left drag on an object moves it.
 /// </summary>
 public static class MouseRules
 {
@@ -31,10 +31,4 @@ public static class MouseRules
     /// </summary>
     public static bool CanStartFreeDrag(ViewportTool tool, bool facePickMode, bool additive, bool space, bool dimmed) =>
         tool is ViewportTool.Move or ViewportTool.Select && !facePickMode && !additive && !space && !dimmed;
-
-    /// <summary>Radius in pixels around the mouse inside which hover snap points are drawn.</summary>
-    public const double HoverMarkerRadius = 60;
-
-    /// <summary>Whether a snap point that is <paramref name="distancePixels"/> from the mouse is drawn (or is the highlighted one).</summary>
-    public static bool ShowHoverMarker(double distancePixels, bool isNearest) => isNearest || distancePixels <= HoverMarkerRadius;
 }

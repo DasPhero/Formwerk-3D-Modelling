@@ -431,7 +431,6 @@ public sealed partial class ViewportControl : Grid
     {
         base.OnMouseDown(e);
         Focus();
-        ClearSnapHover();
         // before StopGlide: a click on the cube starts its own glide, and the second click of a double click must leave it running
         if (e.ChangedButton == MouseButton.Left && TryClickViewCube(e.GetPosition(this), e.ClickCount))
         {
@@ -480,7 +479,6 @@ public sealed partial class ViewportControl : Grid
         if (!IsMouseCaptured)
         {
             UpdateCubeHover(e.GetPosition(this));
-            UpdateSnapHover(e.GetPosition(this));
             if (FacePickMode)
             {
                 UpdateFaceHover(e.GetPosition(this));

@@ -647,7 +647,10 @@ public sealed partial class MainViewModel : ObservableObject
         QueueRepairCheck();
     }
 
-    /// <summary>Click in the viewport. Operands of a boolean or merge are selected as a whole (outermost container).</summary>
+    /// <summary>
+    /// Click in the viewport. Operands of a boolean or merge are selected as a whole (outermost container); a part of a plain group
+    /// selects the group first and the part only when the group is already selected (see <see cref="ClickTargetFor"/>).
+    /// </summary>
     [RelayCommand]
     private void Pick(PickRequest? request)
     {
@@ -664,7 +667,8 @@ public sealed partial class MainViewModel : ObservableObject
             if (!hit.IsDescendantOf(open)) SetOpenContainer(null); // a click on a dimmed object leaves the group and selects it
         }
 
-        var node = SelectableFor(id);
+        if (request.ForDrag && IsCoveredBySelection(id)) return;
+        var node = ClickTargetFor(id);
         if (node is null) return;
 
         if (request.Additive)
@@ -676,6 +680,39 @@ public sealed partial class MainViewModel : ObservableObject
         {
             SelectOnly([node.Id]);
         }
+    }
+
+    /// <summary>The displayed part <paramref name="id"/> is selected itself or lies inside a selected node.</summary>
+    private bool IsCoveredBySelection(Guid id)
+    {
+        if (_document.FindNode(id) is not { } hit) return false;
+        return _selected.Any(selectedId => _document.FindNode(selectedId) is { } selected && (selected == hit || hit.IsDescendantOf(selected)));
+    }
+
+    /// <summary>
+    /// What a click on the displayed part <paramref name="id"/> selects. A part of a plain group selects the group; when the group (or
+    /// something inside it) is already selected, the click goes one step in, to the next group or at last to the part itself. Nested
+    /// groups are entered from the outside in. Everything else is as in <see cref="SelectableFor"/>. While a group is open its parts are
+    /// selected one by one.
+    /// </summary>
+    private Node? ClickTargetFor(Guid id)
+    {
+        var inner = SelectableFor(id);
+        if (inner is null || OpenContainer is not null) return inner;
+
+        var groups = new List<Node>(); // the plain groups around the part, the outermost first
+        for (var parent = inner.Parent; parent is GroupNode { Parent: not null }; parent = parent.Parent) groups.Insert(0, parent);
+        if (groups.Count > 0 && groups[0].Parent is BooleanNode or MergeNode or PatternNode or MirrorNode) return inner; // inside an operand: selected as a whole
+        if (groups.Count == 0) return inner;
+
+        var selected = _selected.Select(_document.FindNode).OfType<Node>().ToList();
+        var entered = -1; // the deepest group that is selected or has something selected inside
+        for (var i = 0; i < groups.Count; i++)
+        {
+            if (selected.Any(s => s == groups[i] || s.IsDescendantOf(groups[i]))) entered = i;
+        }
+
+        return entered + 1 < groups.Count ? groups[entered + 1] : inner;
     }
 
     /// <summary>

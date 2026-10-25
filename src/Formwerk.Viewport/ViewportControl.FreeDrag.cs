@@ -45,14 +45,13 @@ public sealed partial class ViewportControl
         var additive = Keyboard.Modifiers.HasFlag(ModifierKeys.Control) || Keyboard.Modifiers.HasFlag(ModifierKeys.Shift);
         if (!MouseRules.CanStartFreeDrag(ActiveTool, FacePickMode, additive, Keyboard.IsKeyDown(Key.Space), hit.Info.Item.Dimmed)) return;
 
-        var id = hit.Info.Item.NodeId;
-        if (SelectedIds?.Contains(id) != true)
-        {
-            var request = new PickRequest(id, false);
-            if (PickCommand?.CanExecute(request) != true) return;
-            PickCommand.Execute(request);
-            _pickedOnDown = true;
-        }
+        // What is selected and covers the part stays (the selection is what moves); otherwise the click rule of the view model selects.
+        // _pickedOnDown tells the release that this press already selected, so that it does not click a second time.
+        var request = new PickRequest(hit.Info.Item.NodeId, false, ForDrag: true);
+        if (PickCommand?.CanExecute(request) != true) return;
+        var before = SelectedIds?.ToHashSet() ?? [];
+        PickCommand.Execute(request);
+        _pickedOnDown = !before.SetEquals(SelectedIds ?? []);
 
         _freeDragPoint = hit.Point;
         _freeDragPending = true;
