@@ -434,6 +434,8 @@ Try a different location or file name.</value></data>
   <data name="Folder.TooMany" xml:space="preserve"><value>That is enough folders; delete one first.</value></data>
   <data name="Folder.DeleteConfirm" xml:space="preserve"><value>Delete the folder "{0}"? The elements in it stay in the library.</value></data>
   <data name="Folder.Empty" xml:space="preserve"><value>This folder is empty. Right-click an element and choose Folders to put it here.</value></data>
+  <data name="Folder.Added" xml:space="preserve"><value>"{0}" is now in the folder "{1}".</value></data>
+  <data name="Folder.Chips.Tip" xml:space="preserve"><value>Show this folder; drop a library tile here to put it into the folder</value></data>
   <data name="Folder.Menu" xml:space="preserve"><value>Folders</value></data>
   <data name="Library.Size" xml:space="preserve"><value>Size</value></data>
   <data name="Library.Size.Tip" xml:space="preserve"><value>Size of the pictures in the library</value></data>

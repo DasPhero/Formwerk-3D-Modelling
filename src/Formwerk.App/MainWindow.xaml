@@ -476,6 +476,37 @@
                             <Button Grid.Column="2" Content="{res:Loc Folder.Delete}" Margin="3,0,0,0" Padding="4,2" Command="{Binding DeleteLibraryFolderCommand}"
                                     ToolTip="{res:Loc Folder.Delete.Tip}" AutomationProperties.AutomationId="DeleteLibraryFolder" />
                         </Grid>
+                        <ItemsControl ItemsSource="{Binding UserFolderChips}" Margin="0,0,0,6" AutomationProperties.AutomationId="LibraryFolderChips">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding Name}" Margin="0,0,4,4" Padding="8,2" ToolTip="{res:Loc Folder.Chips.Tip}"
+                                            Command="{Binding DataContext.ShowLibraryFolderCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding Index}"
+                                            views:LibraryFolderDropBehavior.Folder="{Binding Name}"
+                                            views:LibraryFolderDropBehavior.Command="{Binding DataContext.DropOnLibraryFolderCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            AutomationProperties.Name="{Binding Name}">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsShown}" Value="True">
+                                                        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                                        <Setter Property="BorderThickness" Value="2" />
+                                                    </DataTrigger>
+                                                    <Trigger Property="views:LibraryFolderDropBehavior.IsDragOver" Value="True">
+                                                        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                                        <Setter Property="BorderThickness" Value="2" />
+                                                        <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                         <DockPanel Margin="0,0,0,6" ToolTip="{res:Loc Library.Size.Tip}">
                             <TextBlock DockPanel.Dock="Left" Text="{res:Loc Library.Size}" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource MutedTextBrush}" />
                             <Slider Minimum="28" Maximum="110" SmallChange="4" LargeChange="16" TickFrequency="4" IsSnapToTickEnabled="True"

@@ -219,6 +219,66 @@ public sealed class LibraryFolderTests : IDisposable
     }
 
     [UiFact]
+    public void The_own_folders_are_also_buttons_that_show_the_folder_and_follow_renames_and_deletes()
+    {
+        var vm = NewViewModel(Store());
+        Assert.Empty(vm.UserFolderChips);
+
+        NewFolder(vm, _dialogs, "A");
+        NewFolder(vm, _dialogs, "B");
+
+        Assert.Equal(["A", "B"], vm.UserFolderChips.Select(c => c.Name).ToArray());
+        Assert.False(vm.UserFolderChips[0].IsShown);
+        Assert.True(vm.UserFolderChips[1].IsShown); // a new folder is shown
+
+        vm.ShowLibraryFolderCommand.Execute(vm.UserFolderChips[0].Index);
+        Assert.True(vm.UserFolderChips[0].IsShown);
+        Assert.False(vm.UserFolderChips[1].IsShown);
+
+        _dialogs.TextAnswer = "Renamed";
+        vm.RenameLibraryFolderCommand.Execute(null);
+        Assert.Equal(["Renamed", "B"], vm.UserFolderChips.Select(c => c.Name).ToArray());
+
+        _dialogs.ConfirmAnswer = true;
+        vm.DeleteLibraryFolderCommand.Execute(null);
+        Assert.Equal(["B"], vm.UserFolderChips.Select(c => c.Name).ToArray());
+        Assert.False(vm.UserFolderChips[0].IsShown);
+
+        Show(vm, "All");
+        Assert.Equal(["B"], NewViewModel(Store()).UserFolderChips.Select(c => c.Name).ToArray()); // after a restart
+    }
+
+    [UiFact]
+    public void A_tile_dropped_on_a_folder_button_is_put_into_the_folder_once()
+    {
+        var vm = NewViewModel(Store());
+        NewFolder(vm, _dialogs, "Mine");
+        vm.LibraryCategoryIndex = 0;
+
+        vm.DropOnLibraryFolderCommand.Execute(new LibraryFolderDrop("Mine", "hex-nut-m3"));
+        vm.DropOnLibraryFolderCommand.Execute(new LibraryFolderDrop("Mine", "hex-nut-m3"));
+
+        Assert.True(Entry(vm, "hex-nut-m3").FolderMemberships.Single().IsMember);
+        Show(vm, "Mine");
+        Assert.Equal(["hex-nut-m3"], Ids(vm));
+        Assert.Equal(["hex-nut-m3"], Store().Load().LibraryFolders.Folders.Single().Items.Ids);
+    }
+
+    [UiFact]
+    public void A_drop_on_an_unknown_folder_or_of_an_unknown_element_changes_nothing()
+    {
+        var vm = NewViewModel(Store());
+        NewFolder(vm, _dialogs, "Mine");
+
+        vm.DropOnLibraryFolderCommand.Execute(new LibraryFolderDrop("Nowhere", "hex-nut-m3"));
+        vm.DropOnLibraryFolderCommand.Execute(new LibraryFolderDrop("Mine", "no-such-element"));
+        vm.DropOnLibraryFolderCommand.Execute(null);
+
+        Assert.Empty(vm.LibraryEntries);
+        Assert.Empty(Store().Load().LibraryFolders.Folders.Single().Items.Ids);
+    }
+
+    [UiFact]
     public async Task A_template_can_be_put_into_a_folder_too()
     {
         var templates = new TemplateStore(Path.Combine(_folder, "templates"));

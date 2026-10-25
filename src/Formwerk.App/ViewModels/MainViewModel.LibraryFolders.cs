@@ -16,6 +16,26 @@ public sealed partial class LibraryFolderChoice(int index, string label) : Obser
     public partial string Label { get; set; } = label;
 }
 
+/// <summary>An own folder as a small button under the folder buttons: a click shows the folder, a tile dropped on it goes into it.</summary>
+public sealed partial class FolderChipViewModel(LibraryFolderChoice choice) : ObservableObject
+{
+    public LibraryFolderChoice Choice { get; } = choice;
+
+    public string Name => Choice.Label;
+
+    /// <summary>The number of the folder in the choice (what <c>LibraryCategoryIndex</c> holds while it is shown).</summary>
+    public int Index => Choice.Index;
+
+    /// <summary>The folder is the one that is shown now.</summary>
+    [ObservableProperty]
+    public partial bool IsShown { get; set; }
+
+    internal void NameChanged() => OnPropertyChanged(nameof(Name));
+}
+
+/// <summary>A tile of the library that was dropped on an own folder (by name) to be put into it.</summary>
+public sealed record LibraryFolderDrop(string Folder, string ItemId);
+
 /// <summary>The check mark of one own folder in the menu of an element: whether the element is in that folder.</summary>
 public sealed partial class FolderMembershipViewModel(string name, bool isMember, Action<FolderMembershipViewModel> changed) : ObservableObject
 {
@@ -42,6 +62,8 @@ public sealed partial class MainViewModel
     {
         public int Key { get; } = key;
 
+        public FolderChipViewModel Chip { get; } = new(choice);
+
         public string Name { get; set; } = name;
 
         public LibraryFolderChoice Choice { get; } = choice;
@@ -50,6 +72,9 @@ public sealed partial class MainViewModel
     }
 
     private readonly List<UserFolder> _userFolders = [];
+
+    /// <summary>The own folders as buttons: the place to drop a tile on.</summary>
+    public ObservableCollection<FolderChipViewModel> UserFolderChips { get; } = [];
     private int _nextFolderKey;
 
     /// <summary>The built-in sub folders in the order of the choice: their category and name.</summary>
@@ -90,6 +115,7 @@ public sealed partial class MainViewModel
         var selected = FolderOfChoice(LibraryCategoryIndex)?.Name;
         foreach (var folder in _userFolders) LibraryCategoryChoices.Remove(folder.Choice);
         _userFolders.Clear();
+        UserFolderChips.Clear();
         foreach (var folder in folders.Folders) AddUserFolder(folder.Name, folder.Items.Ids);
 
         var again = selected is null ? null : _userFolders.FirstOrDefault(f => string.Equals(f.Name, selected, StringComparison.OrdinalIgnoreCase));
@@ -106,6 +132,7 @@ public sealed partial class MainViewModel
         var folder = new UserFolder(key, name, new LibraryFolderChoice(UserFolderBase + key, name), [.. ids]);
         _userFolders.Add(folder);
         LibraryCategoryChoices.Add(folder.Choice);
+        UserFolderChips.Add(folder.Chip);
         return folder;
     }
 
@@ -117,6 +144,25 @@ public sealed partial class MainViewModel
         OnPropertyChanged(nameof(IsUserFolderSelected));
         RenameLibraryFolderCommand.NotifyCanExecuteChanged();
         DeleteLibraryFolderCommand.NotifyCanExecuteChanged();
+        foreach (var chip in UserFolderChips) chip.IsShown = chip.Index == value;
+    }
+
+    /// <summary>The click on the button of an own folder (or any other choice by its number).</summary>
+    [RelayCommand]
+    private void ShowLibraryFolder(int index) => LibraryCategoryIndex = index;
+
+    /// <summary>A tile dropped on the button of an own folder: put into the folder (once), like the check mark in the menu of the tile.</summary>
+    [RelayCommand]
+    private void DropOnLibraryFolder(LibraryFolderDrop? drop)
+    {
+        if (drop is null) return;
+        var folder = _userFolders.FirstOrDefault(f => string.Equals(f.Name, drop.Folder, StringComparison.OrdinalIgnoreCase));
+        var entry = _libraryAll.Concat<LibraryEntryViewModel>(_templateEntries).FirstOrDefault(e => string.Equals(e.Item.Id, drop.ItemId, StringComparison.OrdinalIgnoreCase));
+        if (folder is null || entry is null) return;
+
+        var membership = entry.FolderMemberships.FirstOrDefault(m => string.Equals(m.Name, folder.Name, StringComparison.OrdinalIgnoreCase));
+        if (membership is { IsMember: false }) membership.IsMember = true; // the check mark does the rest: saves and refreshes
+        SetNotice(Texts.Format("Folder.Added", entry.Name, folder.Name));
     }
 
     /// <summary>Every entry gets one check mark per own folder (made again whenever the folders change).</summary>
@@ -170,6 +216,7 @@ public sealed partial class MainViewModel
 
         folder.Name = name;
         folder.Choice.Label = name;
+        folder.Chip.NameChanged();
         RebuildFolderMemberships();
         PersistUserSettings();
         OnPropertyChanged(nameof(UserLibraryFolderNames));
@@ -184,6 +231,7 @@ public sealed partial class MainViewModel
         LibraryCategoryIndex = 0; // first, so that the choice never points at a folder that is gone
         _userFolders.Remove(folder);
         LibraryCategoryChoices.Remove(folder.Choice);
+        UserFolderChips.Remove(folder.Chip);
         RebuildFolderMemberships();
         PersistUserSettings();
         OnPropertyChanged(nameof(UserLibraryFolderNames));
