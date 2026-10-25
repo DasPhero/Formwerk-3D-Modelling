@@ -463,6 +463,12 @@
                             <ComboBox ItemsSource="{Binding LibraryCategoryChoices}" DisplayMemberPath="Label" SelectedValuePath="Index"
                                       SelectedValue="{Binding LibraryCategoryIndex}" AutomationProperties.AutomationId="LibraryCategory" />
                         </DockPanel>
+                        <DockPanel Margin="0,0,0,6" ToolTip="{res:Loc Library.Size.Tip}">
+                            <TextBlock DockPanel.Dock="Left" Text="{res:Loc Library.Size}" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="{DynamicResource MutedTextBrush}" />
+                            <Slider Minimum="28" Maximum="110" SmallChange="4" LargeChange="16" TickFrequency="4" IsSnapToTickEnabled="True"
+                                    Value="{Binding LibraryThumbnailSize, Mode=TwoWay}"
+                                    AutomationProperties.AutomationId="LibraryThumbnailSize" AutomationProperties.Name="{res:Loc Library.Size.Tip}" />
+                        </DockPanel>
                         <TextBlock Text="{Binding LibraryEmptyText}" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,8"
                                    Visibility="{Binding IsLibraryEmpty, Converter={StaticResource BoolToVisibility}}" />
                         <ScrollViewer MaxHeight="250" VerticalScrollBarVisibility="Auto" Margin="0,0,0,12">
@@ -472,13 +478,13 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.Resources>
                                     <DataTemplate DataType="{x:Type vm:LibraryEntryViewModel}">
-                                        <Grid Margin="0,0,4,4" Width="64">
+                                        <Grid Margin="0,0,4,4" Width="{Binding DataContext.LibraryTileWidth, RelativeSource={RelativeSource AncestorType=Window}}">
                                             <Button Padding="2" ToolTip="{Binding Tip}" views:LibraryDragBehavior.ItemId="{Binding Item.Id}"
                                                     AutomationProperties.Name="{Binding Name}"
                                                     Command="{Binding DataContext.AddLibraryItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                     CommandParameter="{Binding}">
                                                 <StackPanel>
-                                                    <Image Source="{Binding Thumbnail}" Width="44" Height="44" HorizontalAlignment="Center" />
+                                                    <Image Source="{Binding Thumbnail}" Width="{Binding DataContext.LibraryThumbnailSize, RelativeSource={RelativeSource AncestorType=Window}}" Height="{Binding DataContext.LibraryThumbnailSize, RelativeSource={RelativeSource AncestorType=Window}}" HorizontalAlignment="Center" />
                                                     <TextBlock Text="{Binding Name}" FontSize="10" TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
                                                 </StackPanel>
                                             </Button>
@@ -501,7 +507,7 @@
                                         </Grid>
                                     </DataTemplate>
                                     <DataTemplate DataType="{x:Type vm:TemplateEntryViewModel}">
-                                        <Grid Margin="0,0,4,4" Width="64">
+                                        <Grid Margin="0,0,4,4" Width="{Binding DataContext.LibraryTileWidth, RelativeSource={RelativeSource AncestorType=Window}}">
                                             <Button Padding="2" ToolTip="{Binding Tip}" views:LibraryDragBehavior.ItemId="{Binding Item.Id}"
                                                     AutomationProperties.Name="{Binding Name}"
                                                     Command="{Binding DataContext.AddLibraryItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -516,7 +522,7 @@
                                                     </ContextMenu>
                                                 </Button.ContextMenu>
                                                 <StackPanel>
-                                                    <Image Source="{Binding Thumbnail}" Width="44" Height="44" HorizontalAlignment="Center" />
+                                                    <Image Source="{Binding Thumbnail}" Width="{Binding DataContext.LibraryThumbnailSize, RelativeSource={RelativeSource AncestorType=Window}}" Height="{Binding DataContext.LibraryThumbnailSize, RelativeSource={RelativeSource AncestorType=Window}}" HorizontalAlignment="Center" />
                                                     <TextBlock Text="{Binding Name}" FontSize="10" TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
                                                 </StackPanel>
                                             </Button>

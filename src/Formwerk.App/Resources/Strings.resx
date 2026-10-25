@@ -419,6 +419,8 @@ Try a different location or file name.</value></data>
   <data name="Library.Empty" xml:space="preserve"><value>Nothing found.</value></data>
   <data name="Library.Item.Tip" xml:space="preserve"><value>Click to insert it; drag it into the view to put it on a face or on the build plate.</value></data>
   <data name="Msg.ElementParametersInvalid" xml:space="preserve"><value>A value of the element does not work, so nothing was inserted.</value></data>
+  <data name="Library.Size" xml:space="preserve"><value>Size</value></data>
+  <data name="Library.Size.Tip" xml:space="preserve"><value>Size of the pictures in the library</value></data>
   <data name="Library.Star.Tip" xml:space="preserve"><value>Mark as favorite</value></data>
   <data name="Panel.Templates" xml:space="preserve"><value>My Templates</value></data>
   <data name="Panel.Templates.Empty" xml:space="preserve"><value>No templates yet. Select objects and choose Edit > Save as Template...</value></data>

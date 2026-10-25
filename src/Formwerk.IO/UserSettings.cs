@@ -48,11 +48,16 @@ public sealed record UserSettings
     /// <summary>Scaling keeps the sizes of holes, chamfers and other details (F-SCL-05).</summary>
     public bool KeepDetailsWhenScaling { get; init; } = true;
 
+    /// <summary>Edge length in pixels of the pictures in the library panel.</summary>
+    public double LibraryThumbnailSize { get; init; } = 44;
+
     /// <summary>Program that "Open in Slicer" starts; null when not set.</summary>
     public string? SlicerPath { get; init; }
 
     public const float MinBuildSize = 10;
     public const float MaxBuildSize = 2000;
+    public const double MinThumbnailSize = 28;
+    public const double MaxThumbnailSize = 110;
 
     /// <summary>The same settings with every value brought into its allowed range (a hand-edited file cannot break the program).</summary>
     public UserSettings Normalized() => this with
@@ -68,6 +73,7 @@ public sealed record UserSettings
         SnapTolerancePixels = Clamp(SnapTolerancePixels, 2, 50, 10),
         AutosaveMinutes = Clamp(AutosaveMinutes, 1, 60, 2),
         EdgeAngleDegrees = Clamp(EdgeAngleDegrees, 1, 90, 30),
+        LibraryThumbnailSize = Clamp(LibraryThumbnailSize, MinThumbnailSize, MaxThumbnailSize, 44),
         SlicerPath = string.IsNullOrWhiteSpace(SlicerPath) ? null : SlicerPath.Trim(),
         FavoriteLibraryItems = (FavoriteLibraryItems ?? IdList.None).Cleaned(),
     };
@@ -116,6 +122,7 @@ public sealed class UserSettingsStore(string path)
                 AlwaysOnFloor = ReadBool(root, "alwaysOnFloor") ?? defaults.AlwaysOnFloor,
                 LightTheme = ReadBool(root, "lightTheme") ?? defaults.LightTheme,
                 KeepDetailsWhenScaling = ReadBool(root, "keepDetailsWhenScaling") ?? defaults.KeepDetailsWhenScaling,
+                LibraryThumbnailSize = ReadNumber(root, "libraryThumbnailSize") ?? defaults.LibraryThumbnailSize,
                 SlicerPath = ReadText(root, "slicerPath"),
                 FavoriteLibraryItems = ReadIds(root, "favoriteLibraryItems"),
             }.Normalized();
@@ -155,6 +162,7 @@ public sealed class UserSettingsStore(string path)
             json.WriteBoolean("alwaysOnFloor", s.AlwaysOnFloor);
             json.WriteBoolean("lightTheme", s.LightTheme);
             json.WriteBoolean("keepDetailsWhenScaling", s.KeepDetailsWhenScaling);
+            json.WriteNumber("libraryThumbnailSize", s.LibraryThumbnailSize);
             if (s.SlicerPath is not null) json.WriteString("slicerPath", s.SlicerPath);
             if (s.FavoriteLibraryItems.Ids.Count > 0)
             {

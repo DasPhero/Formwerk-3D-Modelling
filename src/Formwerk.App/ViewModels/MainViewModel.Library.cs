@@ -93,6 +93,26 @@ public sealed partial class MainViewModel
     /// <summary>The elements that match the search and the category choice.</summary>
     public ObservableCollection<LibraryEntryViewModel> LibraryEntries { get; } = [];
 
+    /// <summary>Edge length in pixels of the pictures in the library (the slider of the panel; remembered).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(LibraryTileWidth))]
+    public partial double LibraryThumbnailSize { get; set; } = 44;
+
+    /// <summary>Width of a tile of the library: the picture and a little room for the star.</summary>
+    public double LibraryTileWidth => LibraryThumbnailSize + 20;
+
+    partial void OnLibraryThumbnailSizeChanged(double value)
+    {
+        var clamped = Math.Clamp(double.IsFinite(value) ? value : 44, UserSettings.MinThumbnailSize, UserSettings.MaxThumbnailSize);
+        if (clamped != value)
+        {
+            LibraryThumbnailSize = clamped; // comes back here once with the allowed value
+            return;
+        }
+
+        PersistUserSettings();
+    }
+
     /// <summary>0 = all, 1 = favorites, then one entry per <see cref="LibraryCategory"/> (index = 2 + the category).</summary>
     public IReadOnlyList<AxisChoice> LibraryCategoryChoices { get; } =
     [

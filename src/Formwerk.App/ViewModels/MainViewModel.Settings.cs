@@ -62,6 +62,7 @@ public sealed partial class MainViewModel
         AlwaysOnFloor = AlwaysOnFloor,
         LightTheme = LightTheme,
         KeepDetailsWhenScaling = KeepDetailsWhenScaling,
+        LibraryThumbnailSize = LibraryThumbnailSize,
         FavoriteLibraryItems = new IdList([.. _favoriteIds]),
     };
 
@@ -89,6 +90,7 @@ public sealed partial class MainViewModel
             AlwaysOnFloor = _user.AlwaysOnFloor;
             LightTheme = _user.LightTheme;
             KeepDetailsWhenScaling = _user.KeepDetailsWhenScaling;
+            LibraryThumbnailSize = _user.LibraryThumbnailSize;
         }
         finally
         {

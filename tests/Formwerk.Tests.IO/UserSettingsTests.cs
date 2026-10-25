@@ -77,6 +77,25 @@ public sealed class UserSettingsTests : IDisposable
     }
 
     [Fact]
+    public void The_size_of_the_library_pictures_is_44_by_default_saved_and_kept_in_range()
+    {
+        Directory.CreateDirectory(_folder);
+        var store = Store();
+        Assert.Equal(44, store.Load().LibraryThumbnailSize);
+
+        store.Save(new UserSettings { LibraryThumbnailSize = 80 });
+        Assert.Equal(80, Store().Load().LibraryThumbnailSize);
+
+        store.Save(new UserSettings { LibraryThumbnailSize = 5 });
+        Assert.Equal(UserSettings.MinThumbnailSize, store.Load().LibraryThumbnailSize);
+        store.Save(new UserSettings { LibraryThumbnailSize = 5000 });
+        Assert.Equal(UserSettings.MaxThumbnailSize, store.Load().LibraryThumbnailSize);
+
+        File.WriteAllText(store.Path, "{ \"libraryThumbnailSize\": \"big\" }");
+        Assert.Equal(44, store.Load().LibraryThumbnailSize);
+    }
+
+    [Fact]
     public void The_library_favorites_are_kept_in_order_and_cleaned()
     {
         var store = Store();

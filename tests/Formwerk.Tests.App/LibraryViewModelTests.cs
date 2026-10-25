@@ -100,6 +100,35 @@ public sealed class LibraryViewModelTests : IDisposable
         Assert.Empty(vm.LibraryEntries);
     }
 
+    // ---- size of the pictures --------------------------------------------------------------------
+
+    [UiFact]
+    public void The_size_of_the_pictures_changes_the_tile_width_and_is_remembered()
+    {
+        var store = Store();
+        var vm = NewViewModel(store);
+        Assert.Equal(44, vm.LibraryThumbnailSize);
+        Assert.Equal(64, vm.LibraryTileWidth);
+
+        vm.LibraryThumbnailSize = 90;
+
+        Assert.Equal(110, vm.LibraryTileWidth);
+        Assert.Equal(90, store.Load().LibraryThumbnailSize);
+        Assert.Equal(90, NewViewModel(store).LibraryThumbnailSize); // a new program start
+    }
+
+    [UiFact]
+    public void A_picture_size_outside_the_range_is_brought_back_into_it()
+    {
+        var vm = NewViewModel(Store());
+
+        vm.LibraryThumbnailSize = 3;
+        Assert.Equal(UserSettings.MinThumbnailSize, vm.LibraryThumbnailSize);
+
+        vm.LibraryThumbnailSize = 999;
+        Assert.Equal(UserSettings.MaxThumbnailSize, vm.LibraryThumbnailSize);
+    }
+
     // ---- favorites -------------------------------------------------------------------------------
 
     [UiFact]
