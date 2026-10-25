@@ -496,3 +496,39 @@ public sealed class RebuildElementCommand : IDocumentCommand
         _document.NotifyChanged();
     }
 }
+
+/// <summary>Sets where a shape grows from when its size changes: -1, 0 or +1 per axis (see <see cref="PrimitiveNode.GrowAnchor"/>).</summary>
+public sealed class SetGrowAnchorCommand : IDocumentCommand
+{
+    private readonly FormwerkDocument _document;
+    private readonly PrimitiveNode _node;
+    private readonly System.Numerics.Vector3 _anchor;
+    private System.Numerics.Vector3 _old;
+
+    public SetGrowAnchorCommand(FormwerkDocument document, PrimitiveNode node, System.Numerics.Vector3 anchor)
+    {
+        foreach (var value in new[] { anchor.X, anchor.Y, anchor.Z })
+        {
+            if (value is not (-1f or 0f or 1f)) throw new ArgumentOutOfRangeException(nameof(anchor), "Each axis is -1, 0 or 1.");
+        }
+
+        _document = document;
+        _node = node;
+        _anchor = anchor;
+    }
+
+    public string Name => $"Grows from ({_node.Name})";
+
+    public void Do()
+    {
+        _old = _node.GrowAnchor;
+        _node.GrowAnchor = _anchor;
+        _document.NotifyChanged();
+    }
+
+    public void Undo()
+    {
+        _node.GrowAnchor = _old;
+        _document.NotifyChanged();
+    }
+}

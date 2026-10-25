@@ -419,6 +419,17 @@ Try a different location or file name.</value></data>
   <data name="Library.Empty" xml:space="preserve"><value>Nothing found.</value></data>
   <data name="Library.Item.Tip" xml:space="preserve"><value>Click to insert it; drag it into the view to put it on a face or on the build plate.</value></data>
   <data name="Msg.ElementParametersInvalid" xml:space="preserve"><value>A value of the element does not work, so nothing was inserted.</value></data>
+  <data name="Grow.Title" xml:space="preserve"><value>Grows from</value></data>
+  <data name="Grow.Tip" xml:space="preserve"><value>What stays where it is when a dimension changes (also through a project variable): the center, or one side. The default is the center of the base.</value></data>
+  <data name="Grow.XMin" xml:space="preserve"><value>X: left side</value></data>
+  <data name="Grow.XCenter" xml:space="preserve"><value>X: center</value></data>
+  <data name="Grow.XMax" xml:space="preserve"><value>X: right side</value></data>
+  <data name="Grow.YMin" xml:space="preserve"><value>Y: front side</value></data>
+  <data name="Grow.YCenter" xml:space="preserve"><value>Y: center</value></data>
+  <data name="Grow.YMax" xml:space="preserve"><value>Y: back side</value></data>
+  <data name="Grow.ZMin" xml:space="preserve"><value>Z: bottom</value></data>
+  <data name="Grow.ZCenter" xml:space="preserve"><value>Z: center</value></data>
+  <data name="Grow.ZMax" xml:space="preserve"><value>Z: top</value></data>
   <data name="Element.Title" xml:space="preserve"><value>Element: {0}</value></data>
   <data name="Element.Hint" xml:space="preserve"><value>Changing a value rebuilds the parts of this element. The scale goes back to 1 (the size comes from the values) and changes made to single parts are lost.</value></data>
   <data name="Err.ElementUnknown" xml:space="preserve"><value>This element is not known to this version of Formwerk, so its values cannot be changed.</value></data>

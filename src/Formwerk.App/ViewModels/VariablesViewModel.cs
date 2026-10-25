@@ -6,6 +6,7 @@ using Formwerk.App.Resources;
 using Formwerk.Core.Commands;
 using Formwerk.Core.Expressions;
 using Formwerk.Core.Model;
+using Formwerk.Features.Shapes;
 
 namespace Formwerk.App.ViewModels;
 
@@ -85,7 +86,12 @@ public sealed partial class VariablesViewModel : ObservableObject
         if (Resolve(table).TryGetValue(row.Key, out var error)) return error; // the change would not work: it is not made
 
         var command = new SetVariablesCommand(_document, table, Texts.Format("Name.SetVariable", row.Key));
-        if (command.HasEffect) _history.Execute(command);
+        if (!command.HasEffect) return null;
+
+        // shapes that grow from a side or the center keep it when their size changes with the variable: one undo step
+        var keep = GrowAnchoring.ForVariableChange(_document, table);
+        if (keep.Count == 0) _history.Execute(command);
+        else _history.Execute(new CompositeCommand(command.Name, [command, .. keep]));
         return null;
     }
 

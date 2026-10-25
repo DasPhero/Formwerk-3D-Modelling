@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Numerics;
 using System.Text;
 using Formwerk.Core.Expressions;
 
@@ -201,9 +202,19 @@ public sealed class PrimitiveNode : ParametricNode
 
     public string GeneratorId { get; }
 
+    /// <summary>Center in X and Y, bottom in Z: what a shape did before the choice existed (the shapes stand on the plate, centered).</summary>
+    public static readonly Vector3 DefaultGrowAnchor = new(0, 0, -1);
+
+    /// <summary>
+    /// What stays where it is when a dimension of the shape changes (typed value or project variable), per axis: -1 the side at the
+    /// small coordinate (left, front, bottom), 0 the center, +1 the side at the large coordinate (right, back, top). The position of
+    /// the object is moved to make it so. It does not influence the geometry, only edits.
+    /// </summary>
+    public Vector3 GrowAnchor { get; set; } = DefaultGrowAnchor;
+
     protected override Node CreateCopy(Guid id)
     {
-        var copy = new PrimitiveNode(GeneratorId, Name) { Id = id };
+        var copy = new PrimitiveNode(GeneratorId, Name) { Id = id, GrowAnchor = GrowAnchor };
         CopyParametersTo(copy);
         return copy;
     }

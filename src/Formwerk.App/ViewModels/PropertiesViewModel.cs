@@ -384,6 +384,7 @@ public sealed partial class PropertiesViewModel : ObservableObject
     /// <summary>Re-reads all values from the node (after any document change).</summary>
     public void Refresh()
     {
+        NotifyGrow();
         if (_element is not null && _node.Element is { } link)
         {
             for (var i = 0; i < ElementFields.Count; i++)
@@ -539,7 +540,68 @@ public sealed partial class PropertiesViewModel : ObservableObject
             return Texts.Format("Err.Range", definition.Label, Format(definition.Min), Format(definition.Max));
 
         if (!node.Parameters.TryGetValue(definition.Name, out var old) || old != stored)
-            _history.Execute(new SetParameterCommand(_document, node, definition.Name, stored));
+        {
+            var set = new SetParameterCommand(_document, node, definition.Name, stored);
+            if (node is PrimitiveNode shape && AnchorMove(shape, definition.Name, stored, variables) is { } moved)
+                _history.Execute(new CompositeCommand(set.Name, [set, new SetTransformCommand(_document, shape, moved)])); // one undo step
+            else
+                _history.Execute(set);
+        }
+
         return null;
+    }
+
+    /// <summary>The new transform of a shape that keeps its chosen side or center when a parameter changes, or null when it does not move.</summary>
+    private static Transform? AnchorMove(PrimitiveNode shape, string parameter, string text, IReadOnlyDictionary<string, double> variables)
+    {
+        var parameters = new Dictionary<string, string>(shape.Parameters, StringComparer.OrdinalIgnoreCase) { [parameter] = text };
+        return GrowAnchoring.LocalShift(shape, parameters, variables, variables) is { } shift && shift != Vector3.Zero ? GrowAnchoring.Moved(shape, shift) : null;
+    }
+
+    // ---- where a shape grows from -------------------------------------------------------------------
+
+    /// <summary>The shape can choose what stays where it is when its size changes (not the tools: holes, edge cuts).</summary>
+    public bool HasGrowAnchor => _node is PrimitiveNode shape && GrowAnchoring.AppliesTo(shape);
+
+    public IReadOnlyList<AxisChoice> GrowChoicesX { get; } = [new(-1, Texts.Get("Grow.XMin")), new(0, Texts.Get("Grow.XCenter")), new(1, Texts.Get("Grow.XMax"))];
+
+    public IReadOnlyList<AxisChoice> GrowChoicesY { get; } = [new(-1, Texts.Get("Grow.YMin")), new(0, Texts.Get("Grow.YCenter")), new(1, Texts.Get("Grow.YMax"))];
+
+    public IReadOnlyList<AxisChoice> GrowChoicesZ { get; } = [new(-1, Texts.Get("Grow.ZMin")), new(0, Texts.Get("Grow.ZCenter")), new(1, Texts.Get("Grow.ZMax"))];
+
+    public int GrowX
+    {
+        get => _node is PrimitiveNode shape ? (int)shape.GrowAnchor.X : 0;
+        set => SetGrow(0, value);
+    }
+
+    public int GrowY
+    {
+        get => _node is PrimitiveNode shape ? (int)shape.GrowAnchor.Y : 0;
+        set => SetGrow(1, value);
+    }
+
+    public int GrowZ
+    {
+        get => _node is PrimitiveNode shape ? (int)shape.GrowAnchor.Z : -1;
+        set => SetGrow(2, value);
+    }
+
+    private void SetGrow(int axis, int value)
+    {
+        if (_node is not PrimitiveNode shape || value is < -1 or > 1) return;
+        var anchor = shape.GrowAnchor;
+        if (axis == 0) anchor.X = value;
+        else if (axis == 1) anchor.Y = value;
+        else anchor.Z = value;
+        if (anchor != shape.GrowAnchor) _history.Execute(new SetGrowAnchorCommand(_document, shape, anchor));
+        NotifyGrow();
+    }
+
+    private void NotifyGrow()
+    {
+        OnPropertyChanged(nameof(GrowX));
+        OnPropertyChanged(nameof(GrowY));
+        OnPropertyChanged(nameof(GrowZ));
     }
 }

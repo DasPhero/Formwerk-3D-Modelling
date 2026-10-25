@@ -168,6 +168,7 @@ public static class ProjectFile
         {
             case PrimitiveNode primitive:
                 json.WriteString("generator", primitive.GeneratorId);
+                if (primitive.GrowAnchor != PrimitiveNode.DefaultGrowAnchor) WriteVector(json, "growAnchor", primitive.GrowAnchor);
                 WriteParameters(json, primitive);
                 break;
             case PatternNode pattern:
@@ -470,6 +471,13 @@ public static class ProjectFile
 
         node.Transform = new Transform(position, rotation, scale);
         if (o["element"] is JsonObject element) node.Element = ReadElement(element);
+        if (node is PrimitiveNode shape && o["growAnchor"] is not null)
+        {
+            var anchor = ReadVector(o, "growAnchor");
+            if (anchor.X is not (-1f or 0f or 1f) || anchor.Y is not (-1f or 0f or 1f) || anchor.Z is not (-1f or 0f or 1f))
+                throw new ProjectFormatException("The file is damaged: a shape grows from an invalid place.");
+            shape.GrowAnchor = anchor;
+        }
 
         if (node is ParametricNode parametric && o["parameters"] is JsonObject parameters)
         {

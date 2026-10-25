@@ -261,6 +261,36 @@ public class ProjectFileTests
         Fails(ZipJson(V1Json.Replace("\"children\": [", "\"element\": { \"values\": { \"a\": \"1\" } }, \"children\": ["))); // no id
     }
 
+    [Fact]
+    public void Where_a_shape_grows_from_is_saved_only_when_it_is_not_the_default_and_loaded_again()
+    {
+        var doc = new FormwerkDocument();
+        var history = new UndoHistory();
+        var anchored = new PrimitiveNode("box", "Anchored") { GrowAnchor = new Vector3(-1, 0, 1) };
+        var plain = new PrimitiveNode("box", "Plain");
+        history.Execute(new AddNodeCommand(doc, doc.Root, anchored));
+        history.Execute(new AddNodeCommand(doc, doc.Root, plain));
+        using var stream = new MemoryStream();
+        ProjectFile.Write(stream, doc);
+        stream.Position = 0;
+
+        var loaded = ProjectFile.Read(stream);
+
+        Assert.Equal(new Vector3(-1, 0, 1), ((PrimitiveNode)loaded.Root.Children[0]).GrowAnchor);
+        Assert.Equal(PrimitiveNode.DefaultGrowAnchor, ((PrimitiveNode)loaded.Root.Children[1]).GrowAnchor);
+    }
+
+    [Theory]
+    [InlineData("[2, 0, 0]")]
+    [InlineData("[0, 0.5, 0]")]
+    [InlineData("[0, 0]")]
+    [InlineData("\"left\"")]
+    public void A_damaged_choice_of_where_a_shape_grows_from_is_refused(string value)
+    {
+        var json = V1Json.Replace("\"generator\": \"cylinder\",", "\"growAnchor\": " + value + ", \"generator\": \"cylinder\",");
+        Fails(ZipJson(json));
+    }
+
     // ---- damaged and hostile files -------------------------------------------------------------
 
     private static ProjectFormatException Fails(byte[] bytes) => Assert.Throws<ProjectFormatException>(() => Open(bytes));

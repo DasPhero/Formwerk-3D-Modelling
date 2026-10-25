@@ -186,6 +186,22 @@
                                   AutomationProperties.AutomationId="PropertiesHoleThrough" />
                     </StackPanel>
                     <ItemsControl ItemsSource="{Binding Parameters}" />
+                    <StackPanel Visibility="{Binding HasGrowAnchor, Converter={StaticResource BoolToVisibility}}" Margin="0,6,0,2" ToolTip="{res:Loc Grow.Tip}" AutomationProperties.AutomationId="GrowAnchor">
+                        <TextBlock Text="{res:Loc Grow.Title}" Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,4" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0" Margin="0,0,3,0" ItemsSource="{Binding GrowChoicesX}" DisplayMemberPath="Label" SelectedValuePath="Index"
+                                      SelectedValue="{Binding GrowX}" AutomationProperties.AutomationId="GrowX" />
+                            <ComboBox Grid.Column="1" Margin="3,0" ItemsSource="{Binding GrowChoicesY}" DisplayMemberPath="Label" SelectedValuePath="Index"
+                                      SelectedValue="{Binding GrowY}" AutomationProperties.AutomationId="GrowY" />
+                            <ComboBox Grid.Column="2" Margin="3,0,0,0" ItemsSource="{Binding GrowChoicesZ}" DisplayMemberPath="Label" SelectedValuePath="Index"
+                                      SelectedValue="{Binding GrowZ}" AutomationProperties.AutomationId="GrowZ" />
+                        </Grid>
+                    </StackPanel>
                     <!-- Chamfer and fillet (F-EDG-01): the size is a field above, type and position are choices -->
                     <StackPanel Visibility="{Binding HasEdgeChoices, Converter={StaticResource BoolToVisibility}}" Margin="0,2,0,0">
                         <Grid Margin="0,2">
