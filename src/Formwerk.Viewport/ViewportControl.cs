@@ -43,6 +43,10 @@ public sealed partial class ViewportControl : Grid
     private readonly OrbitCamera _orbit = new();
     private readonly DirectionalLight _keyLight = new(Colors.White, new Vector3D(0, 0, -1));
     private readonly ModelVisual3D _bedVisual = new();
+    private readonly ModelVisual3D _plateVisual = new(); // drawn last: seen from below it is translucent and must come after what lies behind it
+    private MeshGeometry3D? _plateGeometry;
+    private Color _plateColor;
+    private bool? _plateBelow;
     private bool _showAxes = true;
     private readonly ModelVisual3D _partsVisual = new();
     private readonly Dictionary<Model3D, ModelInfo> _models = [];
@@ -72,6 +76,7 @@ public sealed partial class ViewportControl : Grid
         _viewport.Children.Add(_bedVisual);
         _viewport.Children.Add(_partsVisual);
         _viewport.Children.Add(_edgesVisual);
+        _viewport.Children.Add(_plateVisual);
         _viewport.Camera = _camera;
         Children.Add(_viewport);
         InitializeGizmo();
@@ -153,6 +158,7 @@ public sealed partial class ViewportControl : Grid
         _camera.FieldOfView = OrbitCamera.FieldOfViewDegrees;
         _orthographicCamera.Width = 2 * _orbit.Distance * Math.Tan(OrbitCamera.FieldOfViewDegrees * Math.PI / 360); // as wide at the target as the perspective view
         UpdateCubeCamera();
+        UpdatePlate();
         if (!ReferenceEquals(_viewport.Camera, active))
         {
             _viewport.Camera = active;
@@ -304,7 +310,11 @@ public sealed partial class ViewportControl : Grid
         var colors = LightTheme ? BedColors.Light : BedColors.Dark;
         var plate = new MeshGeometry3D();
         AddQuad(plate, new Point3D(-hx, -hy, -0.05), new Point3D(hx, -hy, -0.05), new Point3D(hx, hy, -0.05), new Point3D(-hx, hy, -0.05));
-        group.Children.Add(Flat(plate, colors.Plate));
+        plate.Freeze();
+        _plateGeometry = plate;
+        _plateColor = colors.Plate;
+        _plateBelow = null;
+        UpdatePlate();
 
         var minor = new MeshGeometry3D();
         var major = new MeshGeometry3D();
@@ -345,6 +355,22 @@ public sealed partial class ViewportControl : Grid
         }
 
         _bedVisual.Content = group;
+    }
+
+    /// <summary>The plate is solid from above and translucent from below, so that the underside of the model can be seen (see <see cref="PlateRules"/>).</summary>
+    private void UpdatePlate()
+    {
+        if (_plateGeometry is null) return;
+        var below = PlateRules.IsBelow(_orbit.Position.Z);
+        if (_plateBelow == below && _plateVisual.Content is not null) return;
+        _plateBelow = below;
+
+        var color = Color.FromArgb((byte)Math.Round(255 * PlateRules.OpacityFor(_orbit.Position.Z)), _plateColor.R, _plateColor.G, _plateColor.B);
+        var material = new MaterialGroup();
+        if (!below) material.Children.Add(new DiffuseMaterial(Brushes.Black));
+        material.Children.Add(new EmissiveMaterial(new SolidColorBrush(color)));
+        material.Freeze();
+        _plateVisual.Content = new GeometryModel3D(_plateGeometry, material) { BackMaterial = material };
     }
 
     private static GeometryModel3D Flat(MeshGeometry3D geometry, Color color)
