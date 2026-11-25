@@ -1,0 +1,30 @@
+{
+  "name": "formwerk-3d-modelling",
+  // .NET 10 SDK (all projects target net10.0 / net10.0-windows)
+  "image": "mcr.microsoft.com/devcontainers/dotnet:10.0",
+  "remoteUser": "vscode",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1": {},
+    // claude-code needs Node; its own Node auto-install fails
+    "ghcr.io/devcontainers/features/node:1": { "version": "22" }
+  },
+  "mounts": [
+    "source=${localEnv:HOME}/.claude,target=/home/vscode/.claude,type=bind",
+    "source=${localEnv:HOME}/.claude.json,target=/home/vscode/.claude.json,type=bind",
+    "source=${localEnv:HOME}/.config/gh,target=/home/vscode/.config/gh,type=bind",
+    "source=${localEnv:HOME}/dist,target=/home/vscode/dist,type=bind"
+  ],
+  // WPF projects need EnableWindowsTargeting to restore/build on Linux
+  "containerEnv": {
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "DOTNET_NOLOGO": "1"
+  },
+  "postCreateCommand": "gh auth setup-git && dotnet restore Formwerk.sln -p:EnableWindowsTargeting=true",
+  "forwardPorts": [],
+  "customizations": {
+    "vscode": {
+      "extensions": ["anthropic.claude-code", "ms-dotnettools.csdevkit"]
+    }
+  }
+}

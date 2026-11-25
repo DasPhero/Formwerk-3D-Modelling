@@ -1,3 +1,5 @@
+@AGENTS.md
+
 # Formwerk
 
 Windows desktop 3D modeller for 3D printing (C# / .NET 10, WPF). Single source of requirements: `docs/spec.md` (German; UI text is English only).

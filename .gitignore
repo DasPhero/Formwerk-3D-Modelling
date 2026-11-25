@@ -6,3 +6,4 @@ TestResults/
 artifacts/
 binary/
 *_wpftmp.csproj
+build/
